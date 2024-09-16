@@ -143,6 +143,20 @@ flutter:
     - images/NotificationIcon.png
     - images/TimeStampImg.png
     - images/TrendingImg.png
+    - images/Settings.png
+    - images/About.png
+    - images/AccountSettings.png
+    - images/Bell.png
+    - images/Exit.png
+    - images/Help.png
+    - images/Hidden word.png
+    - images/Language.png
+    - images/Muted.png
+    - images/Privacy.png
+    - images/RadioHandle.png
+    - images/Users.png
+    - images/RadioBody.png
+    - images/Blocked.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
