@@ -8,6 +8,7 @@ import 'package:yarn/main_app.dart';
 import 'package:yarn/sign_up_page.dart';
 
 import 'forgot_password_page.dart';
+import 'package:yarn/main_app.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({
@@ -197,121 +198,93 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
     return OrientationBuilder(
       builder: (context, orientation) {
         return PopScope(
-            canPop: false,
-            child: Scaffold(
-          body: SingleChildScrollView(
-            child: Center(
-              child: SizedBox(
-                height: orientation == Orientation.portrait
-                    ? MediaQuery.of(context).size.height * 1.2
-                    : MediaQuery.of(context).size.height * 1.9,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        'Hello',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 50.0,
-                          color: Colors.black,
+          canPop: false,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: Center(
+                child: SizedBox(
+                  height: orientation == Orientation.portrait
+                      ? MediaQuery
+                      .of(context)
+                      .size
+                      .height * 1.2
+                      : MediaQuery
+                      .of(context)
+                      .size
+                      .height * 1.9,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.1),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          'Hello',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 50.0,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
-                    ),
 
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        'Again!',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 50.0,
-                          color: Color(0xFF1877F2),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        "Welcome back you've \nbeen missed",
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 17.0,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        'Username',
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16.0,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: TextFormField(
-                        controller: userNameController,
-                        focusNode: _userNameFocusNode,
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          decoration: TextDecoration.none,
-                        ),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                            ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          'Again!',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 50.0,
+                            color: Color(0xFF1877F2),
                           ),
                         ),
-                        cursorColor: Colors.black,
                       ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        'Password',
-                        textAlign: TextAlign.start,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16.0,
-                          color: Colors.black,
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          "Welcome back you've \nbeen missed",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 17.0,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: TextFormField(
-                        controller: passwordController,
-                        focusNode: _passwordFocusNode,
-                        style: const TextStyle(
-                          fontSize: 16.0,
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.05),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          'Username',
+                          textAlign: TextAlign.start,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16.0,
+                            color: Colors.black,
+                          ),
                         ),
-                        decoration: InputDecoration(
-                            labelText: '*******************',
-                            labelStyle: const TextStyle(
-                              color: Colors.grey,
-                              fontFamily: 'Poppins',
-                              fontSize: 12.0,
-                              decoration: TextDecoration.none,
-                            ),
-                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TextFormField(
+                          controller: userNameController,
+                          focusNode: _userNameFocusNode,
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            decoration: TextDecoration.none,
+                          ),
+                          decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -321,158 +294,232 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 color: Colors.black,
                               ),
                             ),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordVisible = !_isPasswordVisible;
-                                });
-                              },
-                            )),
-                        cursorColor: Colors.black,
-                        obscureText: !_isPasswordVisible,
-                        obscuringCharacter: "*",
+                          ),
+                          cursorColor: Colors.black,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10.0, right: 20.0),
-                      child:Row(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          'Password',
+                          textAlign: TextAlign.start,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16.0,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TextFormField(
+                          controller: passwordController,
+                          focusNode: _passwordFocusNode,
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                          ),
+                          decoration: InputDecoration(
+                              labelText: '*******************',
+                              labelStyle: const TextStyle(
+                                color: Colors.grey,
+                                fontFamily: 'Poppins',
+                                fontSize: 12.0,
+                                decoration: TextDecoration.none,
+                              ),
+                              floatingLabelBehavior: FloatingLabelBehavior
+                                  .never,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: const BorderSide(
+                                  color: Colors.black,
+                                ),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(_isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              )),
+                          cursorColor: Colors.black,
+                          obscureText: !_isPasswordVisible,
+                          obscuringCharacter: "*",
+                        ),
+                      ),
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0, right: 20.0),
+                        child: Row(
                           children: [
-                            Checkbox(
-                              activeColor: const Color(0xFF1877F2),
-                              checkColor: Colors.white,
-                              value: _rememberMe,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  _rememberMe = value!;
-                                });
-                              },
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Checkbox(
+                                  activeColor: const Color(0xFF1877F2),
+                                  checkColor: Colors.white,
+                                  value: _rememberMe,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      _rememberMe = value!;
+                                    });
+                                  },
+                                ),
+                                const Text("Remember me", style: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12.0,
+                                  decoration: TextDecoration.none,
+                                ),),
+                              ],
                             ),
-                            const Text("Remember me",style: TextStyle(
-                              color: Colors.black,
-                              fontFamily: 'Poppins',
-                              fontSize: 12.0,
-                              decoration: TextDecoration.none,
-                            ),),
+                            const Spacer(),
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ForgotPassword(key: UniqueKey()),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Forgot password?',
+                                textAlign: TextAlign.start,
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  decorationColor: Colors.grey,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.0,
+                                  color: Color(0xFF5890FF),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        const Spacer(),
-                         InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ForgotPassword(key: UniqueKey()),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'Forgot password?',
-                              textAlign: TextAlign.start,
-                              style: TextStyle(
-                                decoration: TextDecoration.none,
-                                decorationColor: Colors.grey,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12.0,
-                                color: Color(0xFF5890FF),
+                      ),
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      Container(
+                        width: double.infinity,
+                        height: (60 / MediaQuery
+                            .of(context)
+                            .size
+                            .height) *
+                            MediaQuery
+                                .of(context)
+                                .size
+                                .height,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MainApp(key: UniqueKey()),
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
-            ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    Container(
-                      width: double.infinity,
-                      height: (60 / MediaQuery.of(context).size.height) *
-                          MediaQuery.of(context).size.height,
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (isLoading == false) {
-                            // _registerUser();
-                          }
-                        },
-                        style: ButtonStyle(
-                          backgroundColor:
-                              WidgetStateProperty.resolveWith<Color>(
-                            (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
-                                return Colors.white;
-                              }
-                              return const Color(0xFF1877F2);
-                            },
-                          ),
-                          foregroundColor:
-                              WidgetStateProperty.resolveWith<Color>(
-                            (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
+                            );
+                          },
+                          style: ButtonStyle(
+                            backgroundColor:
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.pressed)) {
+                                  return Colors.white;
+                                }
                                 return const Color(0xFF1877F2);
-                              }
-                              return Colors.white;
-                            },
+                              },
+                            ),
+                            foregroundColor:
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.pressed)) {
+                                  return const Color(0xFF1877F2);
+                                }
+                                return Colors.white;
+                              },
+                            ),
+                            elevation: WidgetStateProperty.all<double>(4.0),
+                            shape:
+                            WidgetStateProperty.all<RoundedRectangleBorder>(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(15)),
+                              ),
+                            ),
                           ),
-                          elevation: WidgetStateProperty.all<double>(4.0),
-                          shape:
-                              WidgetStateProperty.all<RoundedRectangleBorder>(
-                            const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(15)),
+                          child: isLoading
+                              ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                              : const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        child: isLoading
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Login',
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
                       ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    const Center(
-                      child: Text(
-                        'or continue with',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      const Center(
+                        child: Text(
+                          'or continue with',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: (60 / MediaQuery
+                                .of(context)
+                                .size
+                                .height) *
+                                MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height,
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: ElevatedButton(
                               onPressed: () {
 
                               },
                               style: ButtonStyle(
                                 backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -480,8 +527,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -493,7 +540,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
+                                    BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
                               ),
@@ -504,7 +551,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     height: 25,
                                   ),
                                   SizedBox(
-                                      width: MediaQuery.of(context).size.width *
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
                                           0.03),
                                   const Text(
                                     'Facebook',
@@ -518,105 +568,120 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             ),
                           ),
                           Container(
-                          height: (60 / MediaQuery.of(context).size.height) *
-                              MediaQuery.of(context).size.height,
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: ElevatedButton(
-                            onPressed: () {
-                            },
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  WidgetStateProperty.resolveWith<Color>(
-                                (Set<WidgetState> states) {
-                                  if (states.contains(WidgetState.pressed)) {
-                                    return Colors.white;
-                                  }
-                                  return const Color(0xFFEEF1F4);
-                                },
-                              ),
-                              foregroundColor:
-                                  WidgetStateProperty.resolveWith<Color>(
-                                (Set<WidgetState> states) {
-                                  if (states.contains(WidgetState.pressed)) {
-                                    return Colors.white;
-                                  }
-                                  return Colors.grey;
-                                },
-                              ),
-                              elevation: WidgetStateProperty.all<double>(0),
-                              shape: WidgetStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(15)),
+                            height: (60 / MediaQuery
+                                .of(context)
+                                .size
+                                .height) *
+                                MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0),
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ButtonStyle(
+                                backgroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
+                                      return Colors.white;
+                                    }
+                                    return const Color(0xFFEEF1F4);
+                                  },
                                 ),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Image.asset(
-                                  'images/GoogleIcon.png',
-                                  height: 25,
+                                foregroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
+                                      return Colors.white;
+                                    }
+                                    return Colors.grey;
+                                  },
                                 ),
-                                SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.03),
-                                const Text(
-                                  'Google',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
+                                elevation: WidgetStateProperty.all<double>(0),
+                                shape: WidgetStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                  const RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Image.asset(
+                                    'images/GoogleIcon.png',
+                                    height: 25,
+                                  ),
+                                  SizedBox(
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
+                                          0.03),
+                                  const Text(
+                                    'Google',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "don't have an account?",
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
+                        ],
+                      ),
+                      SizedBox(height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.02),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "don't have an account?",
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.03),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    SignUpPage(key: UniqueKey()),
+                          SizedBox(
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.03),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      SignUpPage(key: UniqueKey()),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13.0,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1877F2),
                               ),
-                            );
-                          },
-                          child:const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1877F2),
+                            ),
                           ),
-                        ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         );
       },
     );

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:yarn/select_state.dart';
+import 'package:yarn/main_app.dart';
 
 class NewsSources extends StatefulWidget {
   const NewsSources({super.key});
@@ -77,7 +77,10 @@ class NewsSourcesState extends State<NewsSources>
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.1),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
@@ -110,7 +113,10 @@ class NewsSourcesState extends State<NewsSources>
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.03),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.03),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: TextFormField(
@@ -127,7 +133,7 @@ class NewsSourcesState extends State<NewsSources>
                                 fontSize: 12.0,
                               ),
                               floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+                              FloatingLabelBehavior.never,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                               ),
@@ -177,7 +183,10 @@ class NewsSourcesState extends State<NewsSources>
                                 "Yarn14", "70k followers"),
                             SizedBox(
                                 height:
-                                    MediaQuery.of(context).size.height * 0.1),
+                                MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height * 0.1),
                           ],
                         ),
                       ),
@@ -197,24 +206,33 @@ class NewsSourcesState extends State<NewsSources>
                   color: Colors.white,
                 ),
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: Container(
                     width: double.infinity,
-                    height: (60 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
+                    height: (60 / MediaQuery
+                        .of(context)
+                        .size
+                        .height) *
+                        MediaQuery
+                            .of(context)
+                            .size
+                            .height,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SelectState(key: UniqueKey()),
+                            builder: (context) => MainApp(key: UniqueKey()),
                           ),
                         );
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
@@ -222,7 +240,7 @@ class NewsSourcesState extends State<NewsSources>
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
                               return const Color(0xFF1877F2);
                             }
@@ -238,17 +256,17 @@ class NewsSourcesState extends State<NewsSources>
                       ),
                       child: isLoading
                           ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            )
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
                           : const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        'Next',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -274,10 +292,22 @@ class NewsSourcesState extends State<NewsSources>
               ClipRRect(
                 borderRadius: BorderRadius.circular(55),
                 child: Container(
-                  width: (50 / MediaQuery.of(context).size.width) *
-                      MediaQuery.of(context).size.width,
-                  height: (50 / MediaQuery.of(context).size.height) *
-                      MediaQuery.of(context).size.height,
+                  width: (50 / MediaQuery
+                      .of(context)
+                      .size
+                      .width) *
+                      MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                  height: (50 / MediaQuery
+                      .of(context)
+                      .size
+                      .height) *
+                      MediaQuery
+                          .of(context)
+                          .size
+                          .height,
                   color: Colors.grey,
                   child: Image.asset(
                     img,
@@ -289,10 +319,22 @@ class NewsSourcesState extends State<NewsSources>
               ClipRRect(
                 borderRadius: BorderRadius.circular(55),
                 child: Container(
-                  width: (50 / MediaQuery.of(context).size.width) *
-                      MediaQuery.of(context).size.width,
-                  height: (50 / MediaQuery.of(context).size.height) *
-                      MediaQuery.of(context).size.height,
+                  width: (50 / MediaQuery
+                      .of(context)
+                      .size
+                      .width) *
+                      MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                  height: (50 / MediaQuery
+                      .of(context)
+                      .size
+                      .height) *
+                      MediaQuery
+                          .of(context)
+                          .size
+                          .height,
                   color: Colors.grey,
                   child: Image.file(
                     File(_profileImage),
@@ -300,7 +342,10 @@ class NewsSourcesState extends State<NewsSources>
                   ),
                 ),
               ),
-            SizedBox(width: MediaQuery.of(context).size.width * 0.05),
+            SizedBox(width: MediaQuery
+                .of(context)
+                .size
+                .width * 0.05),
             Expanded(
               flex: 10,
               child: Column(
@@ -330,25 +375,73 @@ class NewsSourcesState extends State<NewsSources>
                       color: Colors.grey,
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                  SizedBox(height: MediaQuery
+                      .of(context)
+                      .size
+                      .height * 0.01),
                   Row(
                     children: [
                       Stack(
                         children: [
                           Positioned(
                             left: 10, // Adjust position for overlap
-                            child: Image.asset(
-                              'images/Follower2.png',
-                              height: 20,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(55),
+                              child: Container(
+                                width: (20 / MediaQuery
+                                    .of(context)
+                                    .size
+                                    .width) *
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width,
+                                height: (20 / MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height) *
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .height,
+                                color: Colors.grey,
+                                child: Image.asset(
+                                  'images/Follower2.png',
+                                ),
+                              ),
                             ),
                           ),
-                          Image.asset(
-                            'images/Follower1.png',
-                            height: 20,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(55),
+                            child: Container(
+                              width: (20 / MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width) *
+                                  MediaQuery
+                                      .of(context)
+                                      .size
+                                      .width,
+                              height: (20 / MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height) *
+                                  MediaQuery
+                                      .of(context)
+                                      .size
+                                      .height,
+                              color: Colors.grey,
+                              child: Image.asset(
+                                'images/Follower1.png',
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                      SizedBox(width: MediaQuery
+                          .of(context)
+                          .size
+                          .width * 0.01),
                       Text(
                         followers,
                         overflow: TextOverflow.ellipsis,
@@ -382,7 +475,7 @@ class NewsSourcesState extends State<NewsSources>
                   ),
                 ),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Text(
                   "Follow",
                   style: TextStyle(

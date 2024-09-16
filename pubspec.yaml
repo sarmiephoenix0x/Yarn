@@ -133,6 +133,16 @@ flutter:
     - images/verified.png
     - images/Follower1.png
     - images/Follower2.png
+    - images/Home.png
+    - images/Home-Active.png
+    - images/Explore.png
+    - images/Like.png
+    - images/Account.png
+    - images/Account-active.png
+    - images/LatestImg.png
+    - images/NotificationIcon.png
+    - images/TimeStampImg.png
+    - images/TrendingImg.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
