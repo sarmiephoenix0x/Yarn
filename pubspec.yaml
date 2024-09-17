@@ -109,6 +109,7 @@ flutter:
     - images/Radio button-Active.png
     - images/Radio button-Inactive.png
     - images/Search.png
+    - images/Search-Active.png
     - images/WelcomeImg.png
     - images/WelcomeImg2.png
     - images/WelcomeImg3.png
@@ -136,7 +137,9 @@ flutter:
     - images/Home.png
     - images/Home-Active.png
     - images/Explore.png
+    - images/Explore-Active.png
     - images/Like.png
+    - images/Like-Active.png
     - images/Account.png
     - images/Account-active.png
     - images/LatestImg.png
