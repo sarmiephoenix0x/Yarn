@@ -3,18 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:yarn/settings.dart';
 
-class HomePage extends StatefulWidget {
+class TrendingPage extends StatefulWidget {
   final int selectedIndex;
-  const HomePage({
+  const TrendingPage({
     super.key,
     required this.selectedIndex,
   });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<TrendingPage> createState() => _TrendingPageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMixin {
   int _selectedIndex = 1;
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -68,9 +68,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                     ),
                     const Spacer(),
-                    const Expanded(
-                      flex: 10,
-                      child: Text(
+                     const Text(
                         'Trending',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -80,15 +78,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           color: Colors.black,
                         ),
                       ),
-                    ),
                     const Spacer(),
-                    InkWell(
-                      onTap: () {},
-                      child: Image.asset(
-                        'images/NotificationIcon.png',
-                        height: 50,
-                      ),
-                    ),
+                    const Icon(Icons.more_vert),
                   ],
                 ),
               ),

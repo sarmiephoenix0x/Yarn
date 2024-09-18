@@ -139,7 +139,7 @@ class ForgotPasswordState extends State<ForgotPassword>
                                         color: const Color(0xFFEEF1F4),
                                         child: RadioListTile<int>(
                                           value: 1,
-                                          activeColor: const Color(0xFF1877F2),
+                                          activeColor: const Color(0xFF000099),
                                           groupValue: _selectedRadioValue,
                                           onChanged: (int? value) {
                                             setState(() {
@@ -206,7 +206,7 @@ class ForgotPasswordState extends State<ForgotPassword>
                                         color: const Color(0xFFEEF1F4),
                                         child: RadioListTile<int>(
                                           value: 2,
-                                          activeColor: const Color(0xFF1877F2),
+                                          activeColor: const Color(0xFF000099),
                                           groupValue: _selectedRadioValue,
                                           onChanged: (int? value) {
                                             setState(() {
@@ -352,13 +352,13 @@ class ForgotPasswordState extends State<ForgotPassword>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF1877F2);
+                            return const Color(0xFF000099);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF1877F2);
+                              return const Color(0xFF000099);
                             }
                             return Colors.white;
                           },
@@ -430,13 +430,13 @@ class ForgotPasswordState extends State<ForgotPassword>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF1877F2);
+                            return const Color(0xFF000099);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF1877F2);
+                              return const Color(0xFF000099);
                             }
                             return Colors.white;
                           },

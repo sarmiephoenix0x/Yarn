@@ -203,7 +203,7 @@ class _IntroPageState extends State<IntroPage> {
                                         .contains(MaterialState.pressed)) {
                                       return Colors.white;
                                     }
-                                    return const Color(0xFF1877F2);
+                                    return const Color(0xFF000099);
                                   },
                                 ),
                                 foregroundColor:
@@ -211,7 +211,7 @@ class _IntroPageState extends State<IntroPage> {
                                   (Set<MaterialState> states) {
                                     if (states
                                         .contains(MaterialState.pressed)) {
-                                      return const Color(0xFF1877F2);
+                                      return const Color(0xFF000099);
                                     }
                                     return Colors.white;
                                   },
@@ -249,7 +249,7 @@ class _IntroPageState extends State<IntroPage> {
                                         .contains(MaterialState.pressed)) {
                                       return Colors.white;
                                     }
-                                    return const Color(0xFF1877F2);
+                                    return const Color(0xFF000099);
                                   },
                                 ),
                                 foregroundColor:
@@ -257,7 +257,7 @@ class _IntroPageState extends State<IntroPage> {
                                   (Set<MaterialState> states) {
                                     if (states
                                         .contains(MaterialState.pressed)) {
-                                      return const Color(0xFF1877F2);
+                                      return const Color(0xFF000099);
                                     }
                                     return Colors.white;
                                   },

@@ -212,13 +212,13 @@ class SuccessfulResetPageState extends State<SuccessfulResetPage>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF1877F2);
+                            return const Color(0xFF000099);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF1877F2);
+                              return const Color(0xFF000099);
                             }
                             return Colors.white;
                           },

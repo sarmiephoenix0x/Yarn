@@ -1,21 +1,20 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:yarn/settings.dart';
 
-class AccountPage extends StatefulWidget {
+class AuthorProfilePage extends StatefulWidget {
   final int selectedIndex;
 
-  const AccountPage({
+  const AuthorProfilePage({
     super.key,
     required this.selectedIndex,
   });
 
   @override
-  State<AccountPage> createState() => _AccountPageState();
+  State<AuthorProfilePage> createState() => _AuthorProfilePageState();
 }
 
-class _AccountPageState extends State<AccountPage>
+class _AuthorProfilePageState extends State<AuthorProfilePage>
     with TickerProviderStateMixin {
   int _selectedIndex = 1;
   final TextEditingController searchController = TextEditingController();
@@ -24,6 +23,7 @@ class _AccountPageState extends State<AccountPage>
   String _profileImage = '';
   TabController? latestTabController;
   TabController? profileTab;
+  bool isFollowing = false;
 
   @override
   void initState() {
@@ -46,54 +46,34 @@ class _AccountPageState extends State<AccountPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold( // Add Scaffold to each page
+    return Scaffold(
+      // Add Scaffold to each page
       body: ListView(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Spacer(),
-                    const Text(
-                      'Profile',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const Spacer(),
                     InkWell(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Settings(key: UniqueKey()),
-                          ),
-                        );
+                        Navigator.pop(context);
                       },
                       child: Image.asset(
-                        'images/Settings.png',
-                        height: 30,
+                        'images/BackButton.png',
+                        height: 25,
                       ),
                     ),
+                    const Spacer(),
+                    const Icon(Icons.more_vert),
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.05),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -102,24 +82,10 @@ class _AccountPageState extends State<AccountPage>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
                         child: Container(
-                          width:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .width) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width,
-                          height:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .height) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height,
+                          width: (80 / MediaQuery.of(context).size.width) *
+                              MediaQuery.of(context).size.width,
+                          height: (80 / MediaQuery.of(context).size.height) *
+                              MediaQuery.of(context).size.height,
                           color: Colors.grey,
                           child: Image.asset(
                             'images/ProfileImg.png',
@@ -131,24 +97,10 @@ class _AccountPageState extends State<AccountPage>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
                         child: Container(
-                          width:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .width) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width,
-                          height:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .height) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height,
+                          width: (80 / MediaQuery.of(context).size.width) *
+                              MediaQuery.of(context).size.width,
+                          height: (80 / MediaQuery.of(context).size.height) *
+                              MediaQuery.of(context).size.height,
                           color: Colors.grey,
                           child: Image.file(
                             File(_profileImage),
@@ -156,16 +108,11 @@ class _AccountPageState extends State<AccountPage>
                           ),
                         ),
                       ),
-                    SizedBox(
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width * 0.02),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.02),
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -191,8 +138,7 @@ class _AccountPageState extends State<AccountPage>
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -218,8 +164,7 @@ class _AccountPageState extends State<AccountPage>
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -245,10 +190,7 @@ class _AccountPageState extends State<AccountPage>
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               const Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
@@ -275,58 +217,61 @@ class _AccountPageState extends State<AccountPage>
                   ),
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        setState(() {
+                          isFollowing = !isFollowing;
+                        });
+                      },
                       child: Container(
-                        width: (150 / MediaQuery
-                            .of(context)
-                            .size
-                            .width) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .width,
+                        width: (150 / MediaQuery.of(context).size.width) *
+                            MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
+                          color: isFollowing
+                              ? const Color(0xFF000099)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.black.withOpacity(0.2),
+                            color: isFollowing
+                                ? Colors.transparent
+                                : const Color(0xFF000099).withOpacity(0.2),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
-                        child: const Text(
-                          "Edit profile",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            color: Colors.black,
-                          ),
-                        ),
+                        child: isFollowing
+                            ? const Text(
+                                "Following",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                "+ Follow",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  color: Color(0xFF000099),
+                                ),
+                              ),
                       ),
                     ),
                     const Spacer(),
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        width: (150 / MediaQuery
-                            .of(context)
-                            .size
-                            .width) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .width,
+                        width: (150 / MediaQuery.of(context).size.width) *
+                            MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
@@ -338,7 +283,7 @@ class _AccountPageState extends State<AccountPage>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         child: const Text(
-                          "Share profile",
+                          "Website",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -351,114 +296,67 @@ class _AccountPageState extends State<AccountPage>
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
-              TabBar(
-                controller: profileTab,
-                tabs: [
-                  _buildTab('Timeline'),
-                  _buildTab('My Community'),
-                ],
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey,
-                labelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Inconsolata',
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Inconsolata',
-                ),
-                labelPadding: EdgeInsets.zero,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorColor: Colors.black,
-              ),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               SizedBox(
-                height: (400 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
-                child: TabBarView(
-                  controller: profileTab,
+                height: (400 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
+                child: ListView(
                   children: [
-                    ListView(
-                      children: [
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        timeline(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                      ],
-                    ),
-                    ListView(
-                      children: [],
-                    ),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
+                    timeline(
+                        "images/TrendingImg.png",
+                        "Europe",
+                        "Russian warship: Moskva sinks in Black Sea",
+                        "images/ProfileImg.png",
+                        "Anonymous",
+                        "4h ago"),
                   ],
                 ),
               ),
             ],
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add your onPressed logic here
-        },
-        backgroundColor: const Color(0xFF000099),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color:Colors.white),
       ),
     );
   }
@@ -473,22 +371,10 @@ class _AccountPageState extends State<AccountPage>
             ClipRRect(
               borderRadius: BorderRadius.circular(5),
               child: Container(
-                width: (110 / MediaQuery
-                    .of(context)
-                    .size
-                    .width) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                height: (130 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
+                width: (110 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (130 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   color: Colors.grey,
                   borderRadius: BorderRadius.circular(5),
@@ -510,22 +396,10 @@ class _AccountPageState extends State<AccountPage>
             ClipRRect(
               borderRadius: BorderRadius.circular(5),
               child: Container(
-                width: (50 / MediaQuery
-                    .of(context)
-                    .size
-                    .width) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                height: (50 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
+                width: (50 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (50 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   color: Colors.grey,
                   borderRadius: BorderRadius.circular(5),
@@ -543,10 +417,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ),
             ),
-          SizedBox(width: MediaQuery
-              .of(context)
-              .size
-              .width * 0.02),
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -565,10 +436,7 @@ class _AccountPageState extends State<AccountPage>
                     const Spacer(),
                   ],
                 ),
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.02),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                 Text(
                   description,
                   overflow: TextOverflow.ellipsis,
@@ -581,10 +449,7 @@ class _AccountPageState extends State<AccountPage>
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.01),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                 Row(
                   children: [
                     Row(
@@ -593,23 +458,11 @@ class _AccountPageState extends State<AccountPage>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(55),
                             child: Container(
-                              width: (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width,
+                              width: (25 / MediaQuery.of(context).size.width) *
+                                  MediaQuery.of(context).size.width,
                               height:
-                              (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height,
+                                  (25 / MediaQuery.of(context).size.height) *
+                                      MediaQuery.of(context).size.height,
                               color: Colors.grey,
                               child: Image.asset(
                                 authorImg,
@@ -621,23 +474,11 @@ class _AccountPageState extends State<AccountPage>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(55),
                             child: Container(
-                              width: (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width,
+                              width: (25 / MediaQuery.of(context).size.width) *
+                                  MediaQuery.of(context).size.width,
                               height:
-                              (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height,
+                                  (25 / MediaQuery.of(context).size.height) *
+                                      MediaQuery.of(context).size.height,
                               color: Colors.grey,
                               child: Image.file(
                                 File(_profileImage),
@@ -646,10 +487,7 @@ class _AccountPageState extends State<AccountPage>
                             ),
                           ),
                         SizedBox(
-                            width: MediaQuery
-                                .of(context)
-                                .size
-                                .width * 0.01),
+                            width: MediaQuery.of(context).size.width * 0.01),
                         Text(
                           authorName,
                           overflow: TextOverflow.ellipsis,
@@ -670,10 +508,7 @@ class _AccountPageState extends State<AccountPage>
                           height: 20,
                         ),
                         SizedBox(
-                            width: MediaQuery
-                                .of(context)
-                                .size
-                                .width * 0.03),
+                            width: MediaQuery.of(context).size.width * 0.03),
                         Text(
                           time,
                           overflow: TextOverflow.ellipsis,
@@ -694,7 +529,6 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-
 
   Widget _buildTab(String name) {
     return Tab(

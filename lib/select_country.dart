@@ -206,13 +206,13 @@ class SelectCountryState extends State<SelectCountry>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF1877F2);
+                            return const Color(0xFF000099);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF1877F2);
+                              return const Color(0xFF000099);
                             }
                             return Colors.white;
                           },
@@ -262,7 +262,7 @@ class SelectCountryState extends State<SelectCountry>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1877F2) : Colors.transparent, // Change color based on selection
+            color: isSelected ? const Color(0xFF000099) : Colors.transparent, // Change color based on selection
             // Add other decorations like border if needed
           ),
           child: Row(

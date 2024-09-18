@@ -240,7 +240,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Color(0xFF1877F2),
+                            color: Color(0xFF000099),
                           ),
                         ),
                       ),
@@ -368,7 +368,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Checkbox(
-                                  activeColor: const Color(0xFF1877F2),
+                                  activeColor: const Color(0xFF000099),
                                   checkColor: Colors.white,
                                   value: _rememberMe,
                                   onChanged: (bool? value) {
@@ -405,7 +405,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12.0,
-                                  color: Color(0xFF5890FF),
+                                  color: Color(0xFF000099),
                                 ),
                               ),
                             ),
@@ -443,14 +443,14 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
-                                return const Color(0xFF1877F2);
+                                return const Color(0xFF000099);
                               },
                             ),
                             foregroundColor:
                             WidgetStateProperty.resolveWith<Color>(
                                   (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
-                                  return const Color(0xFF1877F2);
+                                  return const Color(0xFF000099);
                                 }
                                 return Colors.white;
                               },
@@ -670,7 +670,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 fontFamily: 'Poppins',
                                 fontSize: 13.0,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1877F2),
+                                color: Color(0xFF000099),
                               ),
                             ),
                           ),

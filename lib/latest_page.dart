@@ -3,18 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:yarn/settings.dart';
 
-class HomePage extends StatefulWidget {
+class LatestPage extends StatefulWidget {
   final int selectedIndex;
-  const HomePage({
+  const LatestPage({
     super.key,
     required this.selectedIndex,
   });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<LatestPage> createState() => _LatestPageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
   int _selectedIndex = 1;
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -45,10 +45,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   .size
                   .height * 0.03),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Image.asset(
+                      'images/AppLogo.png',
+                      height:50,
+                    ),
                     const Spacer(),
                     InkWell(
                       onTap: () {},
@@ -80,15 +84,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                     ),
                     Spacer(),
-                    Text(
-                      "See all",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15.0,
-                        color: Colors.grey,
-                      ),
-                    ),
+                    // Text(
+                    //   "See all",
+                    //   overflow: TextOverflow.ellipsis,
+                    //   style: TextStyle(
+                    //     fontFamily: 'Poppins',
+                    //     fontSize: 15.0,
+                    //     color: Colors.grey,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

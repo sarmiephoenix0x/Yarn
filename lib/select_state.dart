@@ -204,13 +204,13 @@ class SelectStateState extends State<SelectState>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF1877F2);
+                            return const Color(0xFF000099);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                               (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF1877F2);
+                              return const Color(0xFF000099);
                             }
                             return Colors.white;
                           },
@@ -260,7 +260,7 @@ class SelectStateState extends State<SelectState>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1877F2) : Colors.transparent,
+            color: isSelected ? const Color(0xFF000099) : Colors.transparent,
           ),
           child: Row(
             children: [
