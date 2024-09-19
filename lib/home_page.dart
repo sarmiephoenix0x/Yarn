@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:yarn/trending_page.dart';
 
+import 'details_page.dart';
 import 'latest_page.dart';
 import 'notification_page.dart';
 
@@ -40,9 +41,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Add Scaffold to each page
-      body: ListView(
+    return ListView(
         children: [
           Column(
             children: [
@@ -156,7 +155,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
               trending(
-                  "images/TrendingImg.png",
+                  _profileImage,
                   "Europe",
                   "Russian warship: Moskva sinks in Black Sea",
                   "images/ProfileImg.png",
@@ -241,49 +240,49 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ListView(
                       children: [
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
                             "Anonymous",
                             "4h ago"),
                         latest(
-                            "images/TrendingImg.png",
+                            _profileImage,
                             "Europe",
                             "Russian warship: Moskva sinks in Black Sea",
                             "images/ProfileImg.png",
@@ -315,13 +314,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ],
           ),
         ],
-      ),
     );
   }
 
   Widget trending(String img, String continent, String description,
       String authorImg, String authorName, String time) {
-    return Padding(
+    return InkWell(
+        onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetailsPage(
+            key: UniqueKey(), newsId: 1,
+          ),
+        ),
+      );
+    },
+    child:Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0),
       child: Column(
         children: [
@@ -344,7 +353,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 ),
                 child: Image.asset(
-                  img,
+                  "images/TrendingImg.png",
                   fit: BoxFit.cover,
                 ),
               ),
@@ -472,6 +481,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -501,7 +511,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 ),
                 child: Image.asset(
-                  img,
+                  "images/TrendingImg.png",
                   fit: BoxFit.cover,
                 ),
               ),

@@ -15,10 +15,6 @@ class TrendingPage extends StatefulWidget {
 }
 
 class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMixin {
-  int _selectedIndex = 1;
-  final TextEditingController searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-  final List<bool> _hasNotification = [false, false, false, false];
   String _profileImage = '';
   TabController? latestTabController;
   TabController? profileTab;
@@ -36,11 +32,6 @@ class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMix
     profileTab?.dispose();
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

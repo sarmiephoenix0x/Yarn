@@ -6,16 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-class NewsDetails extends StatefulWidget {
+class DetailsPage extends StatefulWidget {
   final int newsId;
 
-  const NewsDetails({super.key, required this.newsId});
+  const DetailsPage({super.key, required this.newsId});
 
   @override
-  NewsDetailsState createState() => NewsDetailsState();
+  DetailsPageState createState() => DetailsPageState();
 }
 
-class NewsDetailsState extends State<NewsDetails> {
+class DetailsPageState extends State<DetailsPage> {
   late Future<Map<String, dynamic>?> _newsFuture;
   final storage = const FlutterSecureStorage();
   final GlobalKey _key = GlobalKey();
@@ -29,7 +29,7 @@ class NewsDetailsState extends State<NewsDetails> {
 
   void _showPopupMenu(BuildContext context) async {
     final RenderBox renderBox =
-    _key.currentContext!.findRenderObject() as RenderBox;
+        _key.currentContext!.findRenderObject() as RenderBox;
     final Offset position = renderBox.localToGlobal(Offset.zero);
 
     await showMenu(
@@ -48,16 +48,13 @@ class NewsDetailsState extends State<NewsDetails> {
                 'images/share-box-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Share',
                 style: TextStyle(
                   fontSize: 16,
-                  fontFamily: 'Inter',
+                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -72,16 +69,13 @@ class NewsDetailsState extends State<NewsDetails> {
                 'images/feedback-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Report',
                 style: TextStyle(
                   fontSize: 16,
-                  fontFamily: 'Inter',
+                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -96,16 +90,13 @@ class NewsDetailsState extends State<NewsDetails> {
                 'images/save-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Save',
                 style: TextStyle(
                   fontSize: 16,
-                  fontFamily: 'Inter',
+                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -120,16 +111,13 @@ class NewsDetailsState extends State<NewsDetails> {
                 'images/basketball-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Open in browser',
                 style: TextStyle(
                   fontSize: 16,
-                  fontFamily: 'Inter',
+                  fontFamily: 'Poppins',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -161,7 +149,7 @@ class NewsDetailsState extends State<NewsDetails> {
   @override
   void initState() {
     super.initState();
-    _newsFuture = fetchNewsDetails(widget.newsId);
+    _newsFuture = fetchDetailsPage(widget.newsId);
     _scrollController.addListener(() {
       if (_scrollController.offset <= 0) {
         if (_isRefreshing) {
@@ -174,7 +162,7 @@ class NewsDetailsState extends State<NewsDetails> {
     });
   }
 
-  Future<Map<String, dynamic>?> fetchNewsDetails(int id) async {
+  Future<Map<String, dynamic>?> fetchDetailsPage(int id) async {
     final String? accessToken = await storage.read(key: 'accessToken');
     final url = 'https://script.teendev.dev/signal/api/news/$id';
 
@@ -223,7 +211,7 @@ class NewsDetailsState extends State<NewsDetails> {
       // Check for internet connection
       var connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        _showNoInternetDialog(context);
+        _showNoPoppinsnetDialog(context);
         setState(() {
           _isRefreshing = false;
         });
@@ -251,15 +239,15 @@ class NewsDetailsState extends State<NewsDetails> {
   }
 
   Future<void> _performDataFetch() async {
-    _newsFuture = fetchNewsDetails(widget.newsId);
+    _newsFuture = fetchDetailsPage(widget.newsId);
   }
 
-  void _showNoInternetDialog(BuildContext context) {
+  void _showNoPoppinsnetDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('No Internet Connection'),
+          title: const Text('No Poppinsnet Connection'),
           content: const Text(
             'It looks like you are not connected to the internet. Please check your connection and try again.',
             style: TextStyle(fontSize: 16),
@@ -362,7 +350,7 @@ class NewsDetailsState extends State<NewsDetails> {
 
       setState(() {
         isLiked = true;
-        _newsFuture = fetchNewsDetails(widget.newsId);
+        _newsFuture = fetchDetailsPage(widget.newsId);
       });
       setState(() {}); // Update the UI
     } else {
@@ -373,7 +361,6 @@ class NewsDetailsState extends State<NewsDetails> {
       );
     }
   }
-
 
   String _formatUpvotes(int count) {
     if (count >= 1000) {
@@ -413,435 +400,668 @@ class NewsDetailsState extends State<NewsDetails> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   Color originalIconColor = IconTheme
+  //       .of(context)
+  //       .color ?? Colors.black;
+  //   return Scaffold(
+  //     body: OrientationBuilder(
+  //       builder: (context, orientation) {
+  //         return Center(
+  //           child: SizedBox(
+  //             height: orientation == Orientation.portrait
+  //                 ? MediaQuery
+  //                 .of(context)
+  //                 .size
+  //                 .height
+  //                 : MediaQuery
+  //                 .of(context)
+  //                 .size
+  //                 .height * 1.5,
+  //             child: RefreshIndicator(
+  //               onRefresh: _refreshData,
+  //               color: Colors.black,
+  //               child: FutureBuilder<Map<String, dynamic>?>(
+  //                 future: _newsFuture,
+  //                 builder: (context, snapshot) {
+  //                   if (snapshot.connectionState == ConnectionState.waiting) {
+  //                     return const Center(
+  //                         child:
+  //                         CircularProgressIndicator(color: Colors.black));
+  //                   } else if (snapshot.hasError) {
+  //                     return Center(
+  //                       child: Column(
+  //                         mainAxisAlignment: MainAxisAlignment.center,
+  //                         children: [
+  //                           const Text(
+  //                             'An unexpected error occurred',
+  //                             textAlign: TextAlign.center,
+  //                             style: TextStyle(
+  //                               fontFamily: 'Inconsolata',
+  //                               color: Colors.red,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 16),
+  //                           ElevatedButton(
+  //                             onPressed: _refreshData,
+  //                             child: const Text(
+  //                               'Retry',
+  //                               style: TextStyle(
+  //                                 fontFamily: 'Inconsolata',
+  //                                 fontWeight: FontWeight.bold,
+  //                                 fontSize: 18,
+  //                                 color: Colors.black,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     );
+  //                   } else if (snapshot.hasData) {
+  //                     final news = snapshot.data;
+  //                     if (news == null) {
+  //                       return Center(
+  //                         child: Column(
+  //                           mainAxisAlignment: MainAxisAlignment.center,
+  //                           children: [
+  //                             const Text(
+  //                               'No news found',
+  //                               textAlign: TextAlign.center,
+  //                               style: TextStyle(
+  //                                 fontFamily: 'Inconsolata',
+  //                                 color: Colors.red,
+  //                               ),
+  //                             ),
+  //                             const SizedBox(height: 16),
+  //                             ElevatedButton(
+  //                               onPressed: _refreshData,
+  //                               child: const Text(
+  //                                 'Retry',
+  //                                 style: TextStyle(
+  //                                   fontFamily: 'Inconsolata',
+  //                                   fontWeight: FontWeight.bold,
+  //                                   fontSize: 18,
+  //                                   color: Colors.black,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       );
+  //                     }
+  //                     return Stack(
+  //                       alignment: Alignment.center,
+  //                       children: [
+  //                         Padding(
+  //                           padding:
+  //                           const EdgeInsets.symmetric(horizontal: 20.0),
+  //                           child: SingleChildScrollView(
+  //                             child: Column(
+  //                               crossAxisAlignment: CrossAxisAlignment.start,
+  //                               children: [
+  //                                 SizedBox(
+  //                                   height: MediaQuery
+  //                                       .of(context)
+  //                                       .size
+  //                                       .height *
+  //                                       0.1,
+  //                                 ),
+  //                                 Row(
+  //                                   children: [
+  //                                     InkWell(
+  //                                       onTap: () {
+  //                                         Navigator.pop(context);
+  //                                       },
+  //                                       child: Image.asset(
+  //                                           'images/tabler_arrow-back.png'),
+  //                                     ),
+  //                                     const Spacer(),
+  //                                   ],
+  //                                 ),
+  //                                 SizedBox(
+  //                                   height: MediaQuery
+  //                                       .of(context)
+  //                                       .size
+  //                                       .height *
+  //                                       0.05,
+  //                                 ),
+  //                                 Row(
+  //                                   children: [
+  //                                     Image.asset('images/NewsProfileImg.png'),
+  //                                     SizedBox(
+  //                                       width:
+  //                                       MediaQuery
+  //                                           .of(context)
+  //                                           .size
+  //                                           .width *
+  //                                           0.01,
+  //                                     ),
+  //                                     Expanded(
+  //                                       child: Column(
+  //                                         crossAxisAlignment:
+  //                                         CrossAxisAlignment.start,
+  //                                         children: [
+  //                                           Text(
+  //                                             news['user'] ?? '',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                             style: const TextStyle(
+  //                                               fontSize: 16,
+  //                                               fontFamily: 'Poppins',
+  //                                               fontWeight: FontWeight.bold,
+  //                                             ),
+  //                                           ),
+  //                                           SizedBox(
+  //                                             height: MediaQuery
+  //                                                 .of(context)
+  //                                                 .size
+  //                                                 .height *
+  //                                                 0.01,
+  //                                           ),
+  //                                           Text(
+  //                                             news['created_at'] ?? '',
+  //                                             overflow: TextOverflow.ellipsis,
+  //                                             style: const TextStyle(
+  //                                               color: Colors.lightBlue,
+  //                                               fontSize: 16,
+  //                                               fontFamily: 'Poppins',
+  //                                             ),
+  //                                           ),
+  //                                         ],
+  //                                       ),
+  //                                     ),
+  //                                     const Spacer(),
+  //                                     SizedBox(
+  //                                       key: _key,
+  //                                       child: IconButton(
+  //                                         icon: const Icon(
+  //                                             Icons.more_vert_outlined),
+  //                                         onPressed: () {
+  //                                           _showPopupMenu(context);
+  //                                         },
+  //                                       ),
+  //                                     ),
+  //                                   ],
+  //                                 ),
+  //                                 SizedBox(
+  //                                   height: MediaQuery
+  //                                       .of(context)
+  //                                       .size
+  //                                       .height *
+  //                                       0.03,
+  //                                 ),
+  //                                 Text(
+  //                                   news['title'] ?? '',
+  //                                   style: const TextStyle(
+  //                                       fontSize: 16, fontFamily: 'Poppins'),
+  //                                 ),
+  //                                 Padding(
+  //                                   padding: const EdgeInsets.symmetric(
+  //                                       vertical: 20.0),
+  //                                   child: ClipRRect(
+  //                                     borderRadius: BorderRadius.circular(10),
+  //                                     child: Image.network(
+  //                                       news['images'] ?? '',
+  //                                     ),
+  //                                   ),
+  //                                 ),
+  //                                 Padding(
+  //                                   padding:
+  //                                   const EdgeInsets.only(bottom: 76.0),
+  //                                   child: Text(
+  //                                     news['article'] ?? '',
+  //                                     style: const TextStyle(
+  //                                         fontSize: 16, fontFamily: 'Poppins'),
+  //                                   ),
+  //                                 ),
+  //                                 SizedBox(
+  //                                   height: MediaQuery
+  //                                       .of(context)
+  //                                       .size
+  //                                       .height *
+  //                                       0.1,
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         Positioned(
+  //                           bottom: 0,
+  //                           child: Container(
+  //                             height:
+  //                             (70 / MediaQuery
+  //                                 .of(context)
+  //                                 .size
+  //                                 .height) *
+  //                                 MediaQuery
+  //                                     .of(context)
+  //                                     .size
+  //                                     .height,
+  //                             padding: const EdgeInsets.all(12.0),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.white,
+  //                               border:
+  //                               Border.all(width: 0, color: Colors.black),
+  //                               borderRadius: BorderRadius.circular(15),
+  //                               boxShadow: [
+  //                                 BoxShadow(
+  //                                   color: Colors.grey.withOpacity(0.5),
+  //                                   spreadRadius: 3,
+  //                                   blurRadius: 5,
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                             child: SizedBox(
+  //                               width: MediaQuery
+  //                                   .of(context)
+  //                                   .size
+  //                                   .width,
+  //                               child: Padding(
+  //                                 padding: const EdgeInsets.symmetric(
+  //                                     horizontal: 20.0),
+  //                                 child: Row(children: [
+  //                                   Row(
+  //                                     children: [
+  //                                       IconButton(
+  //                                         icon: Icon(
+  //                                             isLiked
+  //                                                 ? Icons.favorite
+  //                                                 : Icons.favorite_border,
+  //                                             color: isLiked
+  //                                                 ? Colors.red
+  //                                                 : originalIconColor),
+  //                                         onPressed: () {
+  //                                           if (!isLiked) {
+  //                                             vote();
+  //                                           }
+  //                                         },
+  //                                       ),
+  //                                       Text(
+  //                                         _formatUpvotes(news['upvotes']),
+  //                                         style: const TextStyle(
+  //                                           fontFamily: 'Inconsolata',
+  //                                           fontSize: 15,
+  //                                           fontWeight: FontWeight.bold,
+  //                                           color: Colors.black,
+  //                                         ),
+  //                                       ),
+  //                                     ],
+  //                                   ),
+  //                                   SizedBox(
+  //                                       width:
+  //                                       MediaQuery
+  //                                           .of(context)
+  //                                           .size
+  //                                           .width *
+  //                                           0.06),
+  //                                   Row(
+  //                                     children: [
+  //                                       IconButton(
+  //                                         icon: const Icon(Icons.comment),
+  //                                         onPressed: () {},
+  //                                       ),
+  //                                       const Text(
+  //                                         '1K',
+  //                                         style: TextStyle(
+  //                                           fontFamily: 'Inconsolata',
+  //                                           fontSize: 15,
+  //                                           fontWeight: FontWeight.bold,
+  //                                           color: Colors.black,
+  //                                         ),
+  //                                       ),
+  //                                     ],
+  //                                   ),
+  //                                   const Spacer(),
+  //                                   IconButton(
+  //                                     icon: Icon(
+  //                                         isBookmarked
+  //                                             ? Icons.bookmark
+  //                                             : Icons.bookmark_border,
+  //                                         color: isBookmarked
+  //                                             ? Colors.blue
+  //                                             : originalIconColor),
+  //                                     onPressed: () {
+  //                                       setState(() {
+  //                                         isBookmarked = !isBookmarked;
+  //                                       });
+  //                                     },
+  //                                   ),
+  //                                   // Expanded(
+  //                                   //   child: Stack(
+  //                                   //     children: [
+  //                                   //       Container(
+  //                                   //         decoration: BoxDecoration(
+  //                                   //           color:
+  //                                   //               Colors.grey.withOpacity(0.1),
+  //                                   //           borderRadius:
+  //                                   //               BorderRadius.circular(25),
+  //                                   //         ),
+  //                                   //         child: SingleChildScrollView(
+  //                                   //           child: TextFormField(
+  //                                   //             keyboardType:
+  //                                   //                 TextInputType.multiline,
+  //                                   //             maxLines: null,
+  //                                   //             controller: commentController,
+  //                                   //             focusNode: _commentFocusNode,
+  //                                   //             style: const TextStyle(
+  //                                   //               fontSize: 16.0,
+  //                                   //               decoration:
+  //                                   //                   TextDecoration.none,
+  //                                   //             ),
+  //                                   //             decoration:
+  //                                   //                 const InputDecoration(
+  //                                   //               contentPadding:
+  //                                   //                   EdgeInsets.only(
+  //                                   //                       left: 20,
+  //                                   //                       right: 65,
+  //                                   //                       bottom: 20,
+  //                                   //                       top: 0),
+  //                                   //               labelText: 'Write a comment',
+  //                                   //               labelStyle: TextStyle(
+  //                                   //                 color: Colors.grey,
+  //                                   //                 fontFamily: 'Poppins',
+  //                                   //                 fontSize: 16.0,
+  //                                   //               ),
+  //                                   //               floatingLabelBehavior:
+  //                                   //                   FloatingLabelBehavior
+  //                                   //                       .never,
+  //                                   //               border: InputBorder.none,
+  //                                   //             ),
+  //                                   //             cursorColor: Colors.black,
+  //                                   //           ),
+  //                                   //         ),
+  //                                   //       ),
+  //                                   //       Positioned(
+  //                                   //         top: 0,
+  //                                   //         right: MediaQuery.of(context)
+  //                                   //                 .padding
+  //                                   //                 .left +
+  //                                   //             10,
+  //                                   //         bottom: 0,
+  //                                   //         child: Image.asset(
+  //                                   //           'images/user-smile-line.png',
+  //                                   //         ),
+  //                                   //       ),
+  //                                   //     ],
+  //                                   //   ),
+  //                                   // ),
+  //                                 ]),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     );
+  //                   } else {
+  //                     return Center(
+  //                       child: Column(
+  //                         mainAxisAlignment: MainAxisAlignment.center,
+  //                         children: [
+  //                           const Text(
+  //                             'No data available',
+  //                             textAlign: TextAlign.center,
+  //                             style: TextStyle(
+  //                               fontFamily: 'Inconsolata',
+  //                               color: Colors.red,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 16),
+  //                           ElevatedButton(
+  //                             onPressed: _refreshData,
+  //                             child: const Text(
+  //                               'Retry',
+  //                               style: TextStyle(
+  //                                 fontFamily: 'Inconsolata',
+  //                                 fontWeight: FontWeight.bold,
+  //                                 fontSize: 18,
+  //                                 color: Colors.black,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     );
+  //                   }
+  //                 },
+  //               ),
+  //             ),
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
-    Color originalIconColor = IconTheme
-        .of(context)
-        .color ?? Colors.black;
+    Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
     return Scaffold(
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          return Center(
-            child: SizedBox(
-              height: orientation == Orientation.portrait
-                  ? MediaQuery
-                  .of(context)
-                  .size
-                  .height
-                  : MediaQuery
-                  .of(context)
-                  .size
-                  .height * 1.5,
-              child: RefreshIndicator(
-                onRefresh: _refreshData,
-                color: Colors.black,
-                child: FutureBuilder<Map<String, dynamic>?>(
-                  future: _newsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                          child:
-                          CircularProgressIndicator(color: Colors.black));
-                    } else if (snapshot.hasError) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+      body: OrientationBuilder(builder: (context, orientation) {
+        return Center(
+          child: SizedBox(
+            height: orientation == Orientation.portrait
+                ? MediaQuery.of(context).size.height
+                : MediaQuery.of(context).size.height * 1.5,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.1,
+                        ),
+                        Row(
                           children: [
-                            const Text(
-                              'An unexpected error occurred',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inconsolata',
-                                color: Colors.red,
+                            InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Image.asset(
+                                'images/BackButton.png',
+                                height: 25,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _refreshData,
-                              child: const Text(
-                                'Retry',
-                                style: TextStyle(
-                                  fontFamily: 'Inconsolata',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.black,
+                            const Spacer(),
+                          ],
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05,
+                        ),
+                        Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(55),
+                              child: Container(
+                                width: (60 / MediaQuery.of(context).size.width) *
+                                    MediaQuery.of(context).size.width,
+                                height: (60 / MediaQuery.of(context).size.height) *
+                                    MediaQuery.of(context).size.height,
+                                color: Colors.grey,
+                                child: Image.asset(
+                                  'images/ProfileImg.png',
+                                  fit: BoxFit.cover,
                                 ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.01,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "BBC NEWS",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height *
+                                        0.01,
+                                  ),
+                                  const Text(
+                                    "14m ago",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.lightBlue,
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              key: _key,
+                              child: IconButton(
+                                icon: const Icon(Icons.more_vert_outlined),
+                                onPressed: () {
+                                  // _showPopupMenu(context);
+                                },
                               ),
                             ),
                           ],
                         ),
-                      );
-                    } else if (snapshot.hasData) {
-                      final news = snapshot.data;
-                      if (news == null) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              "images/TrendingImg.png",
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.03,
+                        ),
+                        const Text(
+                          "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
+                          style: TextStyle(fontSize: 20, fontFamily: 'Poppins', fontWeight: FontWeight.bold,),
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.03,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 76.0),
+                          child: Text(
+                            "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
+                            style:
+                                TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                          ),
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  child: Container(
+                    height: (70 / MediaQuery.of(context).size.height) *
+                        MediaQuery.of(context).size.height,
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(width: 0, color: Colors.black),
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 3,
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(children: [
+                          Row(
                             children: [
-                              const Text(
-                                'No news found',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inconsolata',
-                                  color: Colors.red,
-                                ),
+                              IconButton(
+                                icon: Icon(
+                                    isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: isLiked
+                                        ? Colors.red
+                                        : originalIconColor),
+                                onPressed: () {
+                                  setState(() {
+                                    isLiked = !isLiked;
+                                  });
+                                },
                               ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _refreshData,
-                                child: const Text(
-                                  'Retry',
-                                  style: TextStyle(
-                                    fontFamily: 'Inconsolata',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.black,
-                                  ),
+                              const Text(
+                                '24K',
+                                style: const TextStyle(
+                                  fontFamily: 'Inconsolata',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height *
-                                        0.1,
-                                  ),
-                                  Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: Image.asset(
-                                            'images/tabler_arrow-back.png'),
-                                      ),
-                                      const Spacer(),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height *
-                                        0.05,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Image.asset('images/NewsProfileImg.png'),
-                                      SizedBox(
-                                        width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width *
-                                            0.01,
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              news['user'] ?? '',
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: MediaQuery
-                                                  .of(context)
-                                                  .size
-                                                  .height *
-                                                  0.01,
-                                            ),
-                                            Text(
-                                              news['created_at'] ?? '',
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.lightBlue,
-                                                fontSize: 16,
-                                                fontFamily: 'Inter',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      SizedBox(
-                                        key: _key,
-                                        child: IconButton(
-                                          icon: const Icon(
-                                              Icons.more_vert_outlined),
-                                          onPressed: () {
-                                            _showPopupMenu(context);
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height *
-                                        0.03,
-                                  ),
-                                  Text(
-                                    news['title'] ?? '',
-                                    style: const TextStyle(
-                                        fontSize: 16, fontFamily: 'Inter'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 20.0),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        news['images'] ?? '',
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding:
-                                    const EdgeInsets.only(bottom: 76.0),
-                                    child: Text(
-                                      news['article'] ?? '',
-                                      style: const TextStyle(
-                                          fontSize: 16, fontFamily: 'Inter'),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height *
-                                        0.1,
-                                  ),
-                                ],
+                          SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.06),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.comment),
+                                onPressed: () {},
                               ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            child: Container(
-                              height:
-                              (70 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height,
-                              padding: const EdgeInsets.all(12.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border:
-                                Border.all(width: 0, color: Colors.black),
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.5),
-                                    spreadRadius: 3,
-                                    blurRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0),
-                                  child: Row(children: [
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                              isLiked
-                                                  ? Icons.favorite
-                                                  : Icons.favorite_border,
-                                              color: isLiked
-                                                  ? Colors.red
-                                                  : originalIconColor),
-                                          onPressed: () {
-                                            if (!isLiked) {
-                                              vote();
-                                            }
-                                          },
-                                        ),
-                                        Text(
-                                          _formatUpvotes(news['upvotes']),
-                                          style: const TextStyle(
-                                            fontFamily: 'Inconsolata',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                        width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width *
-                                            0.06),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.comment),
-                                          onPressed: () {},
-                                        ),
-                                        const Text(
-                                          '1K',
-                                          style: TextStyle(
-                                            fontFamily: 'Inconsolata',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(),
-                                    IconButton(
-                                      icon: Icon(
-                                          isBookmarked
-                                              ? Icons.bookmark
-                                              : Icons.bookmark_border,
-                                          color: isBookmarked
-                                              ? Colors.blue
-                                              : originalIconColor),
-                                      onPressed: () {
-                                        setState(() {
-                                          isBookmarked = !isBookmarked;
-                                        });
-                                      },
-                                    ),
-                                    // Expanded(
-                                    //   child: Stack(
-                                    //     children: [
-                                    //       Container(
-                                    //         decoration: BoxDecoration(
-                                    //           color:
-                                    //               Colors.grey.withOpacity(0.1),
-                                    //           borderRadius:
-                                    //               BorderRadius.circular(25),
-                                    //         ),
-                                    //         child: SingleChildScrollView(
-                                    //           child: TextFormField(
-                                    //             keyboardType:
-                                    //                 TextInputType.multiline,
-                                    //             maxLines: null,
-                                    //             controller: commentController,
-                                    //             focusNode: _commentFocusNode,
-                                    //             style: const TextStyle(
-                                    //               fontSize: 16.0,
-                                    //               decoration:
-                                    //                   TextDecoration.none,
-                                    //             ),
-                                    //             decoration:
-                                    //                 const InputDecoration(
-                                    //               contentPadding:
-                                    //                   EdgeInsets.only(
-                                    //                       left: 20,
-                                    //                       right: 65,
-                                    //                       bottom: 20,
-                                    //                       top: 0),
-                                    //               labelText: 'Write a comment',
-                                    //               labelStyle: TextStyle(
-                                    //                 color: Colors.grey,
-                                    //                 fontFamily: 'Inter',
-                                    //                 fontSize: 16.0,
-                                    //               ),
-                                    //               floatingLabelBehavior:
-                                    //                   FloatingLabelBehavior
-                                    //                       .never,
-                                    //               border: InputBorder.none,
-                                    //             ),
-                                    //             cursorColor: Colors.black,
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       Positioned(
-                                    //         top: 0,
-                                    //         right: MediaQuery.of(context)
-                                    //                 .padding
-                                    //                 .left +
-                                    //             10,
-                                    //         bottom: 0,
-                                    //         child: Image.asset(
-                                    //           'images/user-smile-line.png',
-                                    //         ),
-                                    //       ),
-                                    //     ],
-                                    //   ),
-                                    // ),
-                                  ]),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'No data available',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inconsolata',
-                                color: Colors.red,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _refreshData,
-                              child: const Text(
-                                'Retry',
+                              const Text(
+                                '1K',
                                 style: TextStyle(
                                   fontFamily: 'Inconsolata',
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 18,
                                   color: Colors.black,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  },
+                            ],
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(
+                                isBookmarked
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: isBookmarked
+                                    ? Colors.blue
+                                    : originalIconColor),
+                            onPressed: () {
+                              setState(() {
+                                isBookmarked = !isBookmarked;
+                              });
+                            },
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      }),
     );
   }
 }

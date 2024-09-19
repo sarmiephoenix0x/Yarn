@@ -20,7 +20,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  final List<bool> _hasNotification = [false, false, false, false];
+  final List<bool> _hasNotification = [false, false, false, false, false];
 
 
   @override
@@ -117,7 +117,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
               alignment: Alignment.center,
               children: [
                 const ImageIcon(AssetImage('images/Explore.png')),
-                if (_hasNotification[1])
+                if (_hasNotification[3])
                   Positioned(
                     bottom: 0,
                     child: Container(
@@ -142,7 +142,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
               alignment: Alignment.center,
               children: [
                 const ImageIcon(AssetImage('images/Account-active.png')),
-                if (_hasNotification[3])
+                if (_hasNotification[4])
                   Positioned(
                     bottom: 0,
                     child: Container(

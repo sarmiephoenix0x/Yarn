@@ -45,22 +45,32 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                   .size
                   .height * 0.03),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.asset(
-                      'images/AppLogo.png',
-                      height:50,
-                    ),
-                    const Spacer(),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
                       child: Image.asset(
-                        'images/NotificationIcon.png',
-                        height: 50,
+                        'images/BackButton.png',
+                        height: 25,
                       ),
                     ),
+                    const Spacer(),
+                    const Text(
+                      'Latest',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.more_vert),
                   ],
                 ),
               ),
@@ -69,33 +79,6 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                   .size
                   .height * 0.05),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    Text(
-                      "Latest",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
-                        color: Colors.black,
-                      ),
-                    ),
-                    Spacer(),
-                    // Text(
-                    //   "See all",
-                    //   overflow: TextOverflow.ellipsis,
-                    //   style: TextStyle(
-                    //     fontFamily: 'Poppins',
-                    //     fontSize: 15.0,
-                    //     color: Colors.grey,
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
               SizedBox(height: MediaQuery
                   .of(context)
                   .size

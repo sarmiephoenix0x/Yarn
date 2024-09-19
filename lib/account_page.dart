@@ -17,10 +17,6 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage>
     with TickerProviderStateMixin {
-  int _selectedIndex = 1;
-  final TextEditingController searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-  final List<bool> _hasNotification = [false, false, false, false];
   String _profileImage = '';
   TabController? latestTabController;
   TabController? profileTab;
@@ -36,12 +32,6 @@ class _AccountPageState extends State<AccountPage>
   void dispose() {
     latestTabController?.dispose();
     profileTab?.dispose();
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
   }
 
   @override
