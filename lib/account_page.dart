@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:yarn/settings.dart';
 
+import 'create_news.dart';
+
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
 
@@ -444,7 +446,12 @@ class _AccountPageState extends State<AccountPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Add your onPressed logic here
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateNews(key: UniqueKey()),
+            ),
+          );
         },
         backgroundColor: const Color(0xFF000099),
         shape: const CircleBorder(),
