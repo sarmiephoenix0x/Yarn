@@ -32,6 +32,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    super.dispose();
     explorerTabController?.dispose();
   }
 
@@ -65,8 +66,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       prefixIcon: IconButton(
@@ -77,7 +78,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                         icon: const Icon(Icons.close_outlined),
                         onPressed: () {},
                       )),
-                  cursorColor: Colors.black,
+                  cursorColor: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -89,7 +90,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                   _buildTab('Author'),
                 ],
                 //tabNames.map((name) => _buildTab(name)).toList(),
-                labelColor: Colors.black,
+                labelColor: Theme.of(context).colorScheme.onSurface,
                 unselectedLabelColor: Colors.grey,
                 labelStyle: const TextStyle(
                   fontSize: 16,
@@ -101,7 +102,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                 ),
                 labelPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.label,
-                indicatorColor: const Color(0xFF000099),
+                indicatorColor: const Color(0xFF500450),
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height,
@@ -263,11 +264,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),
@@ -418,10 +419,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     Text(
                       name,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 16.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -451,12 +452,12 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: isSave ? const Color(0xFF000099) : Colors.transparent,
+                color: isSave ? const Color(0xFF500450) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSave
                       ? Colors.transparent
-                      : const Color(0xFF000099).withOpacity(0.2),
+                      : const Color(0xFF500450).withOpacity(0.2),
                   width: 2,
                 ),
               ),
@@ -475,7 +476,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Poppins',
-                        color: const Color(0xFF000099),
+                        color: const Color(0xFF500450),
                       ),
                     ),
             ),
@@ -577,13 +578,13 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isFollowing
-                        ? const Color(0xFF000099)
+                        ? const Color(0xFF500450)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF000099).withOpacity(0.2),
+                          : const Color(0xFF500450).withOpacity(0.2),
                       width: 2,
                     ),
                   ),
@@ -603,7 +604,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: const Color(0xFF000099),
+                            color: Color(0xFF500450),
                           ),
                         ),
                 ),

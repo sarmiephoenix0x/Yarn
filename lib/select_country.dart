@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/select_state.dart';
 
 class SelectCountry extends StatefulWidget {
-  const SelectCountry({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const SelectCountry({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SelectCountryState createState() => SelectCountryState();
@@ -86,10 +88,11 @@ class SelectCountryState extends State<SelectCountry>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
+                                color:Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const Spacer(),
-                            const Expanded(
+                            Expanded(
                               flex: 10,
                               child: Text(
                                 'Select your Country',
@@ -98,7 +101,7 @@ class SelectCountryState extends State<SelectCountry>
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -130,15 +133,15 @@ class SelectCountryState extends State<SelectCountry>
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.search),
                                 onPressed: () {},
                               )),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
 
@@ -196,7 +199,9 @@ class SelectCountryState extends State<SelectCountry>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SelectState(key: UniqueKey()),
+                            builder: (context) => SelectState(key: UniqueKey(),
+                                onToggleDarkMode: widget.onToggleDarkMode,
+                                isDarkMode: widget.isDarkMode),
                           ),
                         );
                       },
@@ -206,13 +211,13 @@ class SelectCountryState extends State<SelectCountry>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },
@@ -262,7 +267,7 @@ class SelectCountryState extends State<SelectCountry>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF000099) : Colors.transparent, // Change color based on selection
+            color: isSelected ? const Color(0xFF500450) : Colors.transparent, // Change color based on selection
             // Add other decorations like border if needed
           ),
           child: Row(
@@ -278,7 +283,7 @@ class SelectCountryState extends State<SelectCountry>
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 15.0,
-                  color: isSelected ? Colors.white : Colors.black, // Change text color based on selection
+                  color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface, // Change text color based on selection
                 ),
               ),
             ],

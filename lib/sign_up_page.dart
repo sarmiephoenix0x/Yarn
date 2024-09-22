@@ -11,8 +11,10 @@ import 'package:yarn/sign_in_page.dart';
 import 'forgot_password_page.dart';
 
 class SignUpPage extends StatefulWidget {
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
   const SignUpPage({
-    super.key,
+    super.key, required this.onToggleDarkMode, required this.isDarkMode
   });
 
   @override
@@ -118,13 +120,19 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
         'Sign in successful!',
         isError: false,
       );
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainApp(key: UniqueKey()),
+          builder: (context) => MainApp(
+            key: UniqueKey(),
+            onToggleDarkMode: (bool isDarkMode) {
+              // Your toggle logic here
+            },
+            isDarkMode: true, // Or pass the current dark mode state
+          ),
         ),
       );
+
     } else if (response.statusCode == 400) {
       setState(() {
         isLoading = false;
@@ -219,34 +227,34 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Color(0xFF000099),
+                            color: Color(0xFF500450),
                           ),
                         ),
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           "Signup to get Started",
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 17.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.05),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           'Username',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -265,25 +273,25 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                color: Colors.black,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           'Password',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -310,8 +318,8 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
@@ -324,7 +332,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                   });
                                 },
                               )),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                           obscureText: !_isPasswordVisible,
                           obscuringCharacter: "*",
                         ),
@@ -339,7 +347,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Checkbox(
-                                  activeColor: const Color(0xFF000099),
+                                  activeColor: const Color(0xFF500450),
                                   checkColor: Colors.white,
                                   value: _rememberMe,
                                   onChanged: (bool? value) {
@@ -348,10 +356,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                     });
                                   },
                                 ),
-                                const Text(
+                                Text(
                                   "Remember me",
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontFamily: 'Poppins',
                                     fontSize: 12.0,
                                     decoration: TextDecoration.none,
@@ -376,7 +384,9 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => SelectCountry(key: UniqueKey()),
+                                builder: (context) => SelectCountry(key: UniqueKey(),
+                                    onToggleDarkMode: widget.onToggleDarkMode,
+                                    isDarkMode: widget.isDarkMode),
                               ),
                             );
                           },
@@ -387,14 +397,14 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
-                                return const Color(0xFF000099);
+                                return const Color(0xFF500450);
                               },
                             ),
                             foregroundColor:
                                 WidgetStateProperty.resolveWith<Color>(
                               (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
-                                  return const Color(0xFF000099);
+                                  return const Color(0xFF500450);
                                 }
                                 return Colors.white;
                               },
@@ -578,7 +588,9 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      SignInPage(key: UniqueKey()),
+                                      SignInPage(key: UniqueKey(),
+                                          onToggleDarkMode: widget.onToggleDarkMode,
+                                          isDarkMode: widget.isDarkMode),
                                 ),
                               );
                             },
@@ -588,7 +600,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 fontFamily: 'Poppins',
                                 fontSize: 13.0,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF000099),
+                                color: Color(0xFF500450),
                               ),
                             ),
                           ),

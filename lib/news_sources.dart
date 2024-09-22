@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/main_app.dart';
 
 class NewsSources extends StatefulWidget {
-  const NewsSources({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const NewsSources({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   NewsSourcesState createState() => NewsSourcesState();
@@ -89,10 +91,11 @@ class NewsSourcesState extends State<NewsSources>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
+                                color:Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const Spacer(),
-                            const Expanded(
+                            Expanded(
                               flex: 10,
                               child: Text(
                                 'Choose your News Sources',
@@ -101,7 +104,7 @@ class NewsSourcesState extends State<NewsSources>
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -133,15 +136,15 @@ class NewsSourcesState extends State<NewsSources>
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.search),
                                 onPressed: () {},
                               )),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Expanded(
@@ -208,9 +211,14 @@ class NewsSourcesState extends State<NewsSources>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => MainApp(key: UniqueKey()),
+                            builder: (context) => MainApp(
+                              key: UniqueKey(),
+                                onToggleDarkMode: widget.onToggleDarkMode,
+                                isDarkMode: widget.isDarkMode
+                            ),
                           ),
                         );
+
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.resolveWith<Color>(
@@ -218,13 +226,13 @@ class NewsSourcesState extends State<NewsSources>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },
@@ -392,33 +400,33 @@ class NewsSourcesState extends State<NewsSources>
               child: Container(
                 decoration: BoxDecoration(
                   color: isFollowing
-                      ? const Color(0xFF000099)
+                      ? const Color(0xFF500450)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isFollowing
                         ? Colors.transparent
-                        : Colors.black.withOpacity(0.2),
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                     width: 2,
                   ),
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: isFollowing
-                    ? const Text(
+                    ? Text(
                         "Following",
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: 'Poppins',
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         "Follow",
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: 'Poppins',
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
               ),

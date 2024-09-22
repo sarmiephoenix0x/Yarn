@@ -86,12 +86,13 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
+                                color:Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             SizedBox(
                                 width:
                                     MediaQuery.of(context).size.width * 0.05),
-                            const Expanded(
+                            Expanded(
                               flex: 10,
                               child: Text(
                                 'Privacy',
@@ -100,7 +101,7 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -122,60 +123,25 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                     Image.asset(
                                       'images/Privacy.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.065),
-                                    const Text(
+                                    Text(
                                       'Private profile',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                     const Spacer(),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _privateProfileMoved =
-                                              !_privateProfileMoved;
-                                        });
-                                      },
-                                      child: Stack(
-                                        children: [
-                                          Image.asset(
-                                            'images/RadioBody.png',
-                                            height: 30,
-                                            color: _privateProfileMoved
-                                                ? Colors.black
-                                                : null,
-                                          ),
-                                          AnimatedPositioned(
-                                            bottom: MediaQuery.of(context)
-                                                    .padding
-                                                    .bottom + 0,
-                                            left: _privateProfileMoved
-                                                ? MediaQuery.of(context)
-                                                        .padding
-                                                        .left +
-                                                    20
-                                                : MediaQuery.of(context)
-                                                        .padding
-                                                        .left +
-                                                    -2,
-                                            duration: const Duration(
-                                                milliseconds: 160),
-                                            child: Image.asset(
-                                              'images/RadioHandle.png',
-                                              height: 30,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    Switch(
+                                      value: _privateProfileMoved,
+                                      onChanged: (value) => {}, // Toggle the dark mode
                                     ),
                                   ],
                                 ),
@@ -192,19 +158,19 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                     Image.asset(
                                       'images/Muted.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Muted',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -222,19 +188,19 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                     Image.asset(
                                       'images/Hidden word.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Hidden Words',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -252,19 +218,19 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                     Image.asset(
                                       'images/Users.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Profiles you follow',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -279,20 +245,20 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                 onTap: () {},
                                 child: Row(
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Other privacy settings',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                     const Spacer(),
                                     Image.asset(
                                       'images/Exit.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ],
                                 ),
@@ -324,25 +290,26 @@ class PrivacyState extends State<Privacy> with SingleTickerProviderStateMixin {
                                     Image.asset(
                                       'images/Blocked.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Blocked',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                     const Spacer(),
                                     Image.asset(
                                       'images/Exit.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ],
                                 ),

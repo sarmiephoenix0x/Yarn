@@ -175,6 +175,7 @@ flutter:
     - images/RadioBody.png
     - images/Blocked.png
     - images/AddCoverPhoto.png
+    - images/tabler_brightness-filled.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

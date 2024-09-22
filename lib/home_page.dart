@@ -35,9 +35,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,8 +100,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       prefixIcon: IconButton(
@@ -110,7 +112,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         icon: const Icon(Icons.filter_list_alt),
                         onPressed: () {},
                       )),
-                  cursorColor: Colors.black,
+                  cursorColor: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -118,14 +120,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       "Trending",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -166,14 +168,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       "Latest",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -217,7 +219,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   _buildTab('Science'),
                 ],
                 //tabNames.map((name) => _buildTab(name)).toList(),
-                labelColor: Colors.black,
+                labelColor: Theme.of(context).colorScheme.onSurface,
                 unselectedLabelColor: Colors.grey,
                 labelStyle: const TextStyle(
                   fontSize: 16,
@@ -229,7 +231,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 labelPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.label,
-                indicatorColor: const Color(0xFF000099),
+                indicatorColor: const Color(0xFF500450),
               ),
               SizedBox(
                 height: (400 / MediaQuery.of(context).size.height) *
@@ -403,11 +405,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             overflow: TextOverflow.ellipsis,
             softWrap: true,
             maxLines: 3,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.bold,
               fontSize: 18.0,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -566,11 +568,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),

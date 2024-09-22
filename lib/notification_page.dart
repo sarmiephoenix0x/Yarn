@@ -499,13 +499,13 @@ class NotificationPageState extends State<NotificationPage> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isFollowing
-                        ? const Color(0xFF000099)
+                        ? const Color(0xFF500450)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF000099).withOpacity(0.2),
+                          : const Color(0xFF500450).withOpacity(0.2),
                       width: 2,
                     ),
                   ),
@@ -525,7 +525,7 @@ class NotificationPageState extends State<NotificationPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: const Color(0xFF000099),
+                            color: const Color(0xFF500450),
                           ),
                         ),
                 ),

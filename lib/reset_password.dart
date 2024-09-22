@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/successful_psw_reset_page.dart';
 
 class ResetPassword extends StatefulWidget {
-  const ResetPassword({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const ResetPassword({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   ResetPasswordState createState() => ResetPasswordState();
@@ -162,6 +164,7 @@ class ResetPasswordState extends State<ResetPassword>
                             child: Image.asset(
                               'images/BackButton.png',
                               height: 25,
+                              color:Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const Spacer(),
@@ -203,8 +206,8 @@ class ResetPasswordState extends State<ResetPassword>
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                color: Colors.black,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             suffixIcon: IconButton(
@@ -217,7 +220,7 @@ class ResetPasswordState extends State<ResetPassword>
                                 });
                               },
                             )),
-                        cursorColor: Colors.black,
+                        cursorColor: Theme.of(context).colorScheme.onSurface,
                         obscureText: !_isPasswordVisible,
                         obscuringCharacter: "*",
                       ),
@@ -244,8 +247,8 @@ class ResetPasswordState extends State<ResetPassword>
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                color: Colors.black,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             suffixIcon: IconButton(
@@ -258,7 +261,7 @@ class ResetPasswordState extends State<ResetPassword>
                                 });
                               },
                             )),
-                        cursorColor: Colors.black,
+                        cursorColor: Theme.of(context).colorScheme.onSurface,
                         obscureText: !_isPasswordVisible2,
                         obscuringCharacter: "*",
                       ),
@@ -295,7 +298,9 @@ class ResetPasswordState extends State<ResetPassword>
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                SuccessfulResetPage(key: UniqueKey()),
+                                SuccessfulResetPage(key: UniqueKey(),
+                                    onToggleDarkMode: widget.onToggleDarkMode,
+                                    isDarkMode: widget.isDarkMode),
                           ),
                         );
                       } else {
@@ -312,13 +317,13 @@ class ResetPasswordState extends State<ResetPassword>
                           if (states.contains(WidgetState.pressed)) {
                             return Colors.white;
                           }
-                          return const Color(0xFF000099);
+                          return const Color(0xFF500450);
                         },
                       ),
                       foregroundColor: WidgetStateProperty.resolveWith<Color>(
                         (Set<WidgetState> states) {
                           if (states.contains(WidgetState.pressed)) {
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           }
                           return Colors.white;
                         },

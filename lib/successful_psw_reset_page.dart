@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/sign_in_page.dart';
 
 class SuccessfulResetPage extends StatefulWidget {
-  const SuccessfulResetPage({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const SuccessfulResetPage({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SuccessfulResetPageState createState() => SuccessfulResetPageState();
@@ -166,12 +168,12 @@ class SuccessfulResetPageState extends State<SuccessfulResetPage>
                             color: Color(0xFF4E4B66),
                           ),
                         ),
-                        const Text(
+                        Text(
                           "Your account is ready to use",
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 15.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -202,7 +204,9 @@ class SuccessfulResetPageState extends State<SuccessfulResetPage>
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SignInPage(key: UniqueKey()),
+                            builder: (context) => SignInPage(key: UniqueKey(),
+                                onToggleDarkMode: widget.onToggleDarkMode,
+                                isDarkMode: widget.isDarkMode),
                           ),
                         );
                       },
@@ -212,13 +216,13 @@ class SuccessfulResetPageState extends State<SuccessfulResetPage>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                           (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },

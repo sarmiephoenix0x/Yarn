@@ -254,7 +254,7 @@ class DetailsPageState extends State<DetailsPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Retry', style: TextStyle(color: Colors.blue)),
+              child: const Text('Retry', style: TextStyle(color: const Color(0xFF500450))),
               onPressed: () {
                 Navigator.of(context).pop();
                 _refreshData();
@@ -284,7 +284,7 @@ class DetailsPageState extends State<DetailsPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Retry', style: TextStyle(color: Colors.blue)),
+              child: Text('Retry', style: TextStyle(color: const Color(0xFF500450))),
               onPressed: () {
                 Navigator.of(context).pop();
                 _refreshData();
@@ -718,7 +718,7 @@ class DetailsPageState extends State<DetailsPage> {
   //                                             ? Icons.bookmark
   //                                             : Icons.bookmark_border,
   //                                         color: isBookmarked
-  //                                             ? Colors.blue
+  //                                             ? const Color(0xFF500450)
   //                                             : originalIconColor),
   //                                     onPressed: () {
   //                                       setState(() {
@@ -834,7 +834,7 @@ class DetailsPageState extends State<DetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
+    Color originalIconColor = Theme.of(context).colorScheme.onSurface;
     return Scaffold(
       body: OrientationBuilder(builder: (context, orientation) {
         return Center(
@@ -911,7 +911,7 @@ class DetailsPageState extends State<DetailsPage> {
                                     "14m ago",
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: Colors.lightBlue,
+                                      color: Colors.grey,
                                       fontSize: 16,
                                       fontFamily: 'Poppins',
                                     ),
@@ -1023,7 +1023,7 @@ class DetailsPageState extends State<DetailsPage> {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.comment),
+                                icon: Icon(Icons.comment, color:Theme.of(context).colorScheme.onSurface),
                                 onPressed: () {},
                               ),
                               const Text(
@@ -1044,7 +1044,7 @@ class DetailsPageState extends State<DetailsPage> {
                                     ? Icons.bookmark
                                     : Icons.bookmark_border,
                                 color: isBookmarked
-                                    ? Colors.blue
+                                    ? const Color(0xFF500450)
                                     : originalIconColor),
                             onPressed: () {
                               setState(() {

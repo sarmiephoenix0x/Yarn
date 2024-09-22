@@ -4,9 +4,11 @@ import 'package:yarn/sign_up_page.dart';
 import 'package:yarn/sign_in_page.dart';
 
 class IntroPage extends StatefulWidget {
-  const IntroPage({
-    super.key,
-  });
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+
+  const IntroPage(
+      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -21,7 +23,7 @@ class _IntroPageState extends State<IntroPage> {
   ];
 
   List<String> imageHeaders = [
-    "Welcome to Yarn – Your Community Connection",
+    "Welcome to Yarn – See Something, Say Something",
     "Share Information Safely & Stay Informed",
     "Support Local & Grow Together",
   ];
@@ -92,8 +94,8 @@ class _IntroPageState extends State<IntroPage> {
                                     horizontal: 20.0),
                                 child: Text(
                                   imageHeaders[_current],
-                                  style: const TextStyle(
-                                    color: Colors.black,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontFamily: 'Inconsolata',
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -112,8 +114,8 @@ class _IntroPageState extends State<IntroPage> {
                                       horizontal: 20.0),
                                   child: Text(
                                     imageSubheadings[_current],
-                                    style: const TextStyle(
-                                      color: Colors.black,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontFamily: 'Inconsolata',
                                       fontSize: 16,
                                     ),
@@ -191,34 +193,33 @@ class _IntroPageState extends State<IntroPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        SignInPage(key: UniqueKey()),
+                                        SignInPage(key: UniqueKey(),
+                                            onToggleDarkMode: widget.onToggleDarkMode,
+                                            isDarkMode: widget.isDarkMode),
                                   ),
                                 );
                               },
                               style: ButtonStyle(
                                 backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
-                                    return const Color(0xFF000099);
+                                    return const Color(0xFF500450);
                                   },
                                 ),
                                 foregroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      return const Color(0xFF000099);
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
+                                      return const Color(0xFF500450);
                                     }
                                     return Colors.white;
                                   },
                                 ),
-                                elevation:
-                                    MaterialStateProperty.all<double>(4.0),
-                                shape: MaterialStateProperty.all<
+                                elevation: WidgetStateProperty.all<double>(4.0),
+                                shape: WidgetStateProperty.all<
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
@@ -243,28 +244,25 @@ class _IntroPageState extends State<IntroPage> {
                               },
                               style: ButtonStyle(
                                 backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
-                                    return const Color(0xFF000099);
+                                    return const Color(0xFF500450);
                                   },
                                 ),
                                 foregroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      return const Color(0xFF000099);
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                    if (states.contains(WidgetState.pressed)) {
+                                      return const Color(0xFF500450);
                                     }
                                     return Colors.white;
                                   },
                                 ),
-                                elevation:
-                                    MaterialStateProperty.all<double>(4.0),
-                                shape: MaterialStateProperty.all<
+                                elevation: WidgetStateProperty.all<double>(4.0),
+                                shape: WidgetStateProperty.all<
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:

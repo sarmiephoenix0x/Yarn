@@ -6,7 +6,9 @@ import 'package:yarn/sign_in_page.dart';
 import 'fill_profile.dart';
 
 class SelectState extends StatefulWidget {
-  const SelectState({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const SelectState({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SelectStateState createState() => SelectStateState();
@@ -88,10 +90,11 @@ class SelectStateState extends State<SelectState>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
+                                color:Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const Spacer(),
-                            const Expanded(
+                            Expanded(
                               flex: 10,
                               child: Text(
                                 'Select your State',
@@ -100,7 +103,7 @@ class SelectStateState extends State<SelectState>
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -132,15 +135,15 @@ class SelectStateState extends State<SelectState>
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.search),
                                 onPressed: () {},
                               )),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
 
@@ -194,7 +197,9 @@ class SelectStateState extends State<SelectState>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => FillProfile(key: UniqueKey()),
+                            builder: (context) => FillProfile(key: UniqueKey(),
+                                onToggleDarkMode: widget.onToggleDarkMode,
+                                isDarkMode: widget.isDarkMode),
                           ),
                         );
                       },
@@ -204,13 +209,13 @@ class SelectStateState extends State<SelectState>
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
                               (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },
@@ -260,7 +265,7 @@ class SelectStateState extends State<SelectState>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF000099) : Colors.transparent,
+            color: isSelected ? const Color(0xFF500450) : Colors.transparent,
           ),
           child: Row(
             children: [
@@ -270,7 +275,7 @@ class SelectStateState extends State<SelectState>
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 15.0,
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],

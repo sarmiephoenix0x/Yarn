@@ -32,6 +32,7 @@ class _ExplorePageState extends State<ExplorePage>
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
   }
@@ -45,20 +46,20 @@ class _ExplorePageState extends State<ExplorePage>
           Column(
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 0.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
                       child: Text(
                         "Explore",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w900,
                           fontSize: 30.0,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -67,8 +68,8 @@ class _ExplorePageState extends State<ExplorePage>
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
                     Text(
@@ -78,11 +79,11 @@ class _ExplorePageState extends State<ExplorePage>
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Spacer(),
-                    Text(
+                    const Text(
                       "See all",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -100,8 +101,8 @@ class _ExplorePageState extends State<ExplorePage>
                   "German warship: Moskva sinks in Black Sea"),
               topics("images/TrendingImg.png", "Art",
                   "Japanese warship: Moskva sinks in Black Sea"),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
                     Text(
@@ -111,11 +112,11 @@ class _ExplorePageState extends State<ExplorePage>
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    Spacer(),
-                    Text(
+                    const Spacer(),
+                    const Text(
                       "See all",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -230,11 +231,11 @@ class _ExplorePageState extends State<ExplorePage>
             overflow: TextOverflow.ellipsis,
             softWrap: true,
             maxLines: 3,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.bold,
               fontSize: 18.0,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -378,10 +379,10 @@ class _ExplorePageState extends State<ExplorePage>
                     Text(
                       name,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 16.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -411,12 +412,12 @@ class _ExplorePageState extends State<ExplorePage>
             },
             child: Container(
               decoration: BoxDecoration(
-                color: isSave ? const Color(0xFF000099) : Colors.transparent,
+                color: isSave ? const Color(0xFF500450) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSave
                       ? Colors.transparent
-                      : const Color(0xFF000099).withOpacity(0.2),
+                      : const Color(0xFF500450).withOpacity(0.2),
                   width: 2,
                 ),
               ),
@@ -435,7 +436,7 @@ class _ExplorePageState extends State<ExplorePage>
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Poppins',
-                        color: const Color(0xFF000099),
+                        color: const Color(0xFF500450),
                       ),
                     ),
             ),

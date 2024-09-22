@@ -11,8 +11,11 @@ import 'forgot_password_page.dart';
 import 'package:yarn/main_app.dart';
 
 class SignInPage extends StatefulWidget {
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+
   const SignInPage({
-    super.key,
+    super.key, required this.onToggleDarkMode, required this.isDarkMode
   });
 
   @override
@@ -118,11 +121,17 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
         'Sign in successful!',
         isError: false,
       );
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainApp(key: UniqueKey()),
+          builder: (context) =>
+              MainApp(
+                key: UniqueKey(),
+                onToggleDarkMode: (bool isDarkMode) {
+                  // Your toggle logic here
+                },
+                isDarkMode: true, // Or pass the current dark mode state
+              ),
         ),
       );
     } else if (response.statusCode == 400) {
@@ -219,15 +228,15 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           .of(context)
                           .size
                           .height * 0.1),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           'Hello',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -240,7 +249,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Color(0xFF000099),
+                            color: Color(0xFF500450),
                           ),
                         ),
                       ),
@@ -248,14 +257,14 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           .of(context)
                           .size
                           .height * 0.02),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           "Welcome back you've \nbeen missed",
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 17.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -263,15 +272,15 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           .of(context)
                           .size
                           .height * 0.05),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           'Username',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -290,27 +299,27 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                color: Colors.black,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       SizedBox(height: MediaQuery
                           .of(context)
                           .size
                           .height * 0.02),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
                           'Password',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -337,8 +346,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
@@ -351,7 +360,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   });
                                 },
                               )),
-                          cursorColor: Colors.black,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                           obscureText: !_isPasswordVisible,
                           obscuringCharacter: "*",
                         ),
@@ -368,7 +377,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Checkbox(
-                                  activeColor: const Color(0xFF000099),
+                                  activeColor: const Color(0xFF500450),
                                   checkColor: Colors.white,
                                   value: _rememberMe,
                                   onChanged: (bool? value) {
@@ -377,8 +386,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     });
                                   },
                                 ),
-                                const Text("Remember me", style: TextStyle(
-                                  color: Colors.black,
+                                Text("Remember me", style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontFamily: 'Poppins',
                                   fontSize: 12.0,
                                   decoration: TextDecoration.none,
@@ -392,7 +401,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        ForgotPassword(key: UniqueKey()),
+                                        ForgotPassword(key: UniqueKey(),
+                                            onToggleDarkMode: widget
+                                                .onToggleDarkMode,
+                                            isDarkMode: widget.isDarkMode),
                                   ),
                                 );
                               },
@@ -405,7 +417,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12.0,
-                                  color: Color(0xFF000099),
+                                  color: Color(0xFF500450),
                                 ),
                               ),
                             ),
@@ -429,10 +441,16 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => MainApp(key: UniqueKey()),
+                                builder: (context) =>
+                                    MainApp(
+                                        key: UniqueKey(),
+                                        onToggleDarkMode: widget
+                                            .onToggleDarkMode,
+                                        isDarkMode: widget.isDarkMode
+                                    ),
                               ),
                             );
                           },
@@ -443,14 +461,14 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
-                                return const Color(0xFF000099);
+                                return const Color(0xFF500450);
                               },
                             ),
                             foregroundColor:
                             WidgetStateProperty.resolveWith<Color>(
                                   (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
-                                  return const Color(0xFF000099);
+                                  return const Color(0xFF500450);
                                 }
                                 return Colors.white;
                               },
@@ -660,7 +678,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      SignUpPage(key: UniqueKey()),
+                                      SignUpPage(key: UniqueKey(),
+                                          onToggleDarkMode: widget
+                                              .onToggleDarkMode,
+                                          isDarkMode: widget.isDarkMode),
                                 ),
                               );
                             },
@@ -670,7 +691,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 fontFamily: 'Poppins',
                                 fontSize: 13.0,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF000099),
+                                color: Color(0xFF500450),
                               ),
                             ),
                           ),

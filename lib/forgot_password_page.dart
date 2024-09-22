@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:yarn/sign_up_otp.dart';
 
 class ForgotPassword extends StatefulWidget {
-  const ForgotPassword({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+
+  const ForgotPassword(
+      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   ForgotPasswordState createState() => ForgotPasswordState();
@@ -70,7 +74,10 @@ class ForgotPasswordState extends State<ForgotPassword>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.1),
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.1),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: Row(
@@ -88,6 +95,7 @@ class ForgotPasswordState extends State<ForgotPassword>
                                 child: Image.asset(
                                   'images/BackButton.png',
                                   height: 25,
+                                  color:Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               const Spacer(),
@@ -95,7 +103,10 @@ class ForgotPasswordState extends State<ForgotPassword>
                           ),
                         ),
                         SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.02),
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.02),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Text(
@@ -109,206 +120,224 @@ class ForgotPasswordState extends State<ForgotPassword>
                           ),
                         ),
                         SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.02),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.0),
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.02),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: Text(
                             "Don’t worry! it happens. Please select the email or number associated with your account.",
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 17.0,
-                              color: Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ),
                         SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.02),
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.02),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
                           // Animation duration
                           child: _showInitialContent
                               ? Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20.0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 20.0, horizontal: 20.0),
-                                        color: const Color(0xFFEEF1F4),
-                                        child: RadioListTile<int>(
-                                          value: 1,
-                                          activeColor: const Color(0xFF000099),
-                                          groupValue: _selectedRadioValue,
-                                          onChanged: (int? value) {
-                                            setState(() {
-                                              _selectedRadioValue = value;
-                                            });
-                                          },
-                                          title: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 20.0, horizontal: 20.0),
+                                  color: const Color(0xFFEEF1F4),
+                                  child: RadioListTile<int>(
+                                    value: 1,
+                                    activeColor: const Color(0xFF500450),
+                                    groupValue: _selectedRadioValue,
+                                    onChanged: (int? value) {
+                                      setState(() {
+                                        _selectedRadioValue = value;
+                                      });
+                                    },
+                                    title: Row(
+                                      children: [
+                                        Image.asset(
+                                          'images/Mail.png',
+                                          height: 55,
+                                        ),
+                                        SizedBox(
+                                            width: MediaQuery
+                                                .of(context)
+                                                .size
+                                                .width *
+                                                0.05),
+                                        Expanded(
+                                          flex: 10,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment
+                                                .spaceBetween,
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                             children: [
-                                              Image.asset(
-                                                'images/Mail.png',
-                                                height: 55,
+                                              Text(
+                                                'via Email:',
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
                                               ),
-                                              SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.05),
-                                              const Expanded(
-                                                flex: 10,
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'via Email:',
-                                                      style: TextStyle(
-                                                        fontFamily: 'Poppins',
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      'example@youremail.com',
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Poppins',
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
+                                              Text(
+                                                'example@youremail.com',
+                                                overflow:
+                                                TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  fontWeight:
+                                                  FontWeight.bold,
+                                                  color: Theme.of(context).colorScheme.onSurface,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          controlAffinity: ListTileControlAffinity
-                                              .trailing, // Align radio button to the right
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                    SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                0.02),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20.0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 20.0, horizontal: 20.0),
-                                        color: const Color(0xFFEEF1F4),
-                                        child: RadioListTile<int>(
-                                          value: 2,
-                                          activeColor: const Color(0xFF000099),
-                                          groupValue: _selectedRadioValue,
-                                          onChanged: (int? value) {
-                                            setState(() {
-                                              _selectedRadioValue = value;
-                                            });
-                                          },
-                                          title: Row(
-                                            children: [
-                                              Image.asset(
-                                                'images/Messages.png',
-                                                height: 55,
-                                              ),
-                                              SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.05),
-                                              const Expanded(
-                                                flex: 10,
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'via SMS:',
-                                                      style: TextStyle(
-                                                        fontFamily: 'Poppins',
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      '+234-1234-5678-9',
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Poppins',
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          controlAffinity: ListTileControlAffinity
-                                              .trailing, // Align radio button to the right
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20.0),
-                                      child: Text(
-                                        'Email ID / Mobile number',
-                                        textAlign: TextAlign.start,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 16.0,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20.0),
-                                      child: TextFormField(
-                                        controller: emailOrPhoneController,
-                                        focusNode: _emailOrPhoneFocusNode,
-                                        style: const TextStyle(
-                                          fontSize: 16.0,
-                                          decoration: TextDecoration.none,
-                                        ),
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(15),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(15),
-                                            borderSide: const BorderSide(
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                        cursorColor: Colors.black,
-                                      ),
-                                    ),
-                                  ],
+                                    controlAffinity: ListTileControlAffinity
+                                        .trailing, // Align radio button to the right
+                                  ),
                                 ),
+                              ),
+                              SizedBox(
+                                  height:
+                                  MediaQuery
+                                      .of(context)
+                                      .size
+                                      .height *
+                                      0.02),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 20.0, horizontal: 20.0),
+                                  color: const Color(0xFFEEF1F4),
+                                  child: RadioListTile<int>(
+                                    value: 2,
+                                    activeColor: const Color(0xFF500450),
+                                    groupValue: _selectedRadioValue,
+                                    onChanged: (int? value) {
+                                      setState(() {
+                                        _selectedRadioValue = value;
+                                      });
+                                    },
+                                    title: Row(
+                                      children: [
+                                        Image.asset(
+                                          'images/Messages.png',
+                                          height: 55,
+                                        ),
+                                        SizedBox(
+                                            width: MediaQuery
+                                                .of(context)
+                                                .size
+                                                .width *
+                                                0.05),
+                                        Expanded(
+                                          flex: 10,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment
+                                                .spaceBetween,
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'via SMS:',
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              Text(
+                                                '+234-1234-5678-9',
+                                                overflow:
+                                                TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontFamily: 'Poppins',
+                                                  fontWeight:
+                                                  FontWeight.bold,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    controlAffinity: ListTileControlAffinity
+                                        .trailing, // Align radio button to the right
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                              : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: Text(
+                                  'Email ID / Mobile number',
+                                  textAlign: TextAlign.start,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16.0,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: TextFormField(
+                                  controller: emailOrPhoneController,
+                                  focusNode: _emailOrPhoneFocusNode,
+                                  style: const TextStyle(
+                                    fontSize: 16.0,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(15),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(15),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  cursorColor: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         SizedBox(
                             height:
-                                MediaQuery.of(context).viewInsets.bottom),
+                            MediaQuery
+                                .of(context)
+                                .viewInsets
+                                .bottom),
                       ]),
                 ),
               ),
@@ -326,11 +355,20 @@ class ForgotPasswordState extends State<ForgotPassword>
                   color: Colors.white,
                 ),
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: Container(
                     width: double.infinity,
-                    height: (60 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
+                    height: (60 / MediaQuery
+                        .of(context)
+                        .size
+                        .height) *
+                        MediaQuery
+                            .of(context)
+                            .size
+                            .height,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ElevatedButton(
                       onPressed: () {
@@ -348,17 +386,17 @@ class ForgotPasswordState extends State<ForgotPassword>
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },
@@ -372,17 +410,17 @@ class ForgotPasswordState extends State<ForgotPassword>
                       ),
                       child: isLoading
                           ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            )
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
                           : const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        'Next',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -400,11 +438,20 @@ class ForgotPasswordState extends State<ForgotPassword>
                   color: Colors.white,
                 ),
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: Container(
                     width: double.infinity,
-                    height: (60 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
+                    height: (60 / MediaQuery
+                        .of(context)
+                        .size
+                        .height) *
+                        MediaQuery
+                            .of(context)
+                            .size
+                            .height,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ElevatedButton(
                       onPressed: () {
@@ -413,7 +460,9 @@ class ForgotPasswordState extends State<ForgotPassword>
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  SignUpOTPPage(key: UniqueKey()),
+                                  SignUpOTPPage(key: UniqueKey(),
+                                      onToggleDarkMode: widget.onToggleDarkMode,
+                                      isDarkMode: widget.isDarkMode),
                             ),
                           );
                         } else {
@@ -426,17 +475,17 @@ class ForgotPasswordState extends State<ForgotPassword>
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
                               return Colors.white;
                             }
-                            return const Color(0xFF000099);
+                            return const Color(0xFF500450);
                           },
                         ),
                         foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                          (Set<WidgetState> states) {
+                              (Set<WidgetState> states) {
                             if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF000099);
+                              return const Color(0xFF500450);
                             }
                             return Colors.white;
                           },
@@ -450,17 +499,17 @@ class ForgotPasswordState extends State<ForgotPassword>
                       ),
                       child: isLoading
                           ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            )
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
                           : const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        'Next',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),

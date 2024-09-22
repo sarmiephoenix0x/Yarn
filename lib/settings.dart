@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/privacy.dart';
 
 class Settings extends StatefulWidget {
-  const Settings({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const Settings({super.key,required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SettingsState createState() => SettingsState();
@@ -18,11 +20,24 @@ class SettingsState extends State<Settings>
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   int? _selectedRadioValue;
+  late bool _darkModeMoved;
 
   @override
   void initState() {
     super.initState();
+    _darkModeMoved = widget.isDarkMode;
     _initializePrefs();
+  }
+
+  @override
+  void didUpdateWidget(Settings oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update local state if the parent widget's dark mode value changes
+    if (oldWidget.isDarkMode != widget.isDarkMode) {
+      setState(() {
+        _darkModeMoved = widget.isDarkMode;
+      });
+    }
   }
 
   Future<void> _initializePrefs() async {
@@ -59,6 +74,22 @@ class SettingsState extends State<Settings>
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  void _toggleDarkMode(bool value) {
+    setState(() {
+      _darkModeMoved = value; // Update the state
+    });
+    widget.onToggleDarkMode(value);
+    // Simulate a delay to allow for transitions
+    Future.delayed(Duration(milliseconds: 100), () {
+      // After the delay, you can ensure the switch reflects the current mode
+      if (_darkModeMoved != widget.isDarkMode) {
+        setState(() {
+          _darkModeMoved = widget.isDarkMode; // Adjust position
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -87,12 +118,13 @@ class SettingsState extends State<Settings>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
+                                color:Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             SizedBox(
                                 width:
                                     MediaQuery.of(context).size.width * 0.05),
-                            const Expanded(
+                            Expanded(
                               flex: 10,
                               child: Text(
                                 'Settings',
@@ -101,7 +133,7 @@ class SettingsState extends State<Settings>
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -123,19 +155,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Bell.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Notifications',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -160,19 +192,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Privacy.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.065),
-                                    const Text(
+                                    Text(
                                       'Privacy',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -190,19 +222,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/AccountSettings.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Account',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -220,19 +252,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Language.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Language',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -250,19 +282,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Help.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'Help',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -280,19 +312,19 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/About.png',
                                       height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
                                     ),
                                     SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.05),
-                                    const Text(
+                                    Text(
                                       'About',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Colors
-                                            .black, // Change text color based on selection
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -305,14 +337,48 @@ class SettingsState extends State<Settings>
                               child: InkWell(
                                 // Use InkWell for tap functionality
                                 onTap: () {},
-                                child: const Text(
+                                child: Row(
+                                  children: [
+                                    Image.asset(
+                                      'images/tabler_brightness-filled.png',
+                                      height: 35,
+                                      color:Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                    SizedBox(
+                                        width:
+                                        MediaQuery.of(context).size.width *
+                                            0.065),
+                                    Text(
+                                      'Dark Mode',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 15.0,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Switch(
+                                      value: _darkModeMoved,
+                                      onChanged: _toggleDarkMode,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20.0, vertical: 20),
+                              child: InkWell(
+                                // Use InkWell for tap functionality
+                                onTap: () {},
+                                child: Text(
                                   'Log out',
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 15.0,
-                                    color: Colors
-                                        .black, // Change text color based on selection
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),

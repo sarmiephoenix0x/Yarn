@@ -28,6 +28,7 @@ class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMix
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
   }
@@ -56,17 +57,18 @@ class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMix
                       child: Image.asset(
                         'images/BackButton.png',
                         height: 25,
+                        color:Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
-                     const Text(
+                     Text(
                         'Trending',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.bold,
                           fontSize: 20.0,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     const Spacer(),
@@ -227,11 +229,11 @@ class _TrendingPageState extends State<TrendingPage> with TickerProviderStateMix
             overflow: TextOverflow.ellipsis,
             softWrap: true,
             maxLines: 3,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.bold,
               fontSize: 18.0,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           SizedBox(height: MediaQuery

@@ -34,6 +34,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
   }
@@ -66,6 +67,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                       child: Image.asset(
                         'images/BackButton.png',
                         height: 25,
+                        color:Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -233,26 +235,26 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                             MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: isFollowing
-                              ? const Color(0xFF000099)
+                              ? const Color(0xFF500450)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isFollowing
                                 ? Colors.transparent
-                                : const Color(0xFF000099).withOpacity(0.2),
+                                : const Color(0xFF500450).withOpacity(0.2),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         child: isFollowing
-                            ? const Text(
+                            ? Text(
                                 "Following",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontFamily: 'Poppins',
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               )
                             : const Text(
@@ -261,7 +263,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontFamily: 'Poppins',
-                                  color: Color(0xFF000099),
+                                  color: Color(0xFF500450),
                                 ),
                               ),
                       ),
@@ -276,19 +278,19 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
-                        child: const Text(
+                        child: Text(
                           "Website",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -442,11 +444,11 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),

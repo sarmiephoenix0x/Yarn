@@ -7,11 +7,14 @@ import 'create_news.dart';
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
 
-  const AccountPage({
-    super.key,
-    required this.selectedIndex,
-  });
+  const AccountPage(
+      {super.key,
+      required this.selectedIndex,
+      required this.onToggleDarkMode,
+      required this.isDarkMode});
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -32,36 +35,35 @@ class _AccountPageState extends State<AccountPage>
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold( // Add Scaffold to each page
+    return Scaffold(
+      // Add Scaffold to each page
       body: ListView(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Spacer(),
-                    const Text(
+                    Text(
                       'Profile',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 18.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -70,22 +72,23 @@ class _AccountPageState extends State<AccountPage>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Settings(key: UniqueKey()),
+                            builder: (context) => Settings(
+                                key: UniqueKey(),
+                                onToggleDarkMode: widget.onToggleDarkMode,
+                                isDarkMode: widget.isDarkMode),
                           ),
                         );
                       },
                       child: Image.asset(
                         'images/Settings.png',
                         height: 30,
+                        color:Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.05),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -94,24 +97,10 @@ class _AccountPageState extends State<AccountPage>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
                         child: Container(
-                          width:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .width) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width,
-                          height:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .height) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height,
+                          width: (80 / MediaQuery.of(context).size.width) *
+                              MediaQuery.of(context).size.width,
+                          height: (80 / MediaQuery.of(context).size.height) *
+                              MediaQuery.of(context).size.height,
                           color: Colors.grey,
                           child: Image.asset(
                             'images/ProfileImg.png',
@@ -123,24 +112,10 @@ class _AccountPageState extends State<AccountPage>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
                         child: Container(
-                          width:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .width) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width,
-                          height:
-                          (80 / MediaQuery
-                              .of(context)
-                              .size
-                              .height) *
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height,
+                          width: (80 / MediaQuery.of(context).size.width) *
+                              MediaQuery.of(context).size.width,
+                          height: (80 / MediaQuery.of(context).size.height) *
+                              MediaQuery.of(context).size.height,
                           color: Colors.grey,
                           child: Image.file(
                             File(_profileImage),
@@ -148,16 +123,11 @@ class _AccountPageState extends State<AccountPage>
                           ),
                         ),
                       ),
-                    SizedBox(
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width * 0.02),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.02),
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -183,8 +153,7 @@ class _AccountPageState extends State<AccountPage>
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -210,8 +179,7 @@ class _AccountPageState extends State<AccountPage>
                     const Expanded(
                       flex: 5,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
@@ -237,10 +205,7 @@ class _AccountPageState extends State<AccountPage>
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               const Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
@@ -267,10 +232,7 @@ class _AccountPageState extends State<AccountPage>
                   ),
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -278,31 +240,25 @@ class _AccountPageState extends State<AccountPage>
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        width: (150 / MediaQuery
-                            .of(context)
-                            .size
-                            .width) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .width,
+                        width: (150 / MediaQuery.of(context).size.width) *
+                            MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
-                        child: const Text(
+                        child: Text(
                           "Edit profile",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -311,31 +267,25 @@ class _AccountPageState extends State<AccountPage>
                     InkWell(
                       onTap: () {},
                       child: Container(
-                        width: (150 / MediaQuery
-                            .of(context)
-                            .size
-                            .width) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .width,
+                        width: (150 / MediaQuery.of(context).size.width) *
+                            MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
-                        child: const Text(
+                        child: Text(
                           "Share profile",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Colors.black,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -343,17 +293,14 @@ class _AccountPageState extends State<AccountPage>
                   ],
                 ),
               ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               TabBar(
                 controller: profileTab,
                 tabs: [
                   _buildTab('Timeline'),
                   _buildTab('My Community'),
                 ],
-                labelColor: Colors.black,
+                labelColor: Theme.of(context).colorScheme.onSurface,
                 unselectedLabelColor: Colors.grey,
                 labelStyle: const TextStyle(
                   fontSize: 16,
@@ -370,14 +317,8 @@ class _AccountPageState extends State<AccountPage>
                 indicatorColor: Colors.black,
               ),
               SizedBox(
-                height: (400 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
+                height: (400 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
                 child: TabBarView(
                   controller: profileTab,
                   children: [
@@ -453,9 +394,9 @@ class _AccountPageState extends State<AccountPage>
             ),
           );
         },
-        backgroundColor: const Color(0xFF000099),
+        backgroundColor: const Color(0xFF500450),
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color:Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -470,22 +411,10 @@ class _AccountPageState extends State<AccountPage>
             ClipRRect(
               borderRadius: BorderRadius.circular(5),
               child: Container(
-                width: (110 / MediaQuery
-                    .of(context)
-                    .size
-                    .width) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                height: (130 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
+                width: (110 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (130 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   color: Colors.grey,
                   borderRadius: BorderRadius.circular(5),
@@ -507,22 +436,10 @@ class _AccountPageState extends State<AccountPage>
             ClipRRect(
               borderRadius: BorderRadius.circular(5),
               child: Container(
-                width: (50 / MediaQuery
-                    .of(context)
-                    .size
-                    .width) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                height: (50 / MediaQuery
-                    .of(context)
-                    .size
-                    .height) *
-                    MediaQuery
-                        .of(context)
-                        .size
-                        .height,
+                width: (50 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (50 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   color: Colors.grey,
                   borderRadius: BorderRadius.circular(5),
@@ -540,10 +457,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ),
             ),
-          SizedBox(width: MediaQuery
-              .of(context)
-              .size
-              .width * 0.02),
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -562,26 +476,20 @@ class _AccountPageState extends State<AccountPage>
                     const Spacer(),
                   ],
                 ),
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.02),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                 Text(
                   description,
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.01),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                 Row(
                   children: [
                     Row(
@@ -590,23 +498,11 @@ class _AccountPageState extends State<AccountPage>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(55),
                             child: Container(
-                              width: (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width,
+                              width: (25 / MediaQuery.of(context).size.width) *
+                                  MediaQuery.of(context).size.width,
                               height:
-                              (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height,
+                                  (25 / MediaQuery.of(context).size.height) *
+                                      MediaQuery.of(context).size.height,
                               color: Colors.grey,
                               child: Image.asset(
                                 authorImg,
@@ -618,23 +514,11 @@ class _AccountPageState extends State<AccountPage>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(55),
                             child: Container(
-                              width: (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width,
+                              width: (25 / MediaQuery.of(context).size.width) *
+                                  MediaQuery.of(context).size.width,
                               height:
-                              (25 / MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height) *
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height,
+                                  (25 / MediaQuery.of(context).size.height) *
+                                      MediaQuery.of(context).size.height,
                               color: Colors.grey,
                               child: Image.file(
                                 File(_profileImage),
@@ -643,10 +527,7 @@ class _AccountPageState extends State<AccountPage>
                             ),
                           ),
                         SizedBox(
-                            width: MediaQuery
-                                .of(context)
-                                .size
-                                .width * 0.01),
+                            width: MediaQuery.of(context).size.width * 0.01),
                         Text(
                           authorName,
                           overflow: TextOverflow.ellipsis,
@@ -667,10 +548,7 @@ class _AccountPageState extends State<AccountPage>
                           height: 20,
                         ),
                         SizedBox(
-                            width: MediaQuery
-                                .of(context)
-                                .size
-                                .width * 0.03),
+                            width: MediaQuery.of(context).size.width * 0.03),
                         Text(
                           time,
                           overflow: TextOverflow.ellipsis,
@@ -691,7 +569,6 @@ class _AccountPageState extends State<AccountPage>
       ),
     );
   }
-
 
   Widget _buildTab(String name) {
     return Tab(

@@ -30,6 +30,7 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    super.dispose();
     latestTabController?.dispose();
   }
 
@@ -56,17 +57,18 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                       child: Image.asset(
                         'images/BackButton.png',
                         height: 25,
+                        color:Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
-                    const Text(
+                    Text(
                       'Latest',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
                         fontSize: 20.0,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -97,7 +99,7 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                   _buildTab('Science'),
                 ],
                 //tabNames.map((name) => _buildTab(name)).toList(),
-                labelColor: Colors.black,
+                labelColor: Theme.of(context).colorScheme.onSurface,
                 unselectedLabelColor: Colors.grey,
                 labelStyle: const TextStyle(
                   fontSize: 16,
@@ -109,7 +111,7 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                 ),
                 labelPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.label,
-                indicatorColor: Colors.blue,
+                indicatorColor: const Color(0xFF500450),
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height,
@@ -308,11 +310,11 @@ class _LatestPageState extends State<LatestPage> with TickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: MediaQuery

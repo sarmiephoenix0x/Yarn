@@ -30,6 +30,7 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    super.dispose();
     bookmarkTabController?.dispose();
     profileTab?.dispose();
   }
@@ -43,20 +44,20 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
           Column(
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 0.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0),
                       child: Text(
                         "Bookmark",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w900,
                           fontSize: 30.0,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -86,8 +87,8 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       prefixIcon: IconButton(
@@ -98,7 +99,7 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
                         icon: const Icon(Icons.filter_list_alt),
                         onPressed: () {},
                       )),
-                  cursorColor: Colors.black,
+                  cursorColor: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -247,11 +248,11 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   maxLines: 3,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: MediaQuery.of(context).size.height * 0.01),

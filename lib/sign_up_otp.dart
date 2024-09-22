@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:yarn/reset_password.dart';
 
 class SignUpOTPPage extends StatefulWidget {
-  const SignUpOTPPage({super.key});
+  final Function(bool) onToggleDarkMode;
+  final bool isDarkMode;
+  const SignUpOTPPage({super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SignUpOTPPageState createState() => SignUpOTPPageState();
@@ -105,6 +107,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                             child: Image.asset(
                               'images/BackButton.png',
                               height: 25,
+                              color:Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const Spacer(),
@@ -154,12 +157,12 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: Colors.black,
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
-                            cursorColor: Colors.black,
+                            cursorColor: Theme.of(context).colorScheme.onSurface,
                             enabled: index == 0 ||
                                 controllers[index - 1].text.isNotEmpty,
                             onChanged: (value) {
@@ -191,14 +194,14 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                       ),
                     ),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    const Center(
+                    Center(
                       child: Text(
                         "Resend it",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 15.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -225,7 +228,9 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      ResetPassword(key: UniqueKey()),
+                                      ResetPassword(key: UniqueKey(),
+                                          onToggleDarkMode: widget.onToggleDarkMode,
+                                          isDarkMode: widget.isDarkMode),
                                 ),
                               );
                             },
@@ -236,14 +241,14 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                                   if (states.contains(WidgetState.pressed)) {
                                     return Colors.white;
                                   }
-                                  return const Color(0xFF000099);
+                                  return const Color(0xFF500450);
                                 },
                               ),
                               foregroundColor:
                                   WidgetStateProperty.resolveWith<Color>(
                                 (Set<WidgetState> states) {
                                   if (states.contains(WidgetState.pressed)) {
-                                    return const Color(0xFF000099);
+                                    return const Color(0xFF500450);
                                   }
                                   return Colors.white;
                                 },
