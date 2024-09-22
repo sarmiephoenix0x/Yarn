@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:image_picker/image_picker.dart'; // for picking images
+import 'package:flutter_quill/quill_delta.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateNews extends StatefulWidget {
   const CreateNews({super.key});
@@ -15,8 +17,8 @@ class CreateNewsState extends State<CreateNews> with TickerProviderStateMixin {
   XFile? _coverPhoto;
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _titleController = TextEditingController();
+  final FocusNode _titleFocusNode = FocusNode();
 
-  // Function to pick a cover photo
   Future<void> _pickCoverPhoto() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     setState(() {
@@ -24,206 +26,255 @@ class CreateNewsState extends State<CreateNews> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _insertImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final imageBytes = await image.readAsBytes();
+      final imageBase64 = base64Encode(imageBytes);
+      final imageUrl = 'data:image/png;base64,$imageBase64';
+
+      // Create a Delta to insert the image
+      final delta = Delta()
+        ..insert('\n') // Optional: Add a new line before the image
+        ..insert(imageUrl, {'image': imageUrl}); // Embed the image
+
+      // Use the insert method instead
+      _controller.document.insert(_controller.selection.baseOffset, delta);
+
+      // Optionally, update the selection to be at the end of the inserted image
+      _controller.updateSelection(
+        TextSelection.collapsed(offset: _controller.selection.baseOffset + 1),
+        ChangeSource.local,
+      );
+    }
+  }
+
+
+
+
+  void _showMoreOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.format_quote),
+                title: Text('Insert Quote'),
+                onTap: () {
+                  // Logic to insert quote
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.link),
+                title: Text('Insert Link'),
+                onTap: () {
+                  // Logic to insert link
+                  Navigator.pop(context);
+                },
+              ),
+              // Add more options here
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              child: SizedBox(
-                height: MediaQuery
-                    .of(context)
-                    .size
-                    .height,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.03),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: Image.asset(
-                              'images/BackButton.png',
-                              height: 25,
-                              color:Theme.of(context).colorScheme.onSurface,
-                            ),
+            Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.03),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              InkWell(
+                                onTap: () => Navigator.pop(context),
+                                child: Image.asset(
+                                  'images/BackButton.png',
+                                  height: 25,
+                                  color:
+                                  Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const Spacer(),
+                              Expanded(
+                                flex: 10,
+                                child: Text(
+                                  'Create News',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.0,
+                                    color:
+                                    Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              const Icon(Icons.more_vert),
+                            ],
                           ),
-                          const Spacer(),
-                          Expanded(
-                            flex: 10,
-                            child: Text(
-                              'Create News',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20.0,
-                                color:Theme.of(context).colorScheme.onSurface,
+                        ),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.05),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: GestureDetector(
+                            onTap: _pickCoverPhoto,
+                            child: _coverPhoto != null
+                                ? Image.file(
+                              File(_coverPhoto!.path),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            )
+                                : Container(
+                              height: 200,
+                              width: double.infinity,
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.add_a_photo,
+                                size: 50,
+                                color: Colors.grey,
                               ),
                             ),
                           ),
-                          const Spacer(),
-                          const Icon(Icons.more_vert),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.05),
-                    // Add Cover Photo Section
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: GestureDetector(
-                        onTap: _pickCoverPhoto,
-                        child: _coverPhoto != null
-                            ? Image.file(
-                          File(_coverPhoto!.path),
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
-                            : Container(
-                          height: 200,
-                          width: double.infinity,
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.add_a_photo,
-                            size: 50,
-                            color: Colors.grey[700],
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: TextField(
+                            controller: _titleController,
+                            focusNode: _titleFocusNode,
+                            decoration: InputDecoration(
+                              hintText: 'Enter news title',
+                              border: const OutlineInputBorder(
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(10)),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 15.0, horizontal: 10.0),
+                            ),
+                            onSubmitted: (_) {
+                              _titleFocusNode
+                                  .unfocus(); // Unfocus title when submitted
+                            },
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: TextField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter news title',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                  top: BorderSide(color: Colors.grey[300]!)),
+                              // Only top border
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: QuillEditor.basic(
+                              controller: _controller,
+                              configurations: const QuillEditorConfigurations(),
+                              focusNode: FocusNode(),
+                              scrollController: ScrollController(),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 80),
+                      ],
                     ),
-                    // Quill Editor
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: QuillEditor.basic(
-                            controller: _controller,
-                            configurations: const QuillEditorConfigurations(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Custom Toolbar
-                    SizedBox(
-                      height: 50, // Adjust the height as needed
-                      child: CustomToolbar(controller: _controller),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
             Positioned(
               bottom: 0,
+              left: 0,
+              right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 15.0),
                 decoration: BoxDecoration(
                   border: Border(
-                      top: BorderSide(
-                          width: 0.5, color: Colors.black.withOpacity(0.15))),
+                    top: BorderSide(
+                      width: 0.5,
+                      color: Colors.black.withOpacity(0.15),
+                    ),
+                  ),
                   color: Colors.white,
                 ),
-                child: SizedBox(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.photo_library),
-                        onPressed: () {
-                          // Handle photo attachment
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.format_size),
-                        onPressed: () {
-                          // Handle text capitalization (optional functionality)
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert),
-                        onPressed: () {
-                          // Handle more options
-                        },
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle publish action
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.resolveWith<
-                              Color>(
-                                (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
-                                return Colors.white;
-                              }
-                              return const Color(0xFF500450);
-                            },
-                          ),
-                          foregroundColor: WidgetStateProperty.resolveWith<
-                              Color>(
-                                (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
-                                return const Color(0xFF500450);
-                              }
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CustomToolbar(
+                      controller: _controller,
+                      onImagePressed: _insertImage,
+                      onMorePressed: () => _showMoreOptions(context),
+                    ),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle publish action
+                      },
+                      style: ButtonStyle(
+                        backgroundColor:
+                        MaterialStateProperty.resolveWith<Color>(
+                              (Set<MaterialState> states) {
+                            if (states.contains(MaterialState.pressed)) {
                               return Colors.white;
-                            },
-                          ),
-                          elevation: WidgetStateProperty.all<double>(4.0),
-                          shape: WidgetStateProperty.all<
-                              RoundedRectangleBorder>(
-                            const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(15)),
-                            ),
-                          ),
+                            }
+                            return const Color(0xFF500450);
+                          },
                         ),
-                        child: const Text(
-                          'Publish',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.bold,
+                        foregroundColor:
+                        MaterialStateProperty.resolveWith<Color>(
+                              (Set<MaterialState> states) {
+                            if (states.contains(MaterialState.pressed)) {
+                              return const Color(0xFF500450);
+                            }
+                            return Colors.white;
+                          },
+                        ),
+                        elevation: MaterialStateProperty.all<double>(4.0),
+                        shape:
+                        MaterialStateProperty.all<RoundedRectangleBorder>(
+                          const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(15)),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                      child: const Text(
+                        'Publish',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
                 ),
               ),
             ),
@@ -234,129 +285,45 @@ class CreateNewsState extends State<CreateNews> with TickerProviderStateMixin {
   }
 }
 
-class CustomToolbar extends StatefulWidget {
+class CustomToolbar extends StatelessWidget {
   final QuillController controller;
+  final VoidCallback onImagePressed;
+  final VoidCallback onMorePressed;
 
-  const CustomToolbar({Key? key, required this.controller}) : super(key: key);
-
-  @override
-  _CustomToolbarState createState() => _CustomToolbarState();
-}
-
-class _CustomToolbarState extends State<CustomToolbar> {
-  bool _isExpanded = false; // Track whether the toolbar is expanded
+  const CustomToolbar({
+    Key? key,
+    required this.controller,
+    required this.onImagePressed,
+    required this.onMorePressed,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    Color iconColor = Theme.of(context).iconTheme.color ?? Colors.black;
+
+    return Row(
       children: [
-        SizedBox(
-          height: 50, // Adjust the height as needed
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                QuillIconButton(
-                  icon: Icons.format_bold,
-                  onPressed: () =>
-                      widget.controller.formatSelection(Attribute.bold),
-                ),
-                QuillIconButton(
-                  icon: Icons.format_italic,
-                  onPressed: () =>
-                      widget.controller.formatSelection(Attribute.italic),
-                ),
-                QuillIconButton(
-                  icon: Icons.format_underline,
-                  onPressed: () =>
-                      widget.controller.formatSelection(Attribute.underline),
-                ),
-                QuillIconButton(
-                  icon: Icons.format_strikethrough,
-                  onPressed: () =>
-                      widget.controller.formatSelection(
-                          Attribute.strikeThrough),
-                ),
-                QuillIconButton(
-                  icon: Icons.image,
-                  onPressed: () {
-                    // Your image insertion logic
-                  },
-                ),
-                if (!_isExpanded) ...[
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz),
-                    onPressed: () {
-                      setState(() {
-                        _isExpanded = true; // Expand the toolbar
-                      });
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
+        IconButton(
+          icon: Icon(Icons.format_bold, color: iconColor),
+          onPressed: () => controller.formatSelection(Attribute.bold),
         ),
-        if (_isExpanded)
-          SizedBox(
-            height: 50, // Adjust the height as needed
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  QuillIconButton(
-                    icon: Icons.format_align_left,
-                    onPressed: () =>
-                        widget.controller.formatSelection(
-                            Attribute.leftAlignment),
-                  ),
-                  QuillIconButton(
-                    icon: Icons.format_align_center,
-                    onPressed: () =>
-                        widget.controller.formatSelection(
-                            Attribute.centerAlignment),
-                  ),
-                  QuillIconButton(
-                    icon: Icons.format_align_right,
-                    onPressed: () =>
-                        widget.controller.formatSelection(
-                            Attribute.rightAlignment),
-                  ),
-                  QuillIconButton(
-                    icon: Icons.format_align_justify,
-                    onPressed: () =>
-                        widget.controller.formatSelection(
-                            Attribute.justifyAlignment),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_drop_up),
-                    onPressed: () {
-                      setState(() {
-                        _isExpanded = false; // Collapse the toolbar
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
+        IconButton(
+          icon: Icon(Icons.format_italic, color: iconColor),
+          onPressed: () => controller.formatSelection(Attribute.italic),
+        ),
+        IconButton(
+          icon: Icon(Icons.format_underline, color: iconColor),
+          onPressed: () => controller.formatSelection(Attribute.underline),
+        ),
+        IconButton(
+          icon: Icon(Icons.image, color: iconColor),
+          onPressed: onImagePressed,
+        ),
+        IconButton(
+          icon: Icon(Icons.more_horiz, color: iconColor),
+          onPressed: onMorePressed,
+        ),
       ],
-    );
-  }
-}
-
-class QuillIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  const QuillIconButton({Key? key, required this.icon, required this.onPressed})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon),
-      onPressed: onPressed,
     );
   }
 }

@@ -7,18 +7,25 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:yarn/main_app.dart';
 import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/main_app.dart';
 
 import 'news_sources.dart';
 
 class FillProfile extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final String selectedState;
+  final String countryIsoCode;
+
   const FillProfile({
-    super.key, required this.onToggleDarkMode, required this.isDarkMode
+    super.key,
+    required this.onToggleDarkMode,
+    required this.isDarkMode,
+    required this.selectedState,
+    required this.countryIsoCode,
   });
 
   @override
@@ -27,18 +34,17 @@ class FillProfile extends StatefulWidget {
 }
 
 class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
-  final FocusNode _displayNameFocusNode = FocusNode();
-  final FocusNode _userNameFocusNode = FocusNode();
+  final FocusNode _surnameFocusNode = FocusNode();
+  final FocusNode _firstNameFocusNode = FocusNode();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _phoneNumberFocusNode = FocusNode();
   final FocusNode _dobFocusNode = FocusNode();
 
-  final TextEditingController displayNameController = TextEditingController();
-  final TextEditingController userNameController = TextEditingController();
+  final TextEditingController surnameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
-
 
   bool dropDownTapped = false;
 
@@ -50,9 +56,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
   final double maxHeight = 360;
   final ImagePicker _picker = ImagePicker();
   final maskFormatter = MaskTextInputFormatter(
-    mask: '+###-##-###-##',
+    mask: '+###-##-####-####',
     filter: {"#": RegExp(r'[0-9]')},
   );
+  String? userId;
+  String? userName;
 
   @override
   void initState() {
@@ -68,14 +76,25 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (prefs == null) {
       await _initializePrefs();
     }
+    final userDataString = prefs.getString('user');
+
+    if (userDataString != null) {
+      final userData = jsonDecode(userDataString);
+      setState(() {
+        userId = userData['userId'].toString();
+      });
+    }
     final String email = emailController.text.trim();
-    final String name = displayNameController.text.trim();
-    final String username = userNameController.text.trim();
+    final String surname = surnameController.text.trim();
+    final String firstName = firstNameController.text.trim();
     final String phoneNumber = phoneNumberController.text.trim();
     final String dob = dobController.text.trim();
+    final occupation = 'Student';
+    final PageToFollowIds = []; // Define based on your requirements
+    final CommunityToJoinIds = []; // Define based on your requirements
 
-    if (name.isEmpty ||
-        username.isEmpty ||
+    if (surname.isEmpty ||
+        firstName.isEmpty ||
         email.isEmpty ||
         phoneNumber.isEmpty ||
         dob.isEmpty) {
@@ -99,7 +118,6 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       return;
     }
 
-
     if (phoneNumber.length < 11) {
       _showCustomSnackBar(
         context,
@@ -113,50 +131,58 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     setState(() {
       isLoading = true;
     });
-
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final response = await http.post(
-      Uri.parse('https://script.teendev.dev/signal/api/register'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
       body: jsonEncode({
-        'name': name,
-        'username': username,
+        'userId': userId,
+        'firstName': firstName,
+        'surname': surname,
         'email': email,
-        'phone_number': phoneNumber,
-        'dob': dob,
+        'phone': phoneNumber,
+        'gender': 'male', // Replace with actual gender input
+        'dateOfBirth': dob,
+        'state': widget.selectedState,
+        'country': widget.countryIsoCode,
+        'occupation': occupation,
+        'profilePicture': _profileImage, // You'll need to handle file uploads
+        'PageToFollowIds': PageToFollowIds,
+        'CommunityToJoinIds': CommunityToJoinIds,
       }),
     );
     final Map<String, dynamic> responseData = jsonDecode(response.body);
 
     print('Response Data: $responseData');
 
-    if (response.statusCode == 201) {
-      // The responseData['user'] is a Map, not a String, so handle it accordingly
-      final Map<String, dynamic> user = responseData['user'];
-      final String accessToken = responseData['yarnAccessToken'];
+    if (response.statusCode == 200) {
+      final userDataString = prefs.getString('user');
 
-      await storage.write(key: 'accessToken', value: accessToken);
-      await prefs.setString(
-          'user', jsonEncode(user)); // Store user as a JSON string
+      if (userDataString != null) {
+        final userData = jsonDecode(userDataString);
+        setState(() {
+          userName = userData['username'].toString();
+        });
+      }
 
       // Handle successful response
       _showCustomSnackBar(
         context,
-        'Sign up successful! Welcome, ${user['name']}',
+        'Sign up complete! Welcome, $userName',
         isError: false,
       );
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MainApp(
-            key: UniqueKey(),
-            onToggleDarkMode: (bool isDarkMode) {
-              // Your toggle logic here
-            },
-            isDarkMode: true, // Or pass the current dark mode state
-          ),
+          builder: (context) => NewsSources(
+              key: UniqueKey(),
+              onToggleDarkMode: widget.onToggleDarkMode,
+              isDarkMode: widget.isDarkMode),
         ),
       );
-
     } else if (response.statusCode == 400) {
       setState(() {
         isLoading = false;
@@ -187,8 +213,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
   @override
   void dispose() {
     // Clean up the controllers when the widget is disposed
-    displayNameController.dispose();
-    userNameController.dispose();
+    surnameController.dispose();
+    firstNameController.dispose();
     emailController.dispose();
     phoneNumberController.dispose();
     dobController.dispose();
@@ -230,7 +256,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
       final decodedImage =
-      await decodeImageFromList(imageFile.readAsBytesSync());
+          await decodeImageFromList(imageFile.readAsBytesSync());
 
       if (decodedImage.width > maxWidth || decodedImage.height > maxHeight) {
         var cropper = ImageCropper();
@@ -267,7 +293,6 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     return DateFormat('dd-MMMM-yyyy').format(date);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return OrientationBuilder(
@@ -275,345 +300,139 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         return Scaffold(
           body: SafeArea(
             child: Stack(
-            children: [
-            SingleChildScrollView(
-              child: Center(
-                child: SizedBox(
-                  height: orientation == Orientation.portrait
-                      ? MediaQuery
-                      .of(context)
-                      .size
-                      .height * 1.25
-                      : MediaQuery
-                      .of(context)
-                      .size
-                      .height * 2.05,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.05),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Image.asset(
-                                'images/BackButton.png',
-                                height: 25,
-                                color:Theme.of(context).colorScheme.onSurface,
-                              ),
+              children: [
+                SingleChildScrollView(
+                  child: Center(
+                    child: SizedBox(
+                      height: orientation == Orientation.portrait
+                          ? MediaQuery.of(context).size.height * 1.25
+                          : MediaQuery.of(context).size.height * 2.05,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.05),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Image.asset(
+                                    'images/BackButton.png',
+                                    height: 25,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  'Fill your Profile',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22.0,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                                SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.1),
+                                const Spacer(),
+                              ],
                             ),
-                            const Spacer(),
-                            Text(
-                              'Fill your Profile',
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.05),
+                          Center(
+                            child: Stack(
+                              children: [
+                                if (_profileImage.isEmpty)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(55),
+                                    child: Container(
+                                      width: (111 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
+                                      height: (111 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
+                                      color: Colors.grey,
+                                      child: Image.asset(
+                                        'images/ProfileImg.png',
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(55),
+                                    child: Container(
+                                      width: (111 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
+                                      height: (111 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
+                                      color: Colors.grey,
+                                      child: Image.file(
+                                        File(_profileImage),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: InkWell(
+                                    onTap: () {
+                                      _selectImage();
+                                    },
+                                    child: Image.asset(
+                                      height: 35,
+                                      'images/EditProfileImg.png',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.05),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              'First Name',
+                              textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 22.0,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.1),
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.05),
-                      Center(
-                        child: Stack(
-                          children: [
-                            if (_profileImage.isEmpty)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(55),
-                                child: Container(
-                                  width:
-                                  (111 / MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width) *
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width,
-                                  height:
-                                  (111 / MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height) *
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .height,
-                                  color: Colors.grey,
-                                  child: Image.asset(
-                                    'images/ProfileImg.png',
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              )
-                            else
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(55),
-                                child: Container(
-                                  width:
-                                  (111 / MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width) *
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width,
-                                  height:
-                                  (111 / MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height) *
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .height,
-                                  color: Colors.grey,
-                                  child: Image.file(
-                                    File(_profileImage),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: InkWell(
-                                onTap: () {
-                                  _selectImage();
-                                },
-                                child: Image.asset(
-                                  height: 35,
-                                  'images/EditProfileImg.png',
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.05),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          'Username',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: userNameController,
-                          focusNode: _userNameFocusNode,
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            decoration: TextDecoration.none,
-                          ),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
+                                fontSize: 16.0,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          'Full Name',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: displayNameController,
-                          focusNode: _displayNameFocusNode,
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            decoration: TextDecoration.none,
-                          ),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          'Email',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16.0,
-                            color:Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: emailController,
-                          focusNode: _emailFocusNode,
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            decoration: TextDecoration.none,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: '',
-                            labelStyle: const TextStyle(
-                              color: Colors.grey,
-                              fontFamily: 'Poppins',
-                              fontSize: 12.0,
-                            ),
-                            floatingLabelBehavior: FloatingLabelBehavior.never,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          'Phone Number',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: phoneNumberController,
-                          focusNode: _phoneNumberFocusNode,
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            decoration: TextDecoration.none,
-                          ),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            counterText: '',
-                          ),
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [
-                            maskFormatter,
-                          ],
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Text(
-                          'Date of Birth',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: GestureDetector(
-                          onTap: () async {
-                            final DateTime? picked = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                dobController.text = _formatDate(picked);
-                              });
-                            }
-                          },
-                          child: AbsorbPointer( // Prevent TextFormField from opening keyboard
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
-                              controller: dobController,
+                              controller: firstNameController,
+                              focusNode: _firstNameFocusNode,
                               style: const TextStyle(
                                 fontSize: 16.0,
                                 decoration: TextDecoration.none,
@@ -625,99 +444,303 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              cursorColor:
+                                  Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.02),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              'Surname',
+                              textAlign: TextAlign.start,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16.0,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: TextFormField(
+                              controller: surnameController,
+                              focusNode: _surnameFocusNode,
+                              style: const TextStyle(
+                                fontSize: 16.0,
+                                decoration: TextDecoration.none,
+                              ),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: BorderSide(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              cursorColor:
+                                  Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.02),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              'Email',
+                              textAlign: TextAlign.start,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16.0,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: TextFormField(
+                              controller: emailController,
+                              focusNode: _emailFocusNode,
+                              style: const TextStyle(
+                                fontSize: 16.0,
+                                decoration: TextDecoration.none,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: '',
+                                labelStyle: const TextStyle(
+                                  color: Colors.grey,
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12.0,
+                                ),
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: BorderSide(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              cursorColor:
+                                  Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.02),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              'Phone Number',
+                              textAlign: TextAlign.start,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16.0,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: TextFormField(
+                              controller: phoneNumberController,
+                              focusNode: _phoneNumberFocusNode,
+                              style: const TextStyle(
+                                fontSize: 16.0,
+                                decoration: TextDecoration.none,
+                              ),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: BorderSide(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 counterText: '',
                               ),
-                              cursorColor: Theme.of(context).colorScheme.onSurface,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                maskFormatter,
+                              ],
+                              cursorColor:
+                                  Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
-                        ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.02),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              'Date of Birth',
+                              textAlign: TextAlign.start,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16.0,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: GestureDetector(
+                              onTap: () async {
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(1900),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    dobController.text = _formatDate(picked);
+                                  });
+                                }
+                              },
+                              child: AbsorbPointer(
+                                // Prevent TextFormField from opening keyboard
+                                child: TextFormField(
+                                  controller: dobController,
+                                  style: const TextStyle(
+                                    fontSize: 16.0,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                    ),
+                                    counterText: '',
+                                  ),
+                                  cursorColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.05),
+                        ],
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.05),
-
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-              Positioned(
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 15.0),
-                  decoration: BoxDecoration(
-                    border: Border(
-                        top: BorderSide(
-                            width: 0.5, color: Colors.black.withOpacity(0.15))),
-                    color: Colors.white,
-                  ),
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Container(
-                      width: double.infinity,
-                      height: (60 / MediaQuery.of(context).size.height) *
-                          MediaQuery.of(context).size.height,
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NewsSources(key: UniqueKey(),
-                                  onToggleDarkMode: widget.onToggleDarkMode,
-                                  isDarkMode: widget.isDarkMode),
-                            ),
-                          );
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                                (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
-                                return Colors.white;
-                              }
-                              return const Color(0xFF500450);
-                            },
-                          ),
-                          foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                                (Set<WidgetState> states) {
-                              if (states.contains(WidgetState.pressed)) {
+                Positioned(
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 15.0),
+                    decoration: BoxDecoration(
+                      border: Border(
+                          top: BorderSide(
+                              width: 0.5,
+                              color: Colors.black.withOpacity(0.15))),
+                      color: Colors.white,
+                    ),
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: Container(
+                        width: double.infinity,
+                        height: (60 / MediaQuery.of(context).size.height) *
+                            MediaQuery.of(context).size.height,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // _registerUser();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NewsSources(
+                                    key: UniqueKey(),
+                                    onToggleDarkMode: widget.onToggleDarkMode,
+                                    isDarkMode: widget.isDarkMode),
+                              ),
+                            );
+                          },
+                          style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.pressed)) {
+                                  return Colors.white;
+                                }
                                 return const Color(0xFF500450);
-                              }
-                              return Colors.white;
-                            },
-                          ),
-                          elevation: WidgetStateProperty.all<double>(4.0),
-                          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                            const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(35)),
+                              },
+                            ),
+                            foregroundColor:
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.pressed)) {
+                                  return const Color(0xFF500450);
+                                }
+                                return Colors.white;
+                              },
+                            ),
+                            elevation: WidgetStateProperty.all<double>(4.0),
+                            shape:
+                                WidgetStateProperty.all<RoundedRectangleBorder>(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(35)),
+                              ),
                             ),
                           ),
-                        ),
-                        child: isLoading
-                            ? const Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Text(
-                          'Next',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.bold,
-                          ),
+                          child: isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Next',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
               ],
+            ),
           ),
-              ),
         );
       },
     );

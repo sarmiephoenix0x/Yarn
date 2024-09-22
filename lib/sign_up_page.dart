@@ -13,6 +13,7 @@ import 'forgot_password_page.dart';
 class SignUpPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+
   const SignUpPage({
     super.key, required this.onToggleDarkMode, required this.isDarkMode
   });
@@ -48,42 +49,26 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
     if (prefs == null) {
       await _initializePrefs();
     }
+
     final String username = userNameController.text.trim();
     final String password = passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      // Show an error message if any field is empty
       _showCustomSnackBar(
         context,
         'All fields are required.',
         isError: true,
       );
-
-      return;
-    }
-
-    // Validate email format
-    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!emailRegex.hasMatch(username)) {
-      // Show an error message if email is invalid
-      _showCustomSnackBar(
-        context,
-        'Please enter a valid email address.',
-        isError: true,
-      );
-
       return;
     }
 
     // Validate password length
     if (password.length < 6) {
-      // Show an error message if password is too short
       _showCustomSnackBar(
         context,
         'Password must be at least 6 characters.',
         isError: true,
       );
-
       return;
     }
 
@@ -93,10 +78,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
 
     // Send the POST request
     final response = await http.post(
-      Uri.parse('https://script.teendev.dev/signal/api/login'),
+      Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'email': username,
+        'username': username,
         'password': password,
       }),
     );
@@ -106,56 +91,45 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
     print('Response Data: $responseData');
 
     if (response.statusCode == 200) {
-      // The responseData['user'] is a Map, not a String, so handle it accordingly
-      final Map<String, dynamic> user = responseData['user'];
-      final String accessToken = responseData['access_token'];
+      // The response format: {status, data: {userId, token, username}}
+      final Map<String, dynamic> data = responseData['data'];
+      final String token = data['token'];
+      final int userId = data['userId'];
+      final String userName = data['username'];
 
-      await storage.write(key: 'yarnAccessToken', value: accessToken);
-      await prefs.setString(
-          'user', jsonEncode(user)); // Store user as a JSON string
+      // Store the token and user information
+      await storage.write(key: 'yarnAccessToken', value: token);
+      await prefs.setString('user', jsonEncode({
+        'userId': userId,
+        'username': userName,
+      }));
 
-      // Handle the successful response here
+      // Show success message
       _showCustomSnackBar(
         context,
-        'Sign in successful!',
+        'Account created!',
         isError: false,
       );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainApp(
-            key: UniqueKey(),
-            onToggleDarkMode: (bool isDarkMode) {
-              // Your toggle logic here
-            },
-            isDarkMode: true, // Or pass the current dark mode state
-          ),
+          builder: (context) =>
+              SelectCountry(key: UniqueKey(),
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode),
         ),
       );
-
     } else if (response.statusCode == 400) {
       setState(() {
         isLoading = false;
       });
-      final String error = responseData['error'];
-      final String data = responseData['data'];
+      final String message = responseData['message'];
 
       // Handle validation error
       _showCustomSnackBar(
         context,
-        'Error: $error - $data',
-        isError: true,
-      );
-    } else if (response.statusCode == 401) {
-      setState(() {
-        isLoading = false;
-      });
-      final String error = responseData['error'];
-
-      // Handle invalid credentials
-      _showCustomSnackBar(
-        context,
-        'Error: $error',
+        'Error: $message',
         isError: true,
       );
     } else {
@@ -170,6 +144,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
       );
     }
   }
+
 
   void _showCustomSnackBar(BuildContext context, String message,
       {bool isError = false}) {
@@ -212,13 +187,22 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
               child: Center(
                 child: SizedBox(
                   height: orientation == Orientation.portrait
-                      ? MediaQuery.of(context).size.height * 1.1
-                      : MediaQuery.of(context).size.height * 1.8,
+                      ? MediaQuery
+                      .of(context)
+                      .size
+                      .height * 1.1
+                      : MediaQuery
+                      .of(context)
+                      .size
+                      .height * 1.8,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.1),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -232,7 +216,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -240,12 +227,18 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 17.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.05),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -254,7 +247,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -274,15 +270,24 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
+                          cursorColor: Theme
+                              .of(context)
+                              .colorScheme
+                              .onSurface,
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -291,7 +296,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -312,14 +320,17 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 decoration: TextDecoration.none,
                               ),
                               floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
+                              FloatingLabelBehavior.never,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme
+                                      .of(context)
+                                      .colorScheme
+                                      .onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
@@ -332,13 +343,19 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                   });
                                 },
                               )),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
+                          cursorColor: Theme
+                              .of(context)
+                              .colorScheme
+                              .onSurface,
                           obscureText: !_isPasswordVisible,
                           obscuringCharacter: "*",
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 20.0),
                         child: Row(
@@ -359,7 +376,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 Text(
                                   "Remember me",
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                     fontFamily: 'Poppins',
                                     fontSize: 12.0,
                                     decoration: TextDecoration.none,
@@ -373,27 +393,29 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Container(
                         width: double.infinity,
-                        height: (60 / MediaQuery.of(context).size.height) *
-                            MediaQuery.of(context).size.height,
+                        height: (60 / MediaQuery
+                            .of(context)
+                            .size
+                            .height) *
+                            MediaQuery
+                                .of(context)
+                                .size
+                                .height,
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SelectCountry(key: UniqueKey(),
-                                    onToggleDarkMode: widget.onToggleDarkMode,
-                                    isDarkMode: widget.isDarkMode),
-                              ),
-                            );
+                            _submitForm();
                           },
                           style: ButtonStyle(
                             backgroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
@@ -401,8 +423,8 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                               },
                             ),
                             foregroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return const Color(0xFF500450);
                                 }
@@ -411,30 +433,33 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             ),
                             elevation: WidgetStateProperty.all<double>(4.0),
                             shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
+                            WidgetStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(15)),
+                                BorderRadius.all(Radius.circular(15)),
                               ),
                             ),
                           ),
                           child: isLoading
                               ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                )
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
                               : const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            'Sign Up',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       const Center(
                         child: Text(
                           'or continue with',
@@ -447,22 +472,30 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                         ),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                            height: (60 / MediaQuery
+                                .of(context)
+                                .size
+                                .height) *
+                                MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height,
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: ElevatedButton(
-                              onPressed: () {
-                              },
+                              onPressed: () {},
                               style: ButtonStyle(
                                 backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -470,8 +503,8 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -483,7 +516,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
+                                    BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
                               ),
@@ -494,7 +527,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                     height: 25,
                                   ),
                                   SizedBox(
-                                      width: MediaQuery.of(context).size.width *
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
                                           0.03),
                                   const Text(
                                     'Facebook',
@@ -508,18 +544,24 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             ),
                           ),
                           Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                            height: (60 / MediaQuery
+                                .of(context)
+                                .size
+                                .height) *
+                                MediaQuery
+                                    .of(context)
+                                    .size
+                                    .height,
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: ElevatedButton(
                               onPressed: () {
 
                               },
                               style: ButtonStyle(
                                 backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -527,8 +569,8 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                                      (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -540,7 +582,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
+                                    BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
                               ),
@@ -551,7 +593,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                     height: 25,
                                   ),
                                   SizedBox(
-                                      width: MediaQuery.of(context).size.width *
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
                                           0.03),
                                   const Text(
                                     'Google',
@@ -567,7 +612,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.02),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -581,7 +629,10 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                             ),
                           ),
                           SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.03),
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.03),
                           InkWell(
                             onTap: () {
                               Navigator.push(
@@ -589,7 +640,8 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       SignInPage(key: UniqueKey(),
-                                          onToggleDarkMode: widget.onToggleDarkMode,
+                                          onToggleDarkMode: widget
+                                              .onToggleDarkMode,
                                           isDarkMode: widget.isDarkMode),
                                 ),
                               );

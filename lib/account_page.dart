@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/settings.dart';
 
 import 'create_news.dart';
@@ -25,10 +27,12 @@ class _AccountPageState extends State<AccountPage>
   String _profileImage = '';
   TabController? latestTabController;
   TabController? profileTab;
+  String? userName;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserData();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
   }
@@ -39,6 +43,19 @@ class _AccountPageState extends State<AccountPage>
     latestTabController?.dispose();
     profileTab?.dispose();
   }
+
+  Future<void> _fetchUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userDataString = prefs.getString('user');
+
+    if (userDataString != null) {
+      final userData = jsonDecode(userDataString);
+      setState(() {
+        userName = userData['username'].toString(); // Cast to string if needed
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -206,15 +223,21 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              const Padding(
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text(
-                  "Sarmie Phioenix",
+                child: userName != null
+                    ? Text(
+                  userName!,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.bold,
                     fontSize: 18.0,
+                  ),
+                )
+                    : const Center( // Center the loader if desired
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
                   ),
                 ),
               ),

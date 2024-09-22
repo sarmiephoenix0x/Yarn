@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/main_app.dart';
+import 'package:yarn/select_country.dart';
 import 'package:yarn/sign_up_page.dart';
 
 import 'forgot_password_page.dart';
@@ -49,42 +50,26 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
     if (prefs == null) {
       await _initializePrefs();
     }
+
     final String username = userNameController.text.trim();
     final String password = passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      // Show an error message if any field is empty
       _showCustomSnackBar(
         context,
         'All fields are required.',
         isError: true,
       );
-
-      return;
-    }
-
-    // Validate email format
-    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!emailRegex.hasMatch(username)) {
-      // Show an error message if email is invalid
-      _showCustomSnackBar(
-        context,
-        'Please enter a valid email address.',
-        isError: true,
-      );
-
       return;
     }
 
     // Validate password length
     if (password.length < 6) {
-      // Show an error message if password is too short
       _showCustomSnackBar(
         context,
         'Password must be at least 6 characters.',
         isError: true,
       );
-
       return;
     }
 
@@ -94,10 +79,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
 
     // Send the POST request
     final response = await http.post(
-      Uri.parse('https://script.teendev.dev/signal/api/login'),
+      Uri.parse('https://yarnapi.onrender.com/api/auth/sign-in'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'email': username,
+        'username': username,
         'password': password,
       }),
     );
@@ -107,30 +92,45 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
     print('Response Data: $responseData');
 
     if (response.statusCode == 200) {
-      // The responseData['user'] is a Map, not a String, so handle it accordingly
-      final Map<String, dynamic> user = responseData['user'];
-      final String accessToken = responseData['access_token'];
+      // The response format: {status, data: {userId, token, username}}
+      final Map<String, dynamic> data = responseData['data'];
+      final String token = data['token'];
+      final int userId = data['userId'];
+      final String userName = data['username'];
 
-      await storage.write(key: 'yarnAccessToken', value: accessToken);
-      await prefs.setString(
-          'user', jsonEncode(user)); // Store user as a JSON string
+      // Store the token and user information
+      await storage.write(key: 'yarnAccessToken', value: token);
+      await prefs.setString('user', jsonEncode({
+        'userId': userId,
+        'username': userName,
+      }));
 
-      // Handle the successful response here
+      // Show success message
       _showCustomSnackBar(
         context,
-        'Sign in successful!',
+        'Sign In Successful!',
         isError: false,
       );
+
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) =>
+      //         SelectCountry(key: UniqueKey(),
+      //             onToggleDarkMode: widget.onToggleDarkMode,
+      //             isDarkMode: widget.isDarkMode),
+      //   ),
+      // );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) =>
               MainApp(
-                key: UniqueKey(),
-                onToggleDarkMode: (bool isDarkMode) {
-                  // Your toggle logic here
-                },
-                isDarkMode: true, // Or pass the current dark mode state
+                  key: UniqueKey(),
+                  onToggleDarkMode: widget
+                      .onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode
               ),
         ),
       );
@@ -138,25 +138,12 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
       setState(() {
         isLoading = false;
       });
-      final String error = responseData['error'];
-      final String data = responseData['data'];
+      final String message = responseData['message'];
 
       // Handle validation error
       _showCustomSnackBar(
         context,
-        'Error: $error - $data',
-        isError: true,
-      );
-    } else if (response.statusCode == 401) {
-      setState(() {
-        isLoading = false;
-      });
-      final String error = responseData['error'];
-
-      // Handle invalid credentials
-      _showCustomSnackBar(
-        context,
-        'Error: $error',
+        'Error: $message',
         isError: true,
       );
     } else {
@@ -171,6 +158,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
       );
     }
   }
+
 
   void _showCustomSnackBar(BuildContext context, String message,
       {bool isError = false}) {
@@ -236,7 +224,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -264,7 +255,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 17.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -280,7 +274,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -300,11 +297,17 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
+                          cursorColor: Theme
+                              .of(context)
+                              .colorScheme
+                              .onSurface,
                         ),
                       ),
                       SizedBox(height: MediaQuery
@@ -319,7 +322,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface,
                           ),
                         ),
                       ),
@@ -347,7 +353,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme
+                                      .of(context)
+                                      .colorScheme
+                                      .onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
@@ -360,7 +369,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   });
                                 },
                               )),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
+                          cursorColor: Theme
+                              .of(context)
+                              .colorScheme
+                              .onSurface,
                           obscureText: !_isPasswordVisible,
                           obscuringCharacter: "*",
                         ),
@@ -387,7 +399,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 Text("Remember me", style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme
+                                      .of(context)
+                                      .colorScheme
+                                      .onSurface,
                                   fontFamily: 'Poppins',
                                   fontSize: 12.0,
                                   decoration: TextDecoration.none,
@@ -441,18 +456,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    MainApp(
-                                        key: UniqueKey(),
-                                        onToggleDarkMode: widget
-                                            .onToggleDarkMode,
-                                        isDarkMode: widget.isDarkMode
-                                    ),
-                              ),
-                            );
+                            _submitForm();
                           },
                           style: ButtonStyle(
                             backgroundColor:

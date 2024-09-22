@@ -1,14 +1,22 @@
+import 'package:country_state_city/country_state_city.dart'
+    as csc; // Alias to avoid conflict
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:yarn/sign_in_page.dart';
 
 import 'fill_profile.dart';
 
 class SelectState extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
-  const SelectState({super.key, required this.onToggleDarkMode, required this.isDarkMode});
+  final String countryIsoCode;
+
+  const SelectState({
+    super.key,
+    required this.onToggleDarkMode,
+    required this.isDarkMode,
+    required this.countryIsoCode,
+  });
 
   @override
   SelectStateState createState() => SelectStateState();
@@ -22,15 +30,47 @@ class SelectStateState extends State<SelectState>
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   int? _selectedRadioValue;
+  List<csc.State> states = []; // Aliased to avoid conflict
+  List<csc.State> filteredStates = [];
+  String selectedState = '';
 
   @override
   void initState() {
     super.initState();
     _initializePrefs();
+    _fetchStates();
   }
 
   Future<void> _initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> _fetchStates() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      final fetchedStates = await csc.getStatesOfCountry(widget.countryIsoCode);
+      setState(() {
+        states = fetchedStates;
+        filteredStates = states; // Initialize filteredStates with all states
+      });
+    } catch (e) {
+      _showCustomSnackBar(context, 'Error fetching states', isError: true);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _filterStates(String query) {
+    setState(() {
+      filteredStates = states
+          .where(
+              (state) => state.name.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
 
   void _showCustomSnackBar(BuildContext context, String message,
@@ -65,193 +105,184 @@ class SelectStateState extends State<SelectState>
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  // Wrap SingleChildScrollView with Expanded
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Image.asset(
-                                'images/BackButton.png',
-                                height: 25,
-                                color:Theme.of(context).colorScheme.onSurface,
-                              ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Image.asset(
+                              'images/BackButton.png',
+                              height: 25,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
-                            const Spacer(),
-                            Expanded(
-                              flex: 10,
-                              child: Text(
-                                'Select your State',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20.0,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.03),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: searchController,
-                          focusNode: _searchFocusNode,
-                          style: const TextStyle(
-                            fontSize: 16.0,
                           ),
-                          decoration: InputDecoration(
-                              labelText: 'Search',
-                              labelStyle: const TextStyle(
-                                color: Colors.grey,
+                          const Spacer(),
+                          Expanded(
+                            flex: 10,
+                            child: Text(
+                              'Select your State',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
                                 fontFamily: 'Poppins',
-                                fontSize: 12.0,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20.0,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
-                              floatingLabelBehavior:
-                              FloatingLabelBehavior.never,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.search),
-                                onPressed: () {},
-                              )),
-                          cursorColor: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            countries('State1', 1),
-                            countries('State2', 2),
-                            countries('State3', 3),
-                            countries('State4', 4),
-                            countries('State5', 5),
-                            countries('State6', 6),
-                            countries('State7', 7),
-                            countries('State8', 8),
-                            countries('State9', 9),
-                            countries('State10', 10),
-                            countries('State11', 11),
-                            countries('State12', 12),
-                            countries('State13', 13),
-                            countries('State14', 14),
-                            SizedBox(
-                                height:
-                                MediaQuery.of(context).size.height * 0.1),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Positioned(
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                decoration: BoxDecoration(
-                  border: Border(
-                      top: BorderSide(
-                          width: 0.5, color: Colors.black.withOpacity(0.15))),
-                  color: Colors.white,
-                ),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: Container(
-                    width: double.infinity,
-                    height: (60 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FillProfile(key: UniqueKey(),
-                                onToggleDarkMode: widget.onToggleDarkMode,
-                                isDarkMode: widget.isDarkMode),
+                            ),
                           ),
-                        );
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
-                            if (states.contains(WidgetState.pressed)) {
-                              return Colors.white;
-                            }
-                            return const Color(0xFF500450);
-                          },
+                          const Spacer(),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextFormField(
+                        controller: searchController,
+                        focusNode: _searchFocusNode,
+                        onChanged: (value) {
+                          _filterStates(
+                              value); // Filter states based on search input
+                        },
+                        style: const TextStyle(
+                          fontSize: 16.0,
                         ),
-                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
-                            if (states.contains(WidgetState.pressed)) {
-                              return const Color(0xFF500450);
-                            }
+                        decoration: InputDecoration(
+                          labelText: 'Search',
+                          labelStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                            fontSize: 12.0,
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.search),
+                            onPressed: () {},
+                          ),
+                        ),
+                        cursorColor: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              itemCount:
+                                  filteredStates.length, // Use filteredStates
+                              itemBuilder: (context, index) {
+                                return _stateTile(
+                                    filteredStates[index].name, index);
+                              },
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 15.0),
+              decoration: BoxDecoration(
+                border: Border(
+                    top: BorderSide(
+                        width: 0.5, color: Colors.black.withOpacity(0.15))),
+                color: Colors.white,
+              ),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Container(
+                  width: double.infinity,
+                  height: (60 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FillProfile(
+                            key: UniqueKey(),
+                            onToggleDarkMode: widget.onToggleDarkMode,
+                            isDarkMode: widget.isDarkMode,
+                            selectedState: selectedState, // Pass the selected state
+                            countryIsoCode: widget.countryIsoCode, // Pass the country code
+                          ),
+                        ),
+                      );
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
                             return Colors.white;
-                          },
-                        ),
-                        elevation: WidgetStateProperty.all<double>(4.0),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                          const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(35)),
-                          ),
-                        ),
+                          }
+                          return const Color(0xFF500450);
+                        },
                       ),
-                      child: isLoading
-                          ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        ),
-                      )
-                          : const Text(
-                        'Next',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.bold,
+                      foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return const Color(0xFF500450);
+                          }
+                          return Colors.white;
+                        },
+                      ),
+                      elevation: WidgetStateProperty.all<double>(4.0),
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(35)),
                         ),
                       ),
                     ),
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Next',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget countries(String name, int value) {
+  Widget _stateTile(String name, int value) {
     final isSelected = _selectedRadioValue == value;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -259,6 +290,7 @@ class SelectStateState extends State<SelectState>
         onTap: () {
           setState(() {
             _selectedRadioValue = value;
+            selectedState = name;
           });
         },
         child: Container(
@@ -275,7 +307,9 @@ class SelectStateState extends State<SelectState>
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 15.0,
-                  color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface,
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],

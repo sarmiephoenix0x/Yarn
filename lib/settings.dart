@@ -80,7 +80,7 @@ class SettingsState extends State<Settings>
     });
     widget.onToggleDarkMode(value);
     // Simulate a delay to allow for transitions
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       // After the delay, you can ensure the switch reflects the current mode
       if (_darkModeMoved != widget.isDarkMode) {
         setState(() {
