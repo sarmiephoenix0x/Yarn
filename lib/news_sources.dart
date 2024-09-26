@@ -4,11 +4,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/main_app.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:async/async.dart';
 
 class NewsSources extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
-  const NewsSources({super.key, required this.onToggleDarkMode, required this.isDarkMode});
+  final String email;
+  final String surname;
+  final String firstName;
+  final String phoneNumber;
+  final String dob;
+  final String state;
+  final String country;
+  final String occupation;
+  final String? jobTitle;
+  final String? company;
+  final int? yearJoined;
+  final String selectedGender;
+  final String profileImage;
+
+  const NewsSources(
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      required this.email,
+      required this.surname,
+      required this.firstName,
+      required this.phoneNumber,
+      required this.dob,
+      required this.state,
+      required this.country,
+      required this.occupation,
+      this.jobTitle,
+      this.company,
+      this.yearJoined,
+      required this.selectedGender,
+      required this.profileImage});
 
   @override
   NewsSourcesState createState() => NewsSourcesState();
@@ -21,17 +56,169 @@ class NewsSourcesState extends State<NewsSources>
   late SharedPreferences prefs;
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  String _profileImage = '';
   Map<String, bool> _isFollowingMap = {};
+  String userId = '';
+  String? userName;
+  List<dynamic> communities = [];
+  List<dynamic> filteredCommunities = [];
+  bool isError = false;
+  bool isLoading2 = true;
 
   @override
   void initState() {
     super.initState();
     _initializePrefs();
+    fetchCommunities();
   }
 
   Future<void> _initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> _registerUser() async {
+    if (prefs == null) {
+      await _initializePrefs();
+    }
+    final userDataString = prefs.getString('user');
+
+    if (userDataString != null) {
+      final userData = jsonDecode(userDataString);
+      setState(() {
+        userId = userData['userId'].toString();
+      });
+    }
+
+    final String email = widget.email;
+    final String surname = widget.surname;
+    final String firstName = widget.firstName;
+    final String phoneNumber = widget.phoneNumber;
+    final String dob = widget.dob;
+    final String state = widget.state;
+    final String country = widget.country;
+    final String occupation =
+        widget.occupation; // Replace with actual occupation input
+    final String? jobTitle = widget.jobTitle;
+    final String? company = widget.company;
+    final int? yearJoined = widget.yearJoined;
+
+    final List<int> pageToFollowIds = [];
+    final List<int> communityToJoinIds = [];
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    final url =
+        Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details');
+
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $accessToken'
+      ..fields['userId'] = userId
+      ..fields['firstName'] = firstName
+      ..fields['surname'] = surname
+      ..fields['email'] = email
+      ..fields['phone'] = phoneNumber
+      ..fields['gender'] = widget.selectedGender
+      ..fields['dateOfBirth'] = dob
+      ..fields['state'] = state
+      ..fields['country'] = country
+      ..fields['occupation'] = occupation;
+
+    if (jobTitle != null && jobTitle.isNotEmpty) {
+      request.fields['jobTitle'] = jobTitle;
+    }
+    if (company != null && company.isNotEmpty) {
+      request.fields['company'] = company;
+    }
+    if (yearJoined != null) {
+      request.fields['yearJoined'] = yearJoined.toString();
+    }
+    if (pageToFollowIds.isNotEmpty) {
+      request.fields['PageToFollowIds'] = pageToFollowIds.join(',');
+    }
+    if (communityToJoinIds.isNotEmpty) {
+      request.fields['CommunityToJoinIds'] = communityToJoinIds.join(',');
+    }
+
+    // Check if widget.profileImage is a local file (not an HTTP URL) before uploading
+    if (widget.profileImage != null &&
+        widget.profileImage is File &&
+        !widget.profileImage.startsWith('http')) {
+      File imageFile = File(widget.profileImage);
+
+      // Ensure the image file exists before adding it to the request
+      if (await imageFile.exists()) {
+        var stream =
+            http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+        var length = await imageFile.length();
+        request.files.add(http.MultipartFile(
+          'profile_photo',
+          stream,
+          length,
+          filename: path.basename(imageFile.path),
+        ));
+      } else {
+        print('Image file not found. Skipping image upload.');
+      }
+    } else {
+      print(
+          'Skipping image upload as the profile image is from an HTTP source.');
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      final userDataString = prefs.getString('user');
+
+      if (userDataString != null) {
+        final userData = jsonDecode(userDataString);
+        setState(() {
+          userName = userData['username'].toString();
+        });
+      }
+
+      _showCustomSnackBar(
+        context,
+        'Sign up complete! Welcome, $userName',
+        isError: false,
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainApp(
+              key: UniqueKey(),
+              onToggleDarkMode: widget.onToggleDarkMode,
+              isDarkMode: widget.isDarkMode),
+        ),
+      );
+    } else if (response.statusCode == 400) {
+      setState(() {
+        isLoading = false;
+      });
+      final responseData = jsonDecode(response.body);
+      // final String error = responseData['error'];
+      // final List<dynamic> data = responseData['data']['email'];
+      final String message = responseData['message'];
+      print(message);
+
+      _showCustomSnackBar(
+        context,
+        message,
+        isError: true,
+      );
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      _showCustomSnackBar(
+        context,
+        'An unexpected error occurred.',
+        isError: true,
+      );
+    }
   }
 
   void _showCustomSnackBar(BuildContext context, String message,
@@ -64,6 +251,59 @@ class NewsSourcesState extends State<NewsSources>
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  Future<void> fetchCommunities() async {
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    try {
+      final response = await http.get(
+        Uri.parse('https://yarnapi.onrender.com/api/communities/'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          if (data is List && data.isNotEmpty) {
+            communities = data; // Assuming data is a list of communities
+            filteredCommunities = communities; // Initialize with all communities
+          } else {
+            // Handle empty list case
+            communities = [];
+            filteredCommunities = [];
+          }
+          isError = false; // Reset error state
+        });
+      } else {
+        setState(() {
+          isError = true; // Set error state on non-200 response
+        });
+        // Handle error (e.g., show a snackbar or alert)
+        print('Failed to load communities: ${response.body}');
+      }
+    } catch (e) {
+      setState(() {
+        isError = true; // Set error state on exception
+      });
+      print('Error fetching communities: $e');
+    } finally {
+      setState(() {
+        isLoading2 = false; // Stop loading
+      });
+    }
+  }
+
+  void filterCommunities(String query) {
+    final filtered = communities.where((community) {
+      return community['name'].toLowerCase().contains(query.toLowerCase()) ||
+          community['creator'].toLowerCase().contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      filteredCommunities = filtered; // Update filtered list based on search query
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -91,20 +331,21 @@ class NewsSourcesState extends State<NewsSources>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
-                                color:Theme.of(context).colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const Spacer(),
                             Expanded(
                               flex: 10,
                               child: Text(
-                                'Choose your News Sources',
+                                'Communities To Join',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -123,65 +364,50 @@ class NewsSourcesState extends State<NewsSources>
                             fontSize: 16.0,
                           ),
                           decoration: InputDecoration(
-                              labelText: 'Search',
-                              labelStyle: const TextStyle(
-                                color: Colors.grey,
-                                fontFamily: 'Poppins',
-                                fontSize: 12.0,
+                            labelText: 'Search',
+                            labelStyle: const TextStyle(
+                              color: Colors.grey,
+                              fontFamily: 'Poppins',
+                              fontSize: 12.0,
+                            ),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.search),
-                                onPressed: () {},
-                              )),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.search),
+                              onPressed: () {
+                                filterCommunities(searchController.text);
+                              },
+                            ),
+                          ),
                           cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn", "5k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn2", "10k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn3", "15k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn4", "20k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn5", "25k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn6", "30k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn7", "35k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn8", "40k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn9", "45k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn10", "50k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn11", "55k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn12", "60k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn13", "65k followers"),
-                            countries('images/ProfileImg.png', 'theyarnconcept',
-                                "Yarn14", "70k followers"),
-                            SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.1),
-                          ],
+                      isLoading2
+                          ? const Center(child: CircularProgressIndicator(color:Color(0xFF500450)))
+                          : isError
+                          ? const Center(child: Text('Failed to load communities. Please try again later.'))
+                          : filteredCommunities.isEmpty
+                          ? const Center(child: Text('No communities available.'))
+                          : Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredCommunities.length,
+                          itemBuilder: (context, index) {
+                            var communityData = filteredCommunities[index];
+                            return community(
+                              communityData['communityProfilePictureUrl'] ?? 'images/default.png',
+                              communityData['name'],
+                              communityData['creator'],
+                              "${communityData['members'].length} followers", // Adjust as needed
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -208,17 +434,7 @@ class NewsSourcesState extends State<NewsSources>
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MainApp(
-                              key: UniqueKey(),
-                                onToggleDarkMode: widget.onToggleDarkMode,
-                                isDarkMode: widget.isDarkMode
-                            ),
-                          ),
-                        );
-
+                        _registerUser();
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.resolveWith<Color>(
@@ -268,7 +484,7 @@ class NewsSourcesState extends State<NewsSources>
     );
   }
 
-  Widget countries(String img, String name, String username, String followers) {
+  Widget community(String img, String name, String username, String followers) {
     final widgetKey = username;
     bool isFollowing = _isFollowingMap[widgetKey] ?? false;
     return Padding(
@@ -278,7 +494,7 @@ class NewsSourcesState extends State<NewsSources>
         padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
         child: Row(
           children: [
-            if (_profileImage.isEmpty)
+            if (img.isEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(55),
                 child: Container(
@@ -302,9 +518,12 @@ class NewsSourcesState extends State<NewsSources>
                   height: (50 / MediaQuery.of(context).size.height) *
                       MediaQuery.of(context).size.height,
                   color: Colors.grey,
-                  child: Image.file(
-                    File(_profileImage),
+                  child: Image.network(
+                    img, // Use the communityProfilePictureUrl or a default image
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: Colors.grey); // Fallback if image fails
+                    },
                   ),
                 ),
               ),
@@ -406,7 +625,10 @@ class NewsSourcesState extends State<NewsSources>
                   border: Border.all(
                     color: isFollowing
                         ? Colors.transparent
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.2),
                     width: 2,
                   ),
                 ),

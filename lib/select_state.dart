@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fill_profile.dart';
+import 'select_city.dart';
 
 class SelectState extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
@@ -33,6 +34,7 @@ class SelectStateState extends State<SelectState>
   List<csc.State> states = []; // Aliased to avoid conflict
   List<csc.State> filteredStates = [];
   String selectedState = '';
+  String selectedStateIsoCode = '';
 
   @override
   void initState() {
@@ -177,7 +179,7 @@ class SelectStateState extends State<SelectState>
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
-                          suffixIcon: IconButton(
+                          prefixIcon: IconButton(
                             icon: const Icon(Icons.search),
                             onPressed: () {},
                           ),
@@ -193,8 +195,7 @@ class SelectStateState extends State<SelectState>
                               itemCount:
                                   filteredStates.length, // Use filteredStates
                               itemBuilder: (context, index) {
-                                return _stateTile(
-                                    filteredStates[index].name, index);
+                                return _stateTile(filteredStates[index], index);
                               },
                             ),
                           ),
@@ -222,18 +223,22 @@ class SelectStateState extends State<SelectState>
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FillProfile(
-                            key: UniqueKey(),
-                            onToggleDarkMode: widget.onToggleDarkMode,
-                            isDarkMode: widget.isDarkMode,
-                            selectedState: selectedState, // Pass the selected state
-                            countryIsoCode: widget.countryIsoCode, // Pass the country code
+                      if (selectedStateIsoCode.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SelectCity(
+                              onToggleDarkMode: widget.onToggleDarkMode,
+                              isDarkMode: widget.isDarkMode,
+                              stateIsoCode: selectedStateIsoCode,
+                              countryIsoCode: widget.countryIsoCode,
+                              selectedState: selectedState,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        _showCustomSnackBar(context, 'Please select a state');
+                      }
                     },
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.resolveWith<Color>(
@@ -282,7 +287,7 @@ class SelectStateState extends State<SelectState>
     );
   }
 
-  Widget _stateTile(String name, int value) {
+  Widget _stateTile(csc.State state, int value) {
     final isSelected = _selectedRadioValue == value;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -290,7 +295,8 @@ class SelectStateState extends State<SelectState>
         onTap: () {
           setState(() {
             _selectedRadioValue = value;
-            selectedState = name;
+            selectedState = state.name;
+            selectedStateIsoCode = state.isoCode;
           });
         },
         child: Container(
@@ -302,7 +308,7 @@ class SelectStateState extends State<SelectState>
           child: Row(
             children: [
               Text(
-                name,
+                state.name,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: 'Poppins',

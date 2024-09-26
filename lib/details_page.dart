@@ -2,14 +2,32 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class DetailsPage extends StatefulWidget {
   final int newsId;
+  final List<String> postImg;
+  final String authorImg;
+  final String description;
+  final String authorName;
+  final bool verified;
+  final bool anonymous;
+  final String time;
+  final bool isFollowing;
 
-  const DetailsPage({super.key, required this.newsId});
+  const DetailsPage(
+      {super.key,
+      required this.newsId,
+      required this.postImg,
+      required this.authorImg,
+      required this.description,
+      required this.authorName,
+      required this.verified,
+      required this.anonymous,
+      required this.time,required this.isFollowing});
 
   @override
   DetailsPageState createState() => DetailsPageState();
@@ -26,6 +44,9 @@ class DetailsPageState extends State<DetailsPage> {
   bool _isRefreshing = false;
   bool isLiked = false;
   bool isBookmarked = false;
+  final CarouselController _controller = CarouselController();
+  int _current = 0;
+  bool isFollowing = false;
 
   void _showPopupMenu(BuildContext context) async {
     final RenderBox renderBox =
@@ -149,6 +170,7 @@ class DetailsPageState extends State<DetailsPage> {
   @override
   void initState() {
     super.initState();
+    isFollowing = widget.isFollowing;
     _newsFuture = fetchDetailsPage(widget.newsId);
     _scrollController.addListener(() {
       if (_scrollController.offset <= 0) {
@@ -254,7 +276,8 @@ class DetailsPageState extends State<DetailsPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Retry', style: TextStyle(color: const Color(0xFF500450))),
+              child: const Text('Retry',
+                  style: TextStyle(color: const Color(0xFF500450))),
               onPressed: () {
                 Navigator.of(context).pop();
                 _refreshData();
@@ -284,7 +307,8 @@ class DetailsPageState extends State<DetailsPage> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Retry', style: TextStyle(color: const Color(0xFF500450))),
+              child: Text('Retry',
+                  style: TextStyle(color: const Color(0xFF500450))),
               onPressed: () {
                 Navigator.of(context).pop();
                 _refreshData();
@@ -866,60 +890,10 @@ class DetailsPageState extends State<DetailsPage> {
                               ),
                             ),
                             const Spacer(),
-                          ],
-                        ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05,
-                        ),
-                        Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(55),
-                              child: Container(
-                                width: (60 / MediaQuery.of(context).size.width) *
-                                    MediaQuery.of(context).size.width,
-                                height: (60 / MediaQuery.of(context).size.height) *
-                                    MediaQuery.of(context).size.height,
-                                color: Colors.grey,
-                                child: Image.asset(
-                                  'images/ProfileImg.png',
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                            IconButton(
+                              icon: Icon(Icons.share),
+                              onPressed: () {},
                             ),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.01,
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "BBC NEWS",
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.01,
-                                  ),
-                                  const Text(
-                                    "14m ago",
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 16,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
                             SizedBox(
                               key: _key,
                               child: IconButton(
@@ -931,38 +905,208 @@ class DetailsPageState extends State<DetailsPage> {
                             ),
                           ],
                         ),
-
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.asset(
-                              "images/TrendingImg.png",
-                              fit: BoxFit.cover,
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05,
+                        ),
+                        Row(
+                          children: [
+                            if (widget.anonymous == false)
+                              if (widget.authorImg.isEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(55),
+                                  child: Container(
+                                    width: (50 /
+                                            MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                    height: (50 /
+                                            MediaQuery.of(context)
+                                                .size
+                                                .height) *
+                                        MediaQuery.of(context).size.height,
+                                    color: Colors.grey,
+                                    child: Image.asset(
+                                      'images/ProfileImg.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(55),
+                                  child: Container(
+                                    width: (50 /
+                                            MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                    height: (50 /
+                                            MediaQuery.of(context)
+                                                .size
+                                                .height) *
+                                        MediaQuery.of(context).size.height,
+                                    color: Colors.grey,
+                                    child: Image.network(
+                                      widget.authorImg,
+                                      // Use the communityProfilePictureUrl or a default image
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                            color: Colors
+                                                .grey); // Fallback if image fails
+                                      },
+                                    ),
+                                  ),
+                                ),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.01,
                             ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (widget.anonymous == false)...[
+                                    Row(
+                                      children: [
+                                        Text(
+                                          widget.authorName,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        if (widget.verified == true)
+                                          Image.asset(
+                                            'images/verified.png',
+                                            height: 20,
+                                          ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    Text(
+                                      'Anonymous',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height *
+                                        0.01,
+                                  ),
+                                  Text(
+                                    widget.time,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            if (widget.anonymous == false)
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    isFollowing = !isFollowing;
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isFollowing
+                                        ? const Color(0xFF500450)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isFollowing
+                                          ? Colors.transparent
+                                          : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.2),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  child: isFollowing
+                                      ? Text(
+                                    "Following",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                      color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  )
+                                      : Text(
+                                    "Follow",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                      color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              )
+                          ],
+                        ),
+                        if (widget.postImg.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top: 30.0, bottom: 10.0, left: 0.0, right: 0.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: CarouselSlider(
+                                options: CarouselOptions(
+                                  autoPlay: false,
+                                  enlargeCenterPage: false,
+                                  aspectRatio: 14 / 9,
+                                  viewportFraction: 1.0,
+                                  enableInfiniteScroll: true,
+                                  onPageChanged: (index, reason) {
+                                    setState(() {
+                                      _current = index;
+                                    });
+                                  },
+                                ),
+                                carouselController: _controller,
+                                items: widget.postImg.map((item) {
+                                  return Image.asset(
+                                    item,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.03,
+                        ),
+                        Text(
+                          "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.03,
                         ),
-                        const Text(
-                          "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
-                          style: TextStyle(fontSize: 20, fontFamily: 'Poppins', fontWeight: FontWeight.bold,),
-                        ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.03,
-                        ),
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(bottom: 76.0),
                           child: Text(
-                            "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
+                            widget.description,
                             style:
                                 TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                           ),
-                        ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1,
                         ),
                       ],
                     ),
@@ -1023,7 +1167,10 @@ class DetailsPageState extends State<DetailsPage> {
                           Row(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.comment, color:Theme.of(context).colorScheme.onSurface),
+                                icon: Icon(Icons.comment,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface),
                                 onPressed: () {},
                               ),
                               const Text(

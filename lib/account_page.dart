@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/settings.dart';
 
 import 'create_news.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
@@ -28,10 +30,16 @@ class _AccountPageState extends State<AccountPage>
   TabController? latestTabController;
   TabController? profileTab;
   String? userName;
+  List<dynamic> _communities = [];
+  bool _isLoading = true;
+  List<dynamic> filteredCommunities = [];
+  bool isError = false;
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
+    _fetchCommunities();
     _fetchUserData();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -52,6 +60,46 @@ class _AccountPageState extends State<AccountPage>
       final userData = jsonDecode(userDataString);
       setState(() {
         userName = userData['username'].toString(); // Cast to string if needed
+      });
+    }
+  }
+
+  Future<void> _fetchCommunities() async {
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    try {
+      final response = await http.get(
+        Uri.parse('https://yarnapi.onrender.com/api/communities/joined'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          if (data is List && data.isNotEmpty) {
+            _communities = data;
+          } else {
+            // Handle empty list case
+            _communities = [];
+          }
+          isError = false; // Reset error state
+        });
+      } else {
+        setState(() {
+          isError = true; // Set error state on non-200 response
+        });
+        // Handle error (e.g., show a snackbar or alert)
+        print('Failed to load communities: ${response.body}');
+      }
+    } catch (e) {
+      setState(() {
+        isError = true; // Set error state on exception
+      });
+      print('Error fetching communities: $e');
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
       });
     }
   }
@@ -398,8 +446,26 @@ class _AccountPageState extends State<AccountPage>
                             "4h ago"),
                       ],
                     ),
-                    ListView(
-                      children: [],
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator(color:Color(0xFF500450)))
+                        : isError
+                        ? const Center(child: Text('Failed to load communities. Please try again later.'))
+                        : filteredCommunities.isEmpty
+                        ? const Center(child: Text('No communities available.'))
+                        : ListView.builder(
+                      itemCount: _communities.length,
+                      itemBuilder: (context, index) {
+                        final community = _communities[index];
+                        return communityWidget(
+                          community['communityProfilePictureUrl'] ?? 'default_image.png',
+                          community['name'],
+                          community['description'],
+                          community['creator'], // Assuming this is a string
+                          community['members'][0]['profilePictureUrl'] ?? 'default_profile.png', // Example for first member
+                          community['members'][0]['username'] ?? 'Unknown', // Example for first member
+                          //community['dateCreated'],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -420,6 +486,133 @@ class _AccountPageState extends State<AccountPage>
         backgroundColor: const Color(0xFF500450),
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget communityWidget(String img, String name, String description, String authorImg, String authorName, String time) {
+    // This is your original community widget code.
+    // Update it as necessary.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+      child: Row(
+        children: [
+          if (img.isEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: Container(
+                width: (110 / MediaQuery.of(context).size.width) * MediaQuery.of(context).size.width,
+                height: (130 / MediaQuery.of(context).size.height) * MediaQuery.of(context).size.height,
+                decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 3,
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  img,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: Container(
+                width: (110 / MediaQuery.of(context).size.width) * MediaQuery.of(context).size.width,
+                height: (130 / MediaQuery.of(context).size.height) * MediaQuery.of(context).size.height,
+                decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 3,
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Image.network(
+                  img, // Use the communityProfilePictureUrl or a default image
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(color: Colors.grey); // Fallback if image fails
+                  },
+                ),
+              ),
+            ),
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16.0,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                Text(
+                  description,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
+                  maxLines: 3,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14.0,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
+                      child: Container(
+                        width: 25,
+                        height: 25,
+                        child: Image.network(
+                          authorImg,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                    Text(
+                      authorName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14.0,
+                        color: Color(0xFF4E4B66),
+                      ),
+                    ),
+                    Spacer(),
+                    Text(
+                      time,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13.0,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

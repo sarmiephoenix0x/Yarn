@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -11,14 +10,17 @@ import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/main_app.dart';
-
 import 'news_sources.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:path/path.dart' as path;
+import 'package:async/async.dart';
 
 class FillProfile extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
   final String selectedState;
   final String countryIsoCode;
+  final String selectedCity;
 
   const FillProfile({
     super.key,
@@ -26,6 +28,7 @@ class FillProfile extends StatefulWidget {
     required this.isDarkMode,
     required this.selectedState,
     required this.countryIsoCode,
+    required this.selectedCity,
   });
 
   @override
@@ -45,6 +48,9 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
+  final TextEditingController jobTitleController = TextEditingController();
+  final TextEditingController companyController = TextEditingController();
+  final TextEditingController yearJoinedController = TextEditingController();
 
   bool dropDownTapped = false;
 
@@ -59,8 +65,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     mask: '+###-##-####-####',
     filter: {"#": RegExp(r'[0-9]')},
   );
-  String? userId;
+  String userId = '';
   String? userName;
+  String selectedGender = 'Male';
+  String phoneNumber = '';
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -70,144 +79,6 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
 
   Future<void> _initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
-  }
-
-  Future<void> _registerUser() async {
-    if (prefs == null) {
-      await _initializePrefs();
-    }
-    final userDataString = prefs.getString('user');
-
-    if (userDataString != null) {
-      final userData = jsonDecode(userDataString);
-      setState(() {
-        userId = userData['userId'].toString();
-      });
-    }
-    final String email = emailController.text.trim();
-    final String surname = surnameController.text.trim();
-    final String firstName = firstNameController.text.trim();
-    final String phoneNumber = phoneNumberController.text.trim();
-    final String dob = dobController.text.trim();
-    final occupation = 'Student';
-    final PageToFollowIds = []; // Define based on your requirements
-    final CommunityToJoinIds = []; // Define based on your requirements
-
-    if (surname.isEmpty ||
-        firstName.isEmpty ||
-        email.isEmpty ||
-        phoneNumber.isEmpty ||
-        dob.isEmpty) {
-      _showCustomSnackBar(
-        context,
-        'All fields are required.',
-        isError: true,
-      );
-
-      return;
-    }
-
-    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!emailRegex.hasMatch(email)) {
-      _showCustomSnackBar(
-        context,
-        'Please enter a valid email address.',
-        isError: true,
-      );
-
-      return;
-    }
-
-    if (phoneNumber.length < 11) {
-      _showCustomSnackBar(
-        context,
-        'Phone number must be at least 11 characters.',
-        isError: true,
-      );
-
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-    final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final response = await http.post(
-      Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'firstName': firstName,
-        'surname': surname,
-        'email': email,
-        'phone': phoneNumber,
-        'gender': 'male', // Replace with actual gender input
-        'dateOfBirth': dob,
-        'state': widget.selectedState,
-        'country': widget.countryIsoCode,
-        'occupation': occupation,
-        'profilePicture': _profileImage, // You'll need to handle file uploads
-        'PageToFollowIds': PageToFollowIds,
-        'CommunityToJoinIds': CommunityToJoinIds,
-      }),
-    );
-    final Map<String, dynamic> responseData = jsonDecode(response.body);
-
-    print('Response Data: $responseData');
-
-    if (response.statusCode == 200) {
-      final userDataString = prefs.getString('user');
-
-      if (userDataString != null) {
-        final userData = jsonDecode(userDataString);
-        setState(() {
-          userName = userData['username'].toString();
-        });
-      }
-
-      // Handle successful response
-      _showCustomSnackBar(
-        context,
-        'Sign up complete! Welcome, $userName',
-        isError: false,
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewsSources(
-              key: UniqueKey(),
-              onToggleDarkMode: widget.onToggleDarkMode,
-              isDarkMode: widget.isDarkMode),
-        ),
-      );
-    } else if (response.statusCode == 400) {
-      setState(() {
-        isLoading = false;
-      });
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final String error = responseData['error'];
-      final List<dynamic> data = responseData['data']['email'];
-
-      // Handle validation error
-      _showCustomSnackBar(
-        context,
-        'Error: $error - $data',
-        isError: true,
-      );
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      // Handle other unexpected responses
-      _showCustomSnackBar(
-        context,
-        'An unexpected error occurred.',
-        isError: true,
-      );
-    }
   }
 
   @override
@@ -256,7 +127,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
       final decodedImage =
-          await decodeImageFromList(imageFile.readAsBytesSync());
+      await decodeImageFromList(imageFile.readAsBytesSync());
 
       if (decodedImage.width > maxWidth || decodedImage.height > maxHeight) {
         var cropper = ImageCropper();
@@ -290,7 +161,193 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
   }
 
   String _formatDate(DateTime date) {
-    return DateFormat('dd-MMMM-yyyy').format(date);
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  Future<void> _registerUser() async {
+    if (prefs == null) {
+      await _initializePrefs();
+    }
+    final userDataString = prefs.getString('user');
+
+    if (userDataString != null) {
+      final userData = jsonDecode(userDataString);
+      setState(() {
+        userId = userData['userId'].toString();
+      });
+    }
+
+    final String email = emailController.text.trim();
+    final String surname = surnameController.text.trim();
+    final String firstName = firstNameController.text.trim();
+    final String dob = dobController.text.trim();
+    final String occupation = 'Student';
+    final String? jobTitle = jobTitleController.text.trim();
+    final String? company = companyController.text.trim();
+    final String? yearJoined = yearJoinedController.text.trim();
+
+    final List<int> pageToFollowIds = [];
+    final List<int> communityToJoinIds = [];
+
+    if (surnameController.text
+        .trim()
+        .isEmpty ||
+        firstNameController.text
+            .trim()
+            .isEmpty ||
+        emailController.text
+            .trim()
+            .isEmpty ||
+        phoneNumber.isEmpty ||
+        dobController.text
+            .trim()
+            .isEmpty ||
+        widget.selectedState.isEmpty ||
+        widget.countryIsoCode.isEmpty) {
+      _showCustomSnackBar(
+        context,
+        'All required fields must be filled.',
+        isError: true,
+      );
+      return;
+    }
+
+    final RegExp emailRegex =
+    RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!emailRegex
+        .hasMatch(emailController.text.trim())) {
+      _showCustomSnackBar(
+        context,
+        'Please enter a valid email address.',
+        isError: true,
+      );
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) {
+      _showCustomSnackBar(
+        context,
+        'Please provide a valid phone number.',
+        isError: true,
+      );
+      return;
+    }
+    setState(() {
+      isLoading = true;
+    });
+
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    final url =
+    Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details');
+
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $accessToken'
+      ..fields['userId'] = userId
+      ..fields['firstName'] = firstName
+      ..fields['surname'] = surname
+      ..fields['email'] = email
+      ..fields['phone'] = phoneNumber
+      ..fields['gender'] = selectedGender
+      ..fields['dateOfBirth'] = dob
+      ..fields['state'] = widget.selectedState
+      ..fields['country'] = widget.countryIsoCode
+      ..fields['occupation'] = occupation;
+
+    if (jobTitle != null && jobTitle.isNotEmpty) {
+      request.fields['jobTitle'] = jobTitle;
+    }
+    if (company != null && company.isNotEmpty) {
+      request.fields['company'] = company;
+    }
+    if (yearJoined != null && yearJoined.isNotEmpty) {
+      request.fields['yearJoined'] = yearJoined;
+    }
+    if (pageToFollowIds.isNotEmpty) {
+      request.fields['PageToFollowIds'] = pageToFollowIds.join(',');
+    }
+    if (communityToJoinIds.isNotEmpty) {
+      request.fields['CommunityToJoinIds'] = communityToJoinIds.join(',');
+    }
+
+    // Check if _profileImage is a local file (not an HTTP URL) before uploading
+    if (_profileImage != null &&
+        _profileImage is File &&
+        !_profileImage.startsWith('http')) {
+      File imageFile = File(_profileImage);
+
+      // Ensure the image file exists before adding it to the request
+      if (await imageFile.exists()) {
+        var stream =
+        http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+        var length = await imageFile.length();
+        request.files.add(http.MultipartFile(
+          'profile_photo',
+          stream,
+          length,
+          filename: path.basename(imageFile.path),
+        ));
+      } else {
+        print('Image file not found. Skipping image upload.');
+      }
+    } else {
+      print(
+          'Skipping image upload as the profile image is from an HTTP source.');
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      final userDataString = prefs.getString('user');
+
+      if (userDataString != null) {
+        final userData = jsonDecode(userDataString);
+        setState(() {
+          userName = userData['username'].toString();
+        });
+      }
+
+      _showCustomSnackBar(
+        context,
+        'Sign up complete! Welcome, $userName',
+        isError: false,
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              MainApp(
+                  key: UniqueKey(),
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode),
+        ),
+      );
+    } else if (response.statusCode == 400) {
+      setState(() {
+        isLoading = false;
+      });
+      final responseData = jsonDecode(response.body);
+      // final String error = responseData['error'];
+      // final List<dynamic> data = responseData['data']['email'];
+      final String message = responseData['message'];
+      print(message);
+
+      _showCustomSnackBar(
+        context,
+        message,
+        isError: true,
+      );
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      _showCustomSnackBar(
+        context,
+        'An unexpected error occurred.',
+        isError: true,
+      );
+    }
   }
 
   @override
@@ -305,17 +362,26 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                   child: Center(
                     child: SizedBox(
                       height: orientation == Orientation.portrait
-                          ? MediaQuery.of(context).size.height * 1.25
-                          : MediaQuery.of(context).size.height * 2.05,
+                          ? MediaQuery
+                          .of(context)
+                          .size
+                          .height * 1.35
+                          : MediaQuery
+                          .of(context)
+                          .size
+                          .height * 2.15,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.05),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.05),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Row(
                               children: [
                                 InkWell(
@@ -326,7 +392,10 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     'images/BackButton.png',
                                     height: 25,
                                     color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                   ),
                                 ),
                                 const Spacer(),
@@ -337,11 +406,17 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 22.0,
                                     color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                   ),
                                 ),
                                 SizedBox(
-                                    width: MediaQuery.of(context).size.width *
+                                    width: MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width *
                                         0.1),
                                 const Spacer(),
                               ],
@@ -349,7 +424,10 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.05),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.05),
                           Center(
                             child: Stack(
                               children: [
@@ -358,15 +436,23 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (111 /
-                                              MediaQuery.of(context)
-                                                  .size
-                                                  .width) *
-                                          MediaQuery.of(context).size.width,
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width,
                                       height: (111 /
-                                              MediaQuery.of(context)
-                                                  .size
-                                                  .height) *
-                                          MediaQuery.of(context).size.height,
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height,
                                       color: Colors.grey,
                                       child: Image.asset(
                                         'images/ProfileImg.png',
@@ -379,15 +465,23 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (111 /
-                                              MediaQuery.of(context)
-                                                  .size
-                                                  .width) *
-                                          MediaQuery.of(context).size.width,
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width,
                                       height: (111 /
-                                              MediaQuery.of(context)
-                                                  .size
-                                                  .height) *
-                                          MediaQuery.of(context).size.height,
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height,
                                       color: Colors.grey,
                                       child: Image.file(
                                         File(_profileImage),
@@ -413,23 +507,29 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.05),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.05),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'First Name',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: firstNameController,
                               focusNode: _firstNameFocusNode,
@@ -445,33 +545,45 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme
+                                  .of(context)
+                                  .colorScheme
+                                  .onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.02),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.02),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Surname',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: surnameController,
                               focusNode: _surnameFocusNode,
@@ -487,33 +599,45 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme
+                                  .of(context)
+                                  .colorScheme
+                                  .onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.02),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.02),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Email',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: emailController,
                               focusNode: _emailFocusNode,
@@ -529,7 +653,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   fontSize: 12.0,
                                 ),
                                 floatingLabelBehavior:
-                                    FloatingLabelBehavior.never,
+                                FloatingLabelBehavior.never,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
@@ -537,80 +661,175 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                                  Theme.of(context).colorScheme.onSurface,
+                              Theme
+                                  .of(context)
+                                  .colorScheme
+                                  .onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.02),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.02),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Phone Number',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: TextFormField(
-                              controller: phoneNumberController,
-                              focusNode: _phoneNumberFocusNode,
-                              style: const TextStyle(
-                                fontSize: 16.0,
-                                decoration: TextDecoration.none,
-                              ),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                  borderSide: BorderSide(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0),
+                                  child: IntlPhoneField(
+                                    decoration: InputDecoration(
+                                      labelText: 'Phone Number',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                        borderSide: BorderSide(),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                        borderSide: const BorderSide(
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      counterText: '',
+                                    ),
+                                    initialCountryCode: 'NG',
+                                    // Set initial country code
+                                    onChanged: (phone) {
+                                      setState(() {
+                                        phoneNumber = phone.completeNumber;
+                                      });
+                                    },
+                                    onCountryChanged: (country) {
+                                      print(
+                                          'Country changed to: ${country
+                                              .name}');
+                                    },
                                   ),
                                 ),
-                                counterText: '',
-                              ),
-                              keyboardType: TextInputType.phone,
-                              inputFormatters: [
-                                maskFormatter,
                               ],
-                              cursorColor:
-                                  Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                                  MediaQuery.of(context).size.height * 0.02),
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.02),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Gender',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16.0,
+                                    color:
+                                    Theme
+                                        .of(context)
+                                        .colorScheme
+                                        .onSurface,
+                                  ),
+                                ),
+
+                                // Add some space between label and field
+                                DropdownButtonFormField<String>(
+                                  value: selectedGender,
+                                  // Default value is now "Male"
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                      borderSide: BorderSide(
+                                        color: Theme
+                                            .of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  items: ['Male', 'Female', 'Other']
+                                      .map((String gender) {
+                                    return DropdownMenuItem<String>(
+                                      value: gender,
+                                      child: Text(gender),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      selectedGender = newValue!;
+                                    });
+                                  },
+                                  hint: Text(
+                                    'Select Gender',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16.0,
+                                      color: Theme
+                                          .of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                              height:
+                              MediaQuery
+                                  .of(context)
+                                  .size
+                                  .height * 0.02),
+                          Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Date of Birth',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            const EdgeInsets.symmetric(horizontal: 20.0),
                             child: GestureDetector(
                               onTap: () async {
                                 final DateTime? picked = await showDatePicker(
@@ -621,6 +840,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                 );
                                 if (picked != null) {
                                   setState(() {
+                                    // Format the date in dd/MM/yyyy format before updating the controller
                                     dobController.text = _formatDate(picked);
                                   });
                                 }
@@ -640,7 +860,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide(
-                                        color: Theme.of(context)
+                                        color: Theme
+                                            .of(context)
                                             .colorScheme
                                             .onSurface,
                                       ),
@@ -648,14 +869,14 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     counterText: '',
                                   ),
                                   cursorColor:
-                                      Theme.of(context).colorScheme.onSurface,
+                                  Theme
+                                      .of(context)
+                                      .colorScheme
+                                      .onSurface,
                                 ),
                               ),
                             ),
                           ),
-                          SizedBox(
-                              height:
-                                  MediaQuery.of(context).size.height * 0.05),
                         ],
                       ),
                     ),
@@ -673,29 +894,49 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                       color: Colors.white,
                     ),
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
                       child: Container(
                         width: double.infinity,
-                        height: (60 / MediaQuery.of(context).size.height) *
-                            MediaQuery.of(context).size.height,
+                        height: (60 / MediaQuery
+                            .of(context)
+                            .size
+                            .height) *
+                            MediaQuery
+                                .of(context)
+                                .size
+                                .height,
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
-                            // _registerUser();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NewsSources(
-                                    key: UniqueKey(),
-                                    onToggleDarkMode: widget.onToggleDarkMode,
-                                    isDarkMode: widget.isDarkMode),
-                              ),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => NewsSources(
+                            //       key: UniqueKey(),
+                            //       onToggleDarkMode: widget.onToggleDarkMode,
+                            //       isDarkMode: widget.isDarkMode,
+                            //       email: emailController.text.trim(),
+                            //       surname: surnameController.text.trim(),
+                            //       firstName: firstNameController.text.trim(),
+                            //       phoneNumber: phoneNumber,
+                            //       dob: dobController.text.trim(),
+                            //       state: widget.selectedState,
+                            //       country: widget.countryIsoCode,
+                            //       occupation: 'Student',
+                            //       selectedGender: selectedGender,
+                            //       _profileImage: _profileImage,
+                            //     ),
+                            //   ),
+                            // );
+                            _registerUser();
                           },
                           style: ButtonStyle(
                             backgroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
@@ -703,8 +944,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                               },
                             ),
                             foregroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
+                            WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return const Color(0xFF500450);
                                 }
@@ -713,26 +954,26 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                             ),
                             elevation: WidgetStateProperty.all<double>(4.0),
                             shape:
-                                WidgetStateProperty.all<RoundedRectangleBorder>(
+                            WidgetStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(35)),
+                                BorderRadius.all(Radius.circular(35)),
                               ),
                             ),
                           ),
                           child: isLoading
                               ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                )
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
                               : const Text(
-                                  'Next',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            'Next',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),

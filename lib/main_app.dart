@@ -227,6 +227,8 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
       case 0:
         return HomePage(
           selectedIndex: _selectedIndex,
+            onToggleDarkMode: widget.onToggleDarkMode,
+            isDarkMode: widget.isDarkMode
         );
       case 1:
         return SearchPage(

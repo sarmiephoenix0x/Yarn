@@ -55,6 +55,7 @@ dependencies:
   provider: ^6.0.5
   country_picker: ^2.0.26
   country_state_city: ^0.1.6
+  intl_phone_field: ^3.2.0
 
 
 
