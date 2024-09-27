@@ -111,7 +111,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
         isError: false,
       );
 
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) =>

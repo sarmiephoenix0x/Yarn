@@ -688,6 +688,15 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                           isDarkMode: widget.isDarkMode),
                                 ),
                               );
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) =>
+                              //         SelectCountry(key: UniqueKey(),
+                              //             onToggleDarkMode: widget.onToggleDarkMode,
+                              //             isDarkMode: widget.isDarkMode),
+                              //   ),
+                              // );
                             },
                             child: const Text(
                               "Sign Up",

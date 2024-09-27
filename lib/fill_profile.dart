@@ -239,7 +239,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
     Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details');
-
+    // Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up');
     final request = http.MultipartRequest('POST', url)
       ..headers['Authorization'] = 'Bearer $accessToken'
       ..fields['userId'] = userId
@@ -251,7 +251,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       ..fields['dateOfBirth'] = dob
       ..fields['state'] = widget.selectedState
       ..fields['country'] = widget.countryIsoCode
-      ..fields['occupation'] = occupation;
+      ..fields['occupation'] = occupation
+      ..fields['state'] = widget.selectedCity;
 
     if (jobTitle != null && jobTitle.isNotEmpty) {
       request.fields['jobTitle'] = jobTitle;
@@ -332,13 +333,15 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       // final List<dynamic> data = responseData['data']['email'];
       final String message = responseData['message'];
       print(message);
-
+      print(responseData);
       _showCustomSnackBar(
         context,
         message,
         isError: true,
       );
     } else {
+      final responseData = jsonDecode(response.body);
+      print(responseData);
       setState(() {
         isLoading = false;
       });
