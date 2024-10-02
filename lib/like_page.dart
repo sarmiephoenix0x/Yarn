@@ -103,62 +103,23 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              SizedBox(
-                height: (420 / MediaQuery.of(context).size.height) *
-                    MediaQuery.of(context).size.height,
-                child: ListView(
-                  children: [
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                    bookmark(
-                        "images/TrendingImg.png",
-                        "Europe",
-                        "Russian warship: Moskva sinks in Black Sea",
-                        "images/ProfileImg.png",
-                        "Anonymous",
-                        "4h ago"),
-                  ],
-                ),
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.article_outlined, size: 100, color: Colors.grey),
+                  SizedBox(height: 20),
+                  Text(
+                    'No contents.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  // const SizedBox(height: 20),
+                  // ElevatedButton(
+                  //   onPressed: () => _fetchComments(),
+                  //   // Retry fetching comments
+                  //   child: const Text('Retry'),
+                  // ),
+                ],
               ),
             ],
           ),

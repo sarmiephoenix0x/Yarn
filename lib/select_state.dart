@@ -11,12 +11,14 @@ class SelectState extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
   final String countryIsoCode;
+  final String username;
+  final String password;
 
   const SelectState({
     super.key,
     required this.onToggleDarkMode,
     required this.isDarkMode,
-    required this.countryIsoCode,
+    required this.countryIsoCode, required this.username, required this.password,
   });
 
   @override
@@ -233,6 +235,8 @@ class SelectStateState extends State<SelectState>
                               stateIsoCode: selectedStateIsoCode,
                               countryIsoCode: widget.countryIsoCode,
                               selectedState: selectedState,
+                              username: widget.username,
+                              password: widget.password,
                             ),
                           ),
                         );

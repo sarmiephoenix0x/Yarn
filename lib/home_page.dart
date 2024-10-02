@@ -1,25 +1,24 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart' hide CarouselController;
-import 'package:yarn/trending_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
+import 'comments_page.dart';
 import 'details_page.dart';
-import 'latest_page.dart';
 import 'notification_page.dart';
-import 'package:yarn/select_country.dart';
 
 class HomePage extends StatefulWidget {
   final int selectedIndex;
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
 
-  const HomePage({
-    super.key,
-    required this.selectedIndex,
-    required this.onToggleDarkMode,
-    required this.isDarkMode
-  });
+  const HomePage(
+      {super.key,
+      required this.selectedIndex,
+      required this.onToggleDarkMode,
+      required this.isDarkMode});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -32,15 +31,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   TabController? latestTabController;
   TabController? profileTab;
   bool isLiked = false;
-  int _current = 0;
   final CarouselController _controller = CarouselController();
   Map<String, bool> _isFollowingMap = {};
+  List<dynamic> posts = [];
+  bool isLoading = true;
+  int currentPage = 0;
+  bool hasMore = true;
+  final storage = const FlutterSecureStorage();
+  Map<int, bool> _isLikedMap = {};
 
   @override
   void initState() {
     super.initState();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
+    _fetchPosts();
   }
 
   @override
@@ -50,16 +55,193 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     profileTab?.dispose();
   }
 
+  Future<void> _fetchPosts({int pageNum = 1}) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+      if (accessToken == null) {
+        print('No access token found');
+        _showCustomSnackBar(
+          context,
+          'Authentication failed. Please log in again.',
+          isError: true,
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final url =
+          Uri.parse('https://yarnapi.onrender.com/api/posts/home/$pageNum');
+      final response = await http.get(url, headers: {
+        'Authorization': 'Bearer $accessToken',
+      });
+
+      // Print response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+
+        // Assuming posts are inside a 'data' field
+        final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
+
+        if (fetchedPosts.isEmpty) {
+          print('No posts available');
+          _showCustomSnackBar(
+            context,
+            'No posts to display at the moment.',
+            isError: false,
+          );
+          setState(() {
+            hasMore = false;
+            isLoading = false;
+          });
+          return;
+        }
+
+        setState(() {
+          posts.addAll(fetchedPosts);
+          currentPage = pageNum;
+          hasMore = fetchedPosts.length > 0;
+          isLoading = false;
+        });
+      } else if (response.statusCode == 400) {
+        print('Error 400: ${response.body}');
+        _showCustomSnackBar(
+          context,
+          'Failed to load posts. Bad request.',
+          isError: true,
+        );
+      } else {
+        print('Unexpected error: ${response.body}');
+        _showCustomSnackBar(
+          context,
+          'An unexpected error occurred.',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      print('Exception: $e');
+      _showCustomSnackBar(
+        context,
+        'Failed to load posts.',
+        isError: true,
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<void> _submitComment(
+      int postId, TextEditingController commentController) async {
+    final String comment = commentController.text.trim();
+    if (comment.isEmpty) {
+      _showCustomSnackBar(
+        context,
+        'Please enter a comment.',
+        isError: true,
+      );
+      return;
+    }
+
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    final uri =
+        Uri.parse('https://yarnapi.onrender.com/api/posts/$postId/comments');
+    // Log the comment and URL for debugging
+    print("Submitting Comment:");
+    print("Comment: $comment");
+    print("POST URL: $uri");
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'Comment': comment}),
+    );
+
+    print("Response Status Code: ${response.statusCode}");
+    print("Response Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      try {
+        final responseData = json.decode(response.body);
+        print('Comment added successfully: ${responseData['message']}');
+        commentController.clear(); // Clear the input field after submission
+      } catch (e) {
+        print('Error parsing response: $e');
+        _showCustomSnackBar(
+          context,
+          'Error adding comment. Invalid response from server.',
+          isError: true,
+        );
+      }
+    } else {
+      try {
+        final errorData = json.decode(response.body);
+        _showCustomSnackBar(
+          context,
+          'Error adding comment: ${errorData['message'] ?? 'Unknown error'}',
+          isError: true,
+        );
+      } catch (e) {
+        // If the response is not valid JSON, show the raw response text
+        print('Error response: ${response.body}');
+        _showCustomSnackBar(
+          context,
+          'Error adding comment. Server returned an unexpected response.',
+          isError: true,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       children: [
         Column(
           children: [
-            SizedBox(height: MediaQuery
-                .of(context)
-                .size
-                .height * 0.03),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
@@ -75,11 +257,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              NotificationPage(
-                                key: UniqueKey(),
-                                selectedIndex: widget.selectedIndex,
-                              ),
+                          builder: (context) => NotificationPage(
+                            key: UniqueKey(),
+                            selectedIndex: widget.selectedIndex,
+                          ),
                         ),
                       );
                     },
@@ -91,347 +272,226 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            SizedBox(height: MediaQuery
-                .of(context)
-                .size
-                .height * 0.05),
-            post(
-                _profileImage,
-                _profileImage,
-                "Lagos State | Agege LGA",
-                "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-                [
-                  "images/TrendingImg.png",
-                  "images/TrendingImg.png",
-                  "images/TrendingImg.png",
-                ],
-                "Author",
-                "@username",
-                "4h ago",
-                true,
-                false),
-            post(
-                _profileImage,
-                _profileImage,
-                "Lagos State | Agege LGA",
-                "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-                [],
-                "Author2",
-                "@username",
-                "4h ago",
-                false,
-                false),
-            post(
-                _profileImage,
-                _profileImage,
-                "Lagos State | Agege LGA",
-                "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-                [],
-                "Author2",
-                "@username",
-                "4h ago",
-                false,
-                true),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+            isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF500450)))
+                : posts.isEmpty
+                    ? Center(
+                        // Display this if the posts list is empty
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.article_outlined,
+                                size: 100, color: Colors.grey),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'No posts available at the moment.',
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  _fetchPosts(), // Allow user to retry
+                              child: const Text(
+                                'Retry',
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: posts.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == posts.length) {
+                            // Check if more posts are available
+                            return hasMore
+                                ? ElevatedButton(
+                                    onPressed: () =>
+                                        _fetchPosts(pageNum: currentPage + 1),
+                                    child: const Text('Load More'),
+                                  )
+                                : const Center(
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16),
+                                      child: Text('No more posts'),
+                                    ),
+                                  );
+                          }
+
+                          final post = posts[index];
+                          return _buildPostItem(post);
+                        },
+                      ),
+
+            // post(
+            //     _profileImage,
+            //     _profileImage,
+            //     "Lagos State | Agege LGA",
+            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
+            //     [
+            //       "images/TrendingImg.png",
+            //       "images/TrendingImg.png",
+            //       "images/TrendingImg.png",
+            //     ],
+            //     "Author",
+            //     "@username",
+            //     "4h ago",
+            //     true,
+            //     false),
+            // post(
+            //     _profileImage,
+            //     _profileImage,
+            //     "Lagos State | Agege LGA",
+            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
+            //     [],
+            //     "Author2",
+            //     "@username",
+            //     "4h ago",
+            //     false,
+            //     false),
+            // post(
+            //     _profileImage,
+            //     _profileImage,
+            //     "Lagos State | Agege LGA",
+            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
+            //     [],
+            //     "Author2",
+            //     "@username",
+            //     "4h ago",
+            //     false,
+            //     true),
           ],
         ),
       ],
     );
   }
 
-  Widget post(String authorImg,
-      String accountOwnerImg,
-      String location,
-      String description,
-      List<String> postImg,
-      String authorName,
-      String authorUsername,
-      String time,
-      bool verified,
-      bool anonymous) {
-    Color originalIconColor = IconTheme
-        .of(context)
-        .color ?? Colors.black;
-    final widgetKey = authorName;
-    bool isFollowing = _isFollowingMap[widgetKey] ?? false;
+  Widget _buildPostItem(dynamic post) {
+    // Extract necessary data from the post
+    String authorImg = post['headerImageUrl'] ?? '';
+    String authorName = post['creator'] ?? 'Anonymous';
+    bool anonymous = post['isAnonymous'] ?? false;
+    bool verified =
+        false; // Assuming verification info not provided in post data
+    String location =
+        'Some location'; // Replace with actual location if available
+    String description = post['content'] ?? 'No description';
+    List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
+    String time = post['datePosted'] ?? 'Unknown time';
+    bool isLiked = _isLikedMap[post['postId']] ?? false;
+    bool isFollowing = false; // Same assumption for following
+    int likes = post['likesCount'];
+    int comments = post['commentsCount'];
+    int userId = post['creatorId'];
+    int _current = 0;
+
+    Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
+
+    Future<void> _toggleLike() async {
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+      final uri = Uri.parse(
+        'https://yarnapi.onrender.com/api/posts/toggle-like/${post['postId']}',
+      );
+
+      // Optimistically update the like status and likes count immediately
+      setState(() {
+        _isLikedMap[post['postId']] = !isLiked; // Toggle like
+        likes = _isLikedMap[post['postId']] == true
+            ? likes + 1
+            : likes - 1; // Update like count
+      });
+
+      final response = await http.patch(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body);
+
+        // Revert the optimistic update if the server request fails
+        setState(() {
+          _isLikedMap[post['postId']] = !isLiked; // Revert like
+          likes = _isLikedMap[post['postId']] == true
+              ? likes + 1
+              : likes - 1; // Revert like count
+        });
+
+        // Show error message
+        print('Error toggling like: ${errorData['message']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${errorData['message']}')),
+        );
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 30.0),
       child: InkWell(
         onTap: () {
-          // Navigator.pushReplacement(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) =>
-          //         SelectCountry(key: UniqueKey(),
-          //             onToggleDarkMode: widget.onToggleDarkMode,
-          //             isDarkMode: widget.isDarkMode),
-          //   ),
-          // );
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  DetailsPage(
-                      key: UniqueKey(),
-                      newsId: 1,
-                      postImg: postImg,
-                      authorImg: authorImg,
-                      description: description,
-                      authorName: authorName,
-                      verified: verified,
-                      anonymous: anonymous,
-                      time: time,
-                      isFollowing: isFollowing),
+              builder: (context) => DetailsPage(
+                key: UniqueKey(),
+                postId: post['postId'],
+                postImg: postImg,
+                authorImg: authorImg,
+                description: description,
+                authorName: authorName,
+                verified: verified,
+                anonymous: anonymous,
+                time: time,
+                isFollowing: isFollowing,
+                likes: likes.toString(),
+                comments: comments.toString(),
+                isLiked: isLiked,
+                userId: userId,
+              ),
             ),
           );
         },
         child: SizedBox(
-          width: MediaQuery
-              .of(context)
-              .size
-              .width,
+          width: MediaQuery.of(context).size.width,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
-                    if (anonymous == false)
+                    if (!anonymous)
                       if (authorImg.isEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(55),
-                          child: Container(
-                            width: (50 / MediaQuery
-                                .of(context)
-                                .size
-                                .width) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width,
-                            height: (50 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
-                            color: Colors.grey,
-                            child: Image.asset(
-                              'images/ProfileImg.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        )
+                        _buildProfilePlaceholder()
                       else
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(55),
-                          child: Container(
-                            width: (50 / MediaQuery
-                                .of(context)
-                                .size
-                                .width) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width,
-                            height: (50 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
-                            color: Colors.grey,
-                            child: Image.network(
-                              authorImg,
-                              // Use the communityProfilePictureUrl or a default image
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                    color:
-                                    Colors.grey); // Fallback if image fails
-                              },
-                            ),
-                          ),
-                        ),
-                    SizedBox(width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.03),
+                        _buildProfileImage(authorImg),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.03),
                     Expanded(
                       flex: 10,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (anonymous == false) ...[
-                            Row(
-                              children: [
-                                Text(
-                                  authorName,
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (verified == true)
-                                  Image.asset(
-                                    'images/verified.png',
-                                    height: 20,
-                                  ),
-                              ],
-                            ),
-                            Text(
-                              authorUsername,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ] else
-                            ...[
-                              Text(
-                                'Anonymous',
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          if (postImg.isEmpty) ...[
-                            SizedBox(
-                                width:
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.03),
-                            Text(
-                              location,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.0,
-                                color: Color(0xFF4E4B66),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Image.asset(
-                                  "images/TimeStampImg.png",
-                                  height: 20,
-                                ),
-                                SizedBox(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
-                                        0.01),
-                                Text(
-                                  time,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 15.0,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          _buildAuthorDetails(authorName, verified, anonymous),
+                          if (postImg.isEmpty)
+                            _buildLocationAndTime(location, time),
                         ],
                       ),
                     ),
                     const Spacer(),
-                    if (anonymous == false)
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            _isFollowingMap[widgetKey] = !isFollowing;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isFollowing
-                                ? const Color(0xFF500450)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isFollowing
-                                  ? Colors.transparent
-                                  : Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.2),
-                              width: 2,
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: isFollowing
-                              ? Text(
-                            "Following",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Poppins',
-                              color:
-                              Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
-                            ),
-                          )
-                              : Text(
-                            "Follow",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Poppins',
-                              color:
-                              Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
-                            ),
-                          ),
-                        ),
-                      )
+                    // if (!anonymous) _buildFollowButton(isFollowing, authorName),
                   ],
                 ),
               ),
-              if (postImg.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(
-                      top: 30.0, bottom: 10.0, left: 20.0, right: 20.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CarouselSlider(
-                      options: CarouselOptions(
-                        autoPlay: false,
-                        enlargeCenterPage: false,
-                        aspectRatio: 14 / 9,
-                        viewportFraction: 1.0,
-                        enableInfiniteScroll: true,
-                        onPageChanged: (index, reason) {
-                          setState(() {
-                            _current = index;
-                          });
-                        },
-                      ),
-                      carouselController: _controller,
-                      items: postImg.map((item) {
-                        return Image.asset(
-                          item,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
+              if (postImg.isNotEmpty) _buildPostImages(postImg),
+              // _buildInteractionRow(isLiked, postImg),
               if (postImg.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -440,48 +500,52 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       children: [
                         IconButton(
                           icon: Icon(
-                              isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: isLiked ? Colors.red : originalIconColor),
+                            isLiked == true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: isLiked == true ? Colors.red : Colors.grey,
+                          ),
                           onPressed: () {
                             setState(() {
-                              isLiked = !isLiked;
+                              // Toggle the like status for this post
+                              _toggleLike();
                             });
                           },
                         ),
                         Text(
-                          '20.2K',
+                          likes.toString(),
                           style: TextStyle(
                             fontFamily: 'Inconsolata',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.06),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.06),
                     Row(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.comment),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => CommentsPage(
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                      )),
+                            );
+                          },
                         ),
                         Text(
-                          '1K',
+                          comments.toString(),
                           style: TextStyle(
                             fontFamily: 'Inconsolata',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -491,32 +555,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         postImg.length,
-                            (index) =>
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5.0),
-                              child: Image.asset(
-                                _current == index
-                                    ? "images/ActiveElipses.png"
-                                    : "images/InactiveElipses.png",
-                                width: (10 / MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width) *
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width,
-                                height: (10 / MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height) *
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height,
-                              ),
-                            ),
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                          child: Image.asset(
+                            _current == index
+                                ? "images/ActiveElipses.png"
+                                : "images/InactiveElipses.png",
+                            width: (10 / MediaQuery.of(context).size.width) *
+                                MediaQuery.of(context).size.width,
+                            height: (10 / MediaQuery.of(context).size.height) *
+                                MediaQuery.of(context).size.height,
+                          ),
+                        ),
                       ),
                     ),
                     const Spacer(),
@@ -526,10 +576,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                   ]),
                 ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.04),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
               if (postImg.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -553,10 +600,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             height: 20,
                           ),
                           SizedBox(
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.03),
+                              width: MediaQuery.of(context).size.width * 0.03),
                           Text(
                             time,
                             overflow: TextOverflow.ellipsis,
@@ -581,18 +625,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 18.0,
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .onSurface,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
+              // if (postImg.isEmpty) _buildInteractionRow(isLiked, postImg),
               if (postImg.isEmpty) ...[
-                SizedBox(height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.04),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(children: [
@@ -600,48 +639,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       children: [
                         IconButton(
                           icon: Icon(
-                              isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: isLiked ? Colors.red : originalIconColor),
+                              isLiked == true
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isLiked == true
+                                  ? Colors.red
+                                  : originalIconColor),
                           onPressed: () {
-                            setState(() {
-                              isLiked = !isLiked;
-                            });
+                            _toggleLike();
                           },
                         ),
                         Text(
-                          '20.2K',
+                          likes.toString(),
                           style: TextStyle(
                             fontFamily: 'Inconsolata',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.06),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.06),
                     Row(
                       children: [
                         IconButton(
                           icon: const Icon(Icons.comment),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => CommentsPage(
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                      )),
+                            );
+                          },
                         ),
                         Text(
-                          '1K',
+                          comments.toString(),
                           style: TextStyle(
                             fontFamily: 'Inconsolata',
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -651,32 +692,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         postImg.length,
-                            (index) =>
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5.0),
-                              child: Image.asset(
-                                _current == index
-                                    ? "images/ActiveElipses.png"
-                                    : "images/InactiveElipses.png",
-                                width: (10 / MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width) *
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width,
-                                height: (10 / MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height) *
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height,
-                              ),
-                            ),
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                          child: Image.asset(
+                            _current == index
+                                ? "images/ActiveElipses.png"
+                                : "images/InactiveElipses.png",
+                            width: (10 / MediaQuery.of(context).size.width) *
+                                MediaQuery.of(context).size.width,
+                            height: (10 / MediaQuery.of(context).size.height) *
+                                MediaQuery.of(context).size.height,
+                          ),
+                        ),
                       ),
                     ),
                     const Spacer(),
@@ -687,126 +714,256 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ]),
                 ),
               ],
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.03),
-              SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Row(
-                    children: [
-                      if (_profileImage.isEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(55),
-                          child: Container(
-                            width: (30 / MediaQuery
-                                .of(context)
-                                .size
-                                .width) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width,
-                            height: (30 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
-                            color: Colors.grey,
-                            child: Image.asset(
-                              'images/ProfileImg.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        )
-                      else
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(55),
-                          child: Container(
-                            width: (25 / MediaQuery
-                                .of(context)
-                                .size
-                                .width) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width,
-                            height: (25 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
-                            color: Colors.grey,
-                            child: Image.network(
-                              authorImg,
-                              // Use the communityProfilePictureUrl or a default image
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                    color:
-                                    Colors.grey); // Fallback if image fails
-                              },
-                            ),
-                          ),
-                        ),
-                      SizedBox(width: MediaQuery
-                          .of(context)
-                          .size
-                          .width * 0.01),
-                      // Comment TextField
-                      Expanded(
-                        // Use Expanded to allow TextField to fill available space
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Add comment...',
-                            hintStyle: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
-                              color: Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                              borderSide:
-                              BorderSide.none, // Remove default border
-                            ),
-                            filled: false,
-                            fillColor: Colors.grey[200],
-                            // Light grey background
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.04),
-              Divider(color: Theme
-                  .of(context)
-                  .colorScheme
-                  .onSurface),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+              _buildCommentInput(authorImg, post['postId']),
+              Divider(color: Theme.of(context).colorScheme.onSurface),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfilePlaceholder() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(55),
+      child: Container(
+        width: 50,
+        height: 50,
+        color: Colors.grey,
+        child: Image.asset(
+          'images/ProfileImg.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImage(String imageUrl) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(55),
+      child: Container(
+        width: 50,
+        height: 50,
+        color: Colors.grey,
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(color: Colors.grey); // Fallback if image fails
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthorDetails(String authorName, bool verified, bool anonymous) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!anonymous) ...[
+          Row(
+            children: [
+              Text(
+                authorName,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              //if (verified) Image.asset('images/verified.png', height: 20),
+            ],
+          ),
+          Text(
+            '@$authorName',
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              color: Colors.grey,
+            ),
+          ),
+        ] else
+          const Text(
+            'Anonymous',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLocationAndTime(String location, String time) {
+    return Row(
+      children: [
+        Text(
+          location,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(width: 10),
+        Row(
+          children: [
+            Image.asset("images/TimeStampImg.png", height: 20),
+            SizedBox(width: 5),
+            Text(
+              time,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFollowButton(bool isFollowing, String authorName) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _isFollowingMap[authorName] = !isFollowing;
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isFollowing ? const Color(0xFF500450) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isFollowing
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+            width: 2,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          isFollowing ? "Following" : "Follow",
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Poppins',
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPostImages(List<String> postImg) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: CarouselSlider(
+        options: CarouselOptions(
+          autoPlay: false,
+          enlargeCenterPage: false,
+          aspectRatio: 14 / 9,
+          viewportFraction: 1.0,
+          enableInfiniteScroll: true,
+        ),
+        items: postImg.map((item) {
+          return Image.network(
+            item,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildInteractionRow(bool isLiked, List<String> postImg) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border,
+                color: isLiked ? Colors.red : Colors.grey),
+            onPressed: () {
+              setState(() {
+                isLiked = !isLiked;
+              });
+            },
+          ),
+          const Spacer(),
+          IconButton(icon: const Icon(Icons.comment), onPressed: () {}),
+          const Spacer(),
+          IconButton(icon: const Icon(Icons.share), onPressed: () {}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentInput(String imageUrl, int postId) {
+    final TextEditingController commentController = TextEditingController();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        children: [
+          if (imageUrl.isEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(55),
+              child: Container(
+                width: (30 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (30 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
+                color: Colors.grey,
+                child: Image.asset(
+                  'images/ProfileImg.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(55),
+              child: Container(
+                width: (25 / MediaQuery.of(context).size.width) *
+                    MediaQuery.of(context).size.width,
+                height: (25 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
+                color: Colors.grey,
+                child: Image.network(
+                  imageUrl,
+                  // Use the communityProfilePictureUrl or a default image
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                        color: Colors.grey); // Fallback if image fails
+                  },
+                ),
+              ),
+            ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: commentController,
+              decoration: InputDecoration(
+                hintText: 'Add comment...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          IconButton(
+            icon: const Icon(Icons.send, color: Color(0xFF500450)),
+            onPressed: () {
+              _submitComment(postId, commentController);
+            },
+          ),
+        ],
       ),
     );
   }

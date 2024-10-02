@@ -21,6 +21,8 @@ class FillProfile extends StatefulWidget {
   final String selectedState;
   final String countryIsoCode;
   final String selectedCity;
+  final String username;
+  final String password;
 
   const FillProfile({
     super.key,
@@ -28,7 +30,7 @@ class FillProfile extends StatefulWidget {
     required this.isDarkMode,
     required this.selectedState,
     required this.countryIsoCode,
-    required this.selectedCity,
+    required this.selectedCity, required this.username, required this.password,
   });
 
   @override
@@ -168,8 +170,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (prefs == null) {
       await _initializePrefs();
     }
-    final userDataString = prefs.getString('user');
 
+    final userDataString = prefs.getString('user');
     if (userDataString != null) {
       final userData = jsonDecode(userDataString);
       setState(() {
@@ -177,31 +179,22 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       });
     }
 
+    // Extracting user details from controllers
     final String email = emailController.text.trim();
     final String surname = surnameController.text.trim();
     final String firstName = firstNameController.text.trim();
     final String dob = dobController.text.trim();
-    final String occupation = 'Student';
+    final String occupation = 'Student';  // Default value
     final String? jobTitle = jobTitleController.text.trim();
     final String? company = companyController.text.trim();
     final String? yearJoined = yearJoinedController.text.trim();
 
-    final List<int> pageToFollowIds = [];
-    final List<int> communityToJoinIds = [];
-
-    if (surnameController.text
-        .trim()
-        .isEmpty ||
-        firstNameController.text
-            .trim()
-            .isEmpty ||
-        emailController.text
-            .trim()
-            .isEmpty ||
+    // Validating required fields
+    if (surname.isEmpty ||
+        firstName.isEmpty ||
+        email.isEmpty ||
         phoneNumber.isEmpty ||
-        dobController.text
-            .trim()
-            .isEmpty ||
+        dob.isEmpty ||
         widget.selectedState.isEmpty ||
         widget.countryIsoCode.isEmpty) {
       _showCustomSnackBar(
@@ -212,10 +205,9 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       return;
     }
 
-    final RegExp emailRegex =
-    RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!emailRegex
-        .hasMatch(emailController.text.trim())) {
+    // Validating email format
+    final RegExp emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!emailRegex.hasMatch(email)) {
       _showCustomSnackBar(
         context,
         'Please enter a valid email address.',
@@ -224,6 +216,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       return;
     }
 
+    // Validating phone number
     if (!_formKey.currentState!.validate()) {
       _showCustomSnackBar(
         context,
@@ -232,17 +225,18 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       );
       return;
     }
+
     setState(() {
       isLoading = true;
     });
 
-    final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url =
-    Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details');
-    // Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up');
+    // final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    final url = Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up');
     final request = http.MultipartRequest('POST', url)
-      ..headers['Authorization'] = 'Bearer $accessToken'
-      ..fields['userId'] = userId
+      // ..headers['Authorization'] = 'Bearer $accessToken'
+      // ..fields['userId'] = userId
+      ..fields['username'] = widget.username
+      ..fields['password'] = widget.password
       ..fields['firstName'] = firstName
       ..fields['surname'] = surname
       ..fields['email'] = email
@@ -252,8 +246,9 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       ..fields['state'] = widget.selectedState
       ..fields['country'] = widget.countryIsoCode
       ..fields['occupation'] = occupation
-      ..fields['state'] = widget.selectedCity;
+      ..fields['city'] = widget.selectedCity;
 
+    // Adding optional fields if not empty
     if (jobTitle != null && jobTitle.isNotEmpty) {
       request.fields['jobTitle'] = jobTitle;
     }
@@ -263,23 +258,12 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (yearJoined != null && yearJoined.isNotEmpty) {
       request.fields['yearJoined'] = yearJoined;
     }
-    if (pageToFollowIds.isNotEmpty) {
-      request.fields['PageToFollowIds'] = pageToFollowIds.join(',');
-    }
-    if (communityToJoinIds.isNotEmpty) {
-      request.fields['CommunityToJoinIds'] = communityToJoinIds.join(',');
-    }
 
-    // Check if _profileImage is a local file (not an HTTP URL) before uploading
-    if (_profileImage != null &&
-        _profileImage is File &&
-        !_profileImage.startsWith('http')) {
+    // Handling profile picture upload if it's a local file
+    if (_profileImage != null && _profileImage is File && !_profileImage.startsWith('http')) {
       File imageFile = File(_profileImage);
-
-      // Ensure the image file exists before adding it to the request
       if (await imageFile.exists()) {
-        var stream =
-        http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+        var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
         var length = await imageFile.length();
         request.files.add(http.MultipartFile(
           'profile_photo',
@@ -291,67 +275,63 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         print('Image file not found. Skipping image upload.');
       }
     } else {
-      print(
-          'Skipping image upload as the profile image is from an HTTP source.');
+      print('Skipping image upload as the profile image is from an HTTP source.');
     }
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final responseData = json.decode(response.body);
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      final userDataString = prefs.getString('user');
+      if (response.statusCode == 200) {
+        // Success: Saving the user data
+        final Map<String, dynamic> data = responseData['data'];
+        await storage.write(key: 'yarnAccessToken', value: data['token']);
+        await prefs.setString('user', jsonEncode({
+          // 'userId': data['userId'],
+          'username': data['username'],
+          'firstName': firstName,
+          'surname': surname,
+          'email': email,
+          'phone': phoneNumber,
+          'gender': selectedGender,
+          'dateOfBirth': dob,
+          'state': widget.selectedState,
+          'country': widget.countryIsoCode,
+          'occupation': occupation,
+          'jobTitle': jobTitle,
+          'company': company,
+          'yearJoined': yearJoined,
+          'profilePicture': _profileImage,
+          'city': widget.selectedCity,
+        }));
 
-      if (userDataString != null) {
-        final userData = jsonDecode(userDataString);
-        setState(() {
-          userName = userData['username'].toString();
-        });
+        _showCustomSnackBar(context, 'Account created!', isError: false);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainApp(
+              key: UniqueKey(),
+              onToggleDarkMode: widget.onToggleDarkMode,
+              isDarkMode: widget.isDarkMode,
+            ),
+          ),
+        );
+      } else if (response.statusCode == 400) {
+        final String message = responseData['message'];
+        _showCustomSnackBar(context, message, isError: true);
+      } else {
+        _showCustomSnackBar(context, 'An unexpected error occurred.', isError: true);
       }
-
-      _showCustomSnackBar(
-        context,
-        'Sign up complete! Welcome, $userName',
-        isError: false,
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              MainApp(
-                  key: UniqueKey(),
-                  onToggleDarkMode: widget.onToggleDarkMode,
-                  isDarkMode: widget.isDarkMode),
-        ),
-      );
-    } else if (response.statusCode == 400) {
+    } catch (e) {
+      _showCustomSnackBar(context, 'An error occurred: $e', isError: true);
+    } finally {
       setState(() {
         isLoading = false;
       });
-      final responseData = jsonDecode(response.body);
-      // final String error = responseData['error'];
-      // final List<dynamic> data = responseData['data']['email'];
-      final String message = responseData['message'];
-      print(message);
-      print(responseData);
-      _showCustomSnackBar(
-        context,
-        message,
-        isError: true,
-      );
-    } else {
-      final responseData = jsonDecode(response.body);
-      print(responseData);
-      setState(() {
-        isLoading = false;
-      });
-      _showCustomSnackBar(
-        context,
-        'An unexpected error occurred.',
-        isError: true,
-      );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

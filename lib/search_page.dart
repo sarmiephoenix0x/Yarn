@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'author_profile.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SearchPage extends StatefulWidget {
   final int selectedIndex;
@@ -22,11 +25,16 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   String _profileImage = '';
   TabController? explorerTabController;
   Map<String, bool> _isSaveMap = {};
-  Map<String, bool> _isFollowingMap = {};
+  Map<String, bool> isFollowingMap = {};
+  bool _isLoading = true; // Loading state
+  List<dynamic> _pages = [];
+  String _errorMessage = '';
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
+    _fetchPages();
     explorerTabController = TabController(length: 3, vsync: this);
   }
 
@@ -34,6 +42,57 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   void dispose() {
     super.dispose();
     explorerTabController?.dispose();
+  }
+
+  Future<void> _fetchPages() async {
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
+    try {
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+
+      final url = 'https://yarnapi.onrender.com/api/pages';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      print("Author Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // Check if the 'status' is "Success" and extract the 'data' array
+        if (jsonResponse['status'] == 'Success') {
+          final List<dynamic> pages = jsonResponse['data'];
+
+          setState(() {
+            _pages = pages; // Set the pages list
+            _isLoading = false; // Stop loading after success
+          });
+        } else {
+          setState(() {
+            _errorMessage =
+                'Failed to load pages'; // Handle unexpected responses
+            _isLoading = false; // Stop loading after failure
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load pages';
+          _isLoading = false; // Stop loading after failure
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage =
+            'An error occurred: $e'; // Include the exception in the error message for debugging
+        _isLoading = false; // Stop loading after error
+      });
+    }
   }
 
   @override
@@ -109,70 +168,92 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                 child: TabBarView(
                   controller: explorerTabController,
                   children: [
-                    ListView(
+                    const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
-                        news(
-                            "images/TrendingImg.png",
-                            "Europe",
-                            "Russian warship: Moskva sinks in Black Sea",
-                            "images/ProfileImg.png",
-                            "Anonymous",
-                            "4h ago"),
+                        Icon(Icons.article_outlined,
+                            size: 100, color: Colors.grey),
+                        SizedBox(height: 20),
+                        Text(
+                          'No contents.',
+                          textAlign: TextAlign.center,
+                          style:
+                          TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        // const SizedBox(height: 20),
+                        // ElevatedButton(
+                        //   onPressed: () => _fetchComments(),
+                        //   // Retry fetching comments
+                        //   child: const Text('Retry'),
+                        // ),
                       ],
                     ),
-                    ListView(
+                    const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        topics("images/TrendingImg.png", "Art",
-                            "Russian warship: Moskva sinks in Black Sea"),
+                        Icon(Icons.article_outlined,
+                            size: 100, color: Colors.grey),
+                        SizedBox(height: 20),
+                        Text(
+                          'No contents.',
+                          textAlign: TextAlign.center,
+                          style:
+                          TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        // const SizedBox(height: 20),
+                        // ElevatedButton(
+                        //   onPressed: () => _fetchComments(),
+                        //   // Retry fetching comments
+                        //   child: const Text('Retry'),
+                        // ),
                       ],
                     ),
-                    ListView(
-                      children: [
-                        author('images/ProfileImg.png', "Yarn", "5k followers"),
-                      ],
-                    ),
+                    _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                                color: Color(0xFF500450)),
+                          )
+                        : _errorMessage.isNotEmpty
+                            ? Center(
+                                child:
+                                    Text(_errorMessage), // Show error message
+                              )
+                            : _pages.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.article_outlined,
+                                            size: 100, color: Colors.grey),
+                                        const SizedBox(height: 20),
+                                        const Text(
+                                          'No authors available at the moment.',
+                                          style: TextStyle(
+                                              fontSize: 18, color: Colors.grey),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _fetchPages(), // Retry button
+                                          child: const Text('Retry'),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: _pages.length,
+                                    itemBuilder: (context, index) {
+                                      final page = _pages[index];
+                                      return author(
+                                          page['pageProfilePictureUrl'] ?? '',
+                                          page['name'],
+                                          page['description'],
+                                          '${page['followers'].length} followers',
+                                          false,
+                                          page['pageId']);
+                                    },
+                                  ),
                   ],
                 ),
               ),
@@ -486,15 +567,87 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget author(String img, String name, String followers) {
-    final widgetKey = name;
-    bool isFollowing = _isFollowingMap[widgetKey] ?? false;
+  Widget author(String img, String name, String description, String followers,
+      bool isFollowing, int pageId) {
+    isFollowing = isFollowingMap[pageId.toString()] ?? false;
+    Future<void> followUser() async {
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+      final url = 'https://yarnapi.onrender.com/api/pages/$pageId/follow';
+      try {
+        final response = await http.patch(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({}), // Add an empty body if required
+        );
+
+        if (response.statusCode == 200) {
+          // Check if response body is not empty before parsing
+          if (response.body.isNotEmpty) {
+            final responseData = json.decode(response.body);
+            print('Follow successful: ${responseData['message']}');
+          } else {
+            print('Follow successful: No response body');
+          }
+
+          setState(() {
+            isFollowingMap[pageId.toString()] = true;
+          });
+        } else {
+          print('Error: ${response.statusCode}');
+        }
+      } catch (error) {
+        print('Follow error: $error');
+      }
+    }
+
+    Future<void> unfollowUser() async {
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+      final url = 'https://yarnapi.onrender.com/api/pages/$pageId/unfollow';
+      try {
+        final response = await http.patch(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({}), // Add an empty body if required
+        );
+
+        if (response.statusCode == 200) {
+          // Check if response body is not empty before parsing
+          if (response.body.isNotEmpty) {
+            final responseData = json.decode(response.body);
+            print('Unfollow successful: ${responseData['message']}');
+          } else {
+            print('Unfollow successful: No response body');
+          }
+
+          setState(() {
+            isFollowingMap[pageId.toString()] = false;
+          });
+        } else {
+          print('Error: ${response.statusCode}');
+        }
+      } catch (error) {
+        print('Unfollow error: $error');
+      }
+    }
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AuthorProfilePage(key: UniqueKey(), selectedIndex: widget.selectedIndex,),
+            builder: (context) => AuthorProfilePage(
+              key: UniqueKey(),
+              pageId: pageId,
+              profileImage: img,
+              pageName: name,
+              pageDescription: description,
+            ),
           ),
         );
       },
@@ -505,36 +658,25 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           child: Row(
             children: [
-              if (_profileImage.isEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(55),
-                  child: Container(
-                    width: (50 / MediaQuery.of(context).size.width) *
-                        MediaQuery.of(context).size.width,
-                    height: (50 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
-                    color: Colors.grey,
-                    child: Image.asset(
-                      img,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                )
-              else
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(55),
-                  child: Container(
-                    width: (50 / MediaQuery.of(context).size.width) *
-                        MediaQuery.of(context).size.width,
-                    height: (50 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
-                    color: Colors.grey,
-                    child: Image.file(
-                      File(_profileImage),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(55),
+                child: Container(
+                  width: (50 / MediaQuery.of(context).size.width) *
+                      MediaQuery.of(context).size.width,
+                  height: (50 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height,
+                  color: Colors.grey,
+                  child: img.isNotEmpty
+                      ? Image.network(
+                          img,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'images/ProfileImg.png',
+                          fit: BoxFit.cover,
+                        ),
                 ),
+              ),
               SizedBox(width: MediaQuery.of(context).size.width * 0.02),
               Expanded(
                 flex: 10,
@@ -542,28 +684,20 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                    Row(
-                      children: [
-                        Text(
-                          followers,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ],
+                    Text(
+                      followers,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                      ),
                     ),
                   ],
                 ),
@@ -571,9 +705,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
               const Spacer(),
               InkWell(
                 onTap: () {
-                  setState(() {
-                    _isFollowingMap[widgetKey] = !isFollowing;
-                  });
+                  if (isFollowing) {
+                    unfollowUser();
+                  } else {
+                    followUser();
+                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(

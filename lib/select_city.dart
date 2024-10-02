@@ -8,6 +8,8 @@ class SelectCity extends StatefulWidget {
   final String countryIsoCode;
   final String stateIsoCode;
   final String selectedState;
+  final String username;
+  final String password;
 
   const SelectCity({
     super.key,
@@ -15,7 +17,7 @@ class SelectCity extends StatefulWidget {
     required this.isDarkMode,
     required this.stateIsoCode,
     required this.countryIsoCode,
-    required this.selectedState,
+    required this.selectedState, required this.username, required this.password,
   });
 
   @override
@@ -225,7 +227,9 @@ class SelectCityState extends State<SelectCity> {
                               isDarkMode: widget.isDarkMode,
                               selectedState: widget.selectedState,
                               countryIsoCode: widget.countryIsoCode,
-                              selectedCity: selectedCity!.name, // Pass selected city
+                              selectedCity: selectedCity!.name,
+                              username: widget.username,
+                              password: widget.password,
                             ),
                           ),
                         );

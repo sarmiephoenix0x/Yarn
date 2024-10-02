@@ -7,9 +7,15 @@ import 'package:yarn/select_state.dart';
 class SelectCountry extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final String username;
+  final String password;
 
   const SelectCountry(
-      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      required this.username,
+      required this.password});
 
   @override
   SelectCountryState createState() => SelectCountryState();
@@ -219,6 +225,8 @@ class SelectCountryState extends State<SelectCountry>
                                 countryIsoCode: _selectedCountry!.countryCode,
                                 onToggleDarkMode: widget.onToggleDarkMode,
                                 isDarkMode: widget.isDarkMode,
+                                username: widget.username,
+                                password: widget.password,
                               ),
                             ),
                           );
