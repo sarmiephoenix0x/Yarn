@@ -15,6 +15,7 @@ import 'create_post.dart';
 import 'details_page.dart';
 import 'followers_page.dart';
 import 'followings_page.dart';
+import 'edit_page.dart';
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
@@ -627,7 +628,15 @@ class _AccountPageState extends State<AccountPage>
                       child: Row(
                         children: [
                           InkWell(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditProfilePage(key: UniqueKey()),
+                                ),
+                              );
+                            },
                             child: Container(
                               width: (150 / MediaQuery.of(context).size.width) *
                                   MediaQuery.of(context).size.width,
@@ -2068,11 +2077,10 @@ class _AccountPageState extends State<AccountPage>
                 color: Colors.grey,
                 child: Image.network(
                   imageUrl,
-                  // Use the communityProfilePictureUrl or a default image
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                        color: Colors.grey); // Fallback if image fails
+                        color: Colors.grey);
                   },
                 ),
               ),
@@ -2081,17 +2089,26 @@ class _AccountPageState extends State<AccountPage>
           Expanded(
             child: TextField(
               controller: commentController,
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Theme.of(context).colorScheme.onSurface,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
-                hintText: 'Add comment...',
+                hintText: 'Add a comment...',
+                hintStyle: TextStyle(
+                  color: Colors.grey[600],
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20.0),
                   borderSide: BorderSide.none,
                 ),
-                filled: true,
+                filled: false,
                 fillColor: Colors.grey[200],
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
+              minLines: 1,
+              maxLines: null,
+              cursorColor: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 10),

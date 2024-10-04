@@ -113,7 +113,6 @@ class CreatePageState extends State<CreatePage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,7 +151,9 @@ class CreatePageState extends State<CreatePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(
+                    height: (20.0 / MediaQuery.of(context).size.height) *
+                        MediaQuery.of(context).size.height),
                 // Page Description Section
                 Card(
                   shape: RoundedRectangleBorder(
@@ -175,7 +176,9 @@ class CreatePageState extends State<CreatePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(
+                    height: (20.0 / MediaQuery.of(context).size.height) *
+                        MediaQuery.of(context).size.height),
                 // Page Profile Picture Section
                 Card(
                   shape: RoundedRectangleBorder(
@@ -186,55 +189,77 @@ class CreatePageState extends State<CreatePage> {
                     onTap: _pickPageProfilePicture,
                     child: _pageProfilePicture != null
                         ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(_pageProfilePicture!.path),
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    )
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_pageProfilePicture!.path),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
                         : Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey[300],
-                      ),
-                      child: const Icon(
-                        Icons.add_a_photo,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
+                            height: 200,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[300],
+                            ),
+                            child: const Icon(
+                              Icons.add_a_photo,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Create Page Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _createPage, // Disable button when loading
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.grey,
+                SizedBox(
+                    height: (20.0 / MediaQuery.of(context).size.height) *
+                        MediaQuery.of(context).size.height),
+                Container(
+                  width: double.infinity,
+                  height: (60 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _createPage,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return Colors.white;
+                          }
+                          return const Color(0xFF500450);
+                        },
+                      ),
+                      foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.pressed)) {
+                            return const Color(0xFF500450);
+                          }
+                          return Colors.white;
+                        },
+                      ),
+                      elevation: WidgetStateProperty.all<double>(4.0),
+                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(35)),
                         ),
                       ),
-                      child: _isLoading
-                          ? Row(
-                        children: [
-                          const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                          const SizedBox(width: 10),
-                          Text('Creating...', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                        ],
-                      )
-                          : Text('Create Page', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                     ),
-                  ],
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Page',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ),
               ],
             ),

@@ -1,38 +1,61 @@
+import 'dart:async';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:dio/dio.dart';
+
 import 'package:country_state_city/country_state_city.dart' as csc;
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:convert';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
+
   @override
-  _EditProfilePageState createState() => _EditProfilePageState();
+  EditProfilePageState createState() => EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final Dio _dio = Dio();
 
+  String? _selectedCountryIsoCode;
   String? _selectedCountry;
+  String? _selectedStateIsoCode;
   String? _selectedState;
+  String? _selectedCity;
+  List<csc.City> _cities = [];
   List<csc.State> _states = [];
   List<csc.Country> _countries = [];
 
-  String? _firstName, _email, _surname, _gender, _dateOfBirth, _phone;
+  String? _username,
+      _firstName,
+      _email,
+      _surname,
+      _gender,
+      _dateOfBirth,
+      _phone;
   String? _imagePath;
   final ImagePicker _picker = ImagePicker();
+
+  bool _isLoadingCountry = true; // Loading indicator for country
+  bool _isLoadingState = true; // Loading indicator for state
+  bool _isLoadingCity = true;
 
   // For automatic state and country detection
   Position? _position;
   String? _detectedCountry;
   String? _detectedState;
+  String? _detectedCity;
   final storage = const FlutterSecureStorage();
+  final FocusNode _dobFocusNode = FocusNode();
+  final TextEditingController dobController = TextEditingController();
+  bool _isLoading = false;
+  bool _isProfileImageUpdateOnly = false;
 
   @override
   void initState() {
@@ -42,83 +65,259 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _loadCountries() async {
-    List<csc.Country> countries = await csc.getAllCountries();
-    setState(() {
-      _countries = countries; // Assign the fetched countries to the state variable
-    });
-  }
-
-
-
-  Future<void> _getLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return;
+    if (mounted) {
+      setState(() {
+        _isLoadingCountry = true; // Start loading
+      });
     }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    // Fetch all countries including ISO codes
+    List<csc.Country> countries = await csc.getAllCountries();
+
+    if (mounted) {
+      setState(() {
+        _countries = countries; // Assign countries with ISO codes
+        _isLoadingCountry = false; // Stop loading
+      });
+    }
+  }
+
+  Future<void> _getLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
         return;
       }
     }
 
     _position = await Geolocator.getCurrentPosition();
-    _getAddressFromLatLng(_position!);
+    await _getAddressFromLatLng(_position!); // Fetch address
   }
 
   Future<void> _getAddressFromLatLng(Position position) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
       if (placemarks.isNotEmpty) {
-        setState(() async{
-          _detectedCountry = placemarks.first.country;
-          _detectedState = placemarks.first.administrativeArea;
-          _selectedCountry = _detectedCountry;
-          _states = await csc.getStatesOfCountry(_selectedCountry!); // Use csc for states
-          _selectedState = _detectedState;
-        });
+        if (mounted) {
+          setState(() {
+            _detectedCountry = placemarks.first.country;
+            _detectedState = placemarks.first.administrativeArea;
+            _detectedCity = placemarks.first.locality;
+          });
+        }
+
+        if (_detectedCountry != null) {
+          csc.Country? detectedCountry = _countries.firstWhere(
+              (country) => country.name == _detectedCountry,
+              orElse: () => csc.Country(
+                  name: '',
+                  isoCode: '',
+                  phoneCode: '',
+                  flag: '',
+                  currency: '',
+                  latitude: '',
+                  longitude: ''));
+
+          if (detectedCountry.name.isNotEmpty) {
+            _selectedCountryIsoCode = detectedCountry.isoCode;
+            _selectedCountry = detectedCountry.name;
+            await _fetchStates(_selectedCountryIsoCode!);
+          } else {
+            print('Detected country not found.');
+          }
+        }
+
+        if (_detectedState != null) {
+          csc.State? detectedState = _states.firstWhere(
+              (state) =>
+                  state.name.toLowerCase() == _detectedState!.toLowerCase(),
+              orElse: () => csc.State(
+                  name: '',
+                  isoCode: '',
+                  countryCode: '',
+                  latitude: '',
+                  longitude: ''));
+
+          if (detectedState.name.isNotEmpty) {
+            setState(() {
+              _selectedStateIsoCode = detectedState.isoCode;
+              _selectedState = detectedState.name;
+            });
+            await _fetchCities(
+                _selectedStateIsoCode!, _selectedCountryIsoCode!);
+          } else {
+            print('Detected state not found.');
+          }
+        }
       }
     } catch (e) {
       print(e);
     }
   }
 
+  Future<void> _fetchStates(String countryIsoCode) async {
+    setState(() {
+      _isLoadingState = true; // Start loading states
+    });
+
+    // Fetch states for the selected country
+    List<csc.State> states = await csc.getStatesOfCountry(countryIsoCode);
+
+    if (states.isNotEmpty) {
+      setState(() {
+        _states = states; // Assign the fetched states to the list
+        _selectedState = _detectedState;
+        _isLoadingState = false;
+      });
+      _fetchCities(_selectedStateIsoCode!, countryIsoCode);
+    } else {
+      print('No states found for country $countryIsoCode');
+      setState(() {
+        _states = []; // Clear the list if no states are found
+        _isLoadingState = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCities(String stateIsoCode, String countryIsoCode) async {
+    if (stateIsoCode.isEmpty || countryIsoCode.isEmpty)
+      return; // Ensure valid state and country codes
+    print(
+        'Fetching cities for countryIsoCode: $countryIsoCode and stateIsoCode: $stateIsoCode');
+    setState(() {
+      _isLoadingCity = true; // Start loading cities
+    });
+
+    try {
+      // Fetch the cities based on the selected state and country
+      List<csc.City> cities =
+          await csc.getStateCities(stateIsoCode, countryIsoCode);
+      setState(() {
+        _cities = cities;
+        _selectedCity = _detectedCity;
+
+        // Automatically set the city based on geolocation
+        if (_detectedCity != null) {
+          var detectedCity = _cities.firstWhere(
+              (city) => city.name.toLowerCase() == _detectedCity!.toLowerCase(),
+              orElse: () => csc.City(name: '', stateCode: '', countryCode: ''));
+
+          if (detectedCity.name.isNotEmpty) {
+            _selectedCity = detectedCity.name; // Set the detected city if found
+          } else {
+            print('Detected city not found.');
+          }
+        }
+
+        _isLoadingCity = false; // Stop loading
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCity = false; // Stop loading on error
+      });
+      print('Error fetching cities: $e');
+    }
+  }
+
   Future<void> _updateProfile() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      try {
-        final String? accessToken = await storage.read(key: 'yarnAccessToken');
-        Response response = await _dio.patch(
-          'https://yarnapi.onrender.com/api/users/personal-info',
-          data: {
-            "firstName": _firstName,
-            "surname": _surname,
-            "email": _email,
-            "state": _selectedState,
-            "country": _selectedCountry,
-            "gender": _gender,
-            "dateOfBirth": _dateOfBirth,
-            "phone": _phone,
-          },
-          options: Options(headers: {
-            'Authorization': 'Bearer $accessToken',
-          }),
-        );
-        print(response.data);
-      } catch (e) {
-        print(e);
+    try {
+      setState(() {
+        _isLoading = true; // Start loading
+      });
+      // _showCustomSnackBar(context, '$_username$_firstName$_surname$_email$_selectedCity$_selectedState$_selectedCountry$_gender${dobController.text.trim()}$_phone',
+      //     isError: true);
+      print(
+          '$_username$_firstName$_surname$_email$_selectedCity$_selectedState$_selectedCountry$_gender${dobController.text.trim()}$_phone');
+      final String? accessToken = await storage.read(key: 'yarnAccessToken');
+
+      Response response = await _dio.patch(
+        'https://yarnapi.onrender.com/api/users/personal-info',
+        // data: {
+        //   "firstName": _firstName,
+        //   "surname": _surname,
+        //   "username": "Phil",
+        //   "email": _email,
+        //   "city": "Lokoja",
+        //   "state": "Kogi",
+        //   "country": "Nigeria",
+        //   "gender": _gender,
+        //   "dateOfBirth": dobController.text.trim(),
+        //   "phone": _phone,
+        // },
+        data: {
+          "username": _username,
+          "firstName": _firstName,
+          "surname": _surname,
+          "email": _email,
+          "city": _selectedCity,
+          "state": _selectedState,
+          "country": _selectedCountry,
+          "gender": _gender,
+          "dateOfBirth": dobController.text.trim(),
+          "phone": _phone,
+        },
+        options: Options(headers: {
+          'Authorization': 'Bearer $accessToken',
+        }),
+      );
+
+      // Log the server response body
+      print('Server Response: ${response.data}'); // Log the response body
+      _showCustomSnackBar(context, 'Server Response: ${response.data}',
+          isError: true);
+
+      // Handle response status codes
+      if (response.statusCode == 200) {
+        _showCustomSnackBar(context, 'Profile updated successfully!',
+            isError: false);
+      } else if (response.statusCode == 400) {
+        // Extracting validation errors from response
+        final Map<String, dynamic> errors = response.data['errors'] ?? {};
+        // Show error messages for each invalid field
+        errors.forEach((key, value) {
+          _showCustomSnackBar(context, '$key: $value', isError: true);
+        });
+      } else {
+        _showCustomSnackBar(
+            context, 'Failed to update profile! Unexpected error.',
+            isError: true);
       }
+    } on DioError catch (e) {
+      // Check if there's a response from the server
+      if (e.response != null) {
+        // Log and show the server response error
+        print('Error Response: ${e.response?.data}');
+      } else {
+        // Log and show a general error message
+        print('Error: ${e.message}');
+        _showCustomSnackBar(context, 'Failed to update profile! ${e.message}',
+            isError: true);
+      }
+    } catch (e) {
+      // Handle any other errors
+      _showCustomSnackBar(context, 'Failed to update profile!', isError: true);
+      print(e);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _updateProfilePicture() async {
     if (_imagePath != null) {
       try {
+        setState(() {
+          _isLoading = true; // Start loading
+        });
         final String? accessToken = await storage.read(key: 'yarnAccessToken');
         FormData formData = FormData.fromMap({
           "file": await MultipartFile.fromFile(_imagePath!),
@@ -133,8 +332,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
             },
           ),
         );
-        print(response.data);
+        setState(() {
+          _isLoading = false; // Start loading
+        });
+        _showCustomSnackBar(context, 'Profile picture updated successfully!');
       } catch (e) {
+        setState(() {
+          _isLoading = false; // Start loading
+        });
+        _showCustomSnackBar(context, 'Failed to update profile picture!',
+            isError: true);
         print(e);
       }
     }
@@ -144,7 +351,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
-      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
+      final decodedImage =
+          await decodeImageFromList(imageFile.readAsBytesSync());
 
       if (decodedImage.width > 800 || decodedImage.height > 800) {
         CroppedFile? croppedImage = await ImageCropper().cropImage(
@@ -176,14 +384,55 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  @override
+  void dispose() {
+    _dobFocusNode.dispose(); // Dispose focus node
+    dobController.dispose(); // Dispose controller
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Profile'),
+        title: const Text('Edit Profile'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -192,14 +441,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
               Center(
                 child: Stack(
                   children: [
-                    if (_imagePath == null || _imagePath!.isEmpty) // Check if image path is null or empty
+                    if (_imagePath == null ||
+                        _imagePath!
+                            .isEmpty) // Check if image path is null or empty
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
                         child: Container(
                           width: 111,
                           height: 111,
                           color: Colors.grey,
-                          child: Image.asset('images/ProfileImg.png', fit: BoxFit.cover),
+                          child: Image.asset('images/ProfileImg.png',
+                              fit: BoxFit.cover),
                         ),
                       )
                     else
@@ -209,7 +461,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           width: 111,
                           height: 111,
                           color: Colors.grey,
-                          child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                          child:
+                              Image.file(File(_imagePath!), fit: BoxFit.cover),
                         ),
                       ),
                     Positioned(
@@ -217,108 +470,387 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       right: 0,
                       child: InkWell(
                         onTap: _selectImage,
-                        child: Image.asset('images/EditProfileImg.png', height: 35),
+                        child: Image.asset('images/EditProfileImg.png',
+                            height: 35),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: 16.0),
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
 
               // Personal Information Fields
-              TextField(
-                decoration: InputDecoration(labelText: 'First Name'),
-                onChanged: (value) => _firstName = value, // Correct variable name
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Username'),
+                onChanged: (value) => _username = value,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Username cannot be empty';
+                  }
+                  return null; // Return null if valid
+                },
               ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Surname'),
-                onChanged: (value) => _surname = value, // Correct variable name
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'First Name'),
+                onChanged: (value) => _firstName = value,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'First name cannot be empty';
+                  }
+                  return null; // Return null if valid
+                },
               ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Email'),
-                onChanged: (value) => _email = value, // Correct variable name
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Surname'),
+                onChanged: (value) => _surname = value,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Surname cannot be empty';
+                  }
+                  return null; // Return null if valid
+                },
               ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Phone'),
-                onChanged: (value) => _phone = value, // Correct variable name
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Email'),
+                onChanged: (value) => _email = value,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email cannot be empty';
+                  }
+                  // Add regex for email validation if needed
+                  return null; // Return null if valid
+                },
+              ),
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
+              IntlPhoneField(
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  counterText: '',
+                ),
+                initialCountryCode: 'NG',
+                onChanged: (phone) {
+                  setState(() {
+                    _phone = phone.completeNumber;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.completeNumber.isEmpty) {
+                    return 'Phone number cannot be empty';
+                  }
+                  return null; // Return null if valid
+                },
+              ),
+              // Add bottom divider
+              Container(
+                height: 1,
+                color: Theme.of(context).dividerColor,
+                margin: const EdgeInsets.only(top: 8.0),
               ),
 
-              // Country Dropdown
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: 'Country'),
-                value: _selectedCountry,
-                items: _countries.map((csc.Country country) {
-                  return DropdownMenuItem<String>(
-                    value: country.name,
-                    child: Text(country.name),
-                  );
-                }).toList(),
+                decoration: const InputDecoration(labelText: 'Country'),
+                value: _isLoadingCountry ? null : _selectedCountryIsoCode,
+                items: _isLoadingCountry
+                    ? null
+                    : _countries.map((csc.Country country) {
+                        return DropdownMenuItem<String>(
+                          value: country.isoCode,
+                          child: Text(country.name),
+                        );
+                      }).toList(),
                 onChanged: (value) async {
                   setState(() {
-                    _selectedCountry = value;
-                    _states = []; // Reset states when country changes
-                    _selectedState = null; // Reset selected state
+                    _selectedCountryIsoCode = value;
+                    _states = [];
+                    _selectedState = null;
                   });
-                  if (_selectedCountry != null) {
-                    // Fetch states for the selected country
-                    List<csc.State> states = await csc.getStatesOfCountry(_selectedCountry!);
+                  if (_selectedCountryIsoCode != null) {
+                    await _fetchStates(_selectedCountryIsoCode!);
+                  }
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select a country';
+                  }
+                  return null; // Return null if valid
+                },
+                hint: _isLoadingCountry ? const Text('Loading...') : null,
+              ),
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
+              PopupMenuButton<String>(
+                onSelected: (String value) async {
+                  // Find the selected state based on the ISO code
+                  csc.State? selectedState = _states.firstWhere(
+                      (state) => state.isoCode == value,
+                      orElse: () => csc.State(
+                          name: '',
+                          isoCode: '',
+                          latitude: '',
+                          longitude: '',
+                          countryCode: ''));
+
+                  if (selectedState != null) {
                     setState(() {
-                      _states = states;
+                      _selectedStateIsoCode =
+                          value; // Update selected state ISO code
+                      _selectedState =
+                          selectedState.name; // Update selected state name
+                      _cities = [];
+                      _selectedCity = null; // Reset city
+                    });
+
+                    // Fetch cities after state is selected
+                    if (_selectedStateIsoCode != null) {
+                      await _fetchCities(
+                          _selectedState!, _selectedCountryIsoCode!);
+                    }
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return _isLoadingState
+                      ? [
+                          const PopupMenuItem<String>(
+                            enabled: false, // Disable selection while loading
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator()), // Show loading spinner
+                          )
+                        ]
+                      : _states.map((csc.State state) {
+                          return PopupMenuItem<String>(
+                            value: state.isoCode,
+                            child: Text(
+                              state.name == _selectedState
+                                  ? '${state.name} (Detected)' // Show detected alias
+                                  : state.name, // Normal state name
+                            ),
+                          );
+                        }).toList();
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 15.0, horizontal: 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(0),
+                    border: Border(
+                        bottom:
+                            BorderSide(color: Theme.of(context).dividerColor)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _isLoadingState
+                            ? 'Loading...'
+                            : (_selectedState ?? 'Select a state'),
+                        style: const TextStyle(
+                          fontSize: 16.0, // Font size
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
+
+              // City Dropdown
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
+              PopupMenuButton<String>(
+                onSelected: (String value) {
+                  setState(() {
+                    _selectedCity = value; // Update selected city
+                  });
+                },
+                itemBuilder: (BuildContext context) {
+                  return _isLoadingCity
+                      ? [
+                          const PopupMenuItem<String>(
+                            enabled: false, // Disable selection while loading
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator()), // Show loading spinner
+                          )
+                        ]
+                      : _cities.map((csc.City city) {
+                          return PopupMenuItem<String>(
+                            value: city.name,
+                            child: Text(
+                              city.name == _selectedCity
+                                  ? '${city.name} (Detected)' // Show detected alias
+                                  : city.name, // Normal city name
+                            ),
+                          );
+                        }).toList();
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 15.0, horizontal: 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(0),
+                    border: Border(
+                        bottom:
+                            BorderSide(color: Theme.of(context).dividerColor)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _isLoadingCity
+                            ? 'Loading...'
+                            : (_selectedCity ?? 'Select a city'),
+                        style: const TextStyle(
+                          fontSize: 16.0, // Font size
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
+              // Gender Dropdown
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Gender'),
+                value: _gender,
+                hint: const Text('Select Gender'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _gender = newValue;
+                  });
+                },
+                items: ['Male', 'Female', 'Other'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select a gender';
+                  }
+                  return null; // Return null if valid
+                },
+              ),
+
+              GestureDetector(
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      dobController.text = _formatDate(picked);
                     });
                   }
                 },
-              ),
-              SizedBox(height: 16),
-
-              // State Dropdown
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: 'State'),
-                value: _selectedState,
-                items:  _states.map((csc.State state) {
-                  return DropdownMenuItem<String>(
-                    value: state.name,
-                    child: Text(state.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedState = value;
-                  });
-                },
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    controller: dobController,
+                    decoration: const InputDecoration(
+                        labelText: 'Date of Birth (DD/MM/YYYY)'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Date of birth cannot be empty';
+                      }
+                      // You can add date format validation if needed
+                      return null; // Return null if valid
+                    },
+                  ),
+                ),
               ),
 
-              // Gender Dropdown
-              DropdownButton<String>(
-                value: _gender, // Correct variable name
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _gender = newValue; // Correct variable name
-                  });
-                },
-                items: ['Male', 'Female', 'Other']
-                    .map((value) => DropdownMenuItem(
-                  value: value,
-                  child: Text(value),
-                ))
-                    .toList(),
-              ),
+              SizedBox(
+                  height: (16.0 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height),
 
-              // Date of Birth Field
-              TextField(
-                decoration: InputDecoration(labelText: 'Date of Birth (YYYY-MM-DD)'),
-                onChanged: (value) => _dateOfBirth = value, // Correct variable name
-              ),
+              Container(
+                width: double.infinity,
+                height: (60 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_imagePath != null && _imagePath!.isNotEmpty) {
+                      // If user selects an image, update only the profile image
+                      setState(() {
+                        _isProfileImageUpdateOnly = true;
+                      });
+                    } else {
+                      setState(() {
+                        _isProfileImageUpdateOnly = false;
+                      });
+                    }
 
-              SizedBox(height: 16.0),
-
-              // Submit Button
-              ElevatedButton(
-                onPressed: () async {
-                  await _updateProfile();
-                  await _updateProfilePicture();
-                },
-                child: Text('Update Profile'),
+                    // If user is updating only the profile image, skip form validation
+                    if (_isProfileImageUpdateOnly) {
+                      await _updateProfilePicture(); // Update profile picture only
+                    } else {
+                      // Validate the form and update the whole profile if valid
+                      if (_formKey.currentState!.validate()) {
+                        await _updateProfile(); // Update full profile
+                        if (_imagePath != null && _imagePath!.isNotEmpty) {
+                          await _updateProfilePicture(); // Also update profile picture if changed
+                        }
+                      }
+                    }
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Colors.white;
+                        }
+                        return const Color(0xFF500450);
+                      },
+                    ),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return const Color(0xFF500450);
+                        }
+                        return Colors.white;
+                      },
+                    ),
+                    elevation: WidgetStateProperty.all<double>(4.0),
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                      const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(35)),
+                      ),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Update Profile',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
               ),
             ],
           ),

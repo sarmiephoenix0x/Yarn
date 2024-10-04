@@ -32,6 +32,14 @@ class _UserProfileState extends State<UserProfile>
   int following = 0;
   int posts = 0;
 
+
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserProfile();
+  }
+
   Future<void> fetchUserProfile() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url = 'https://yarnapi.onrender.com/api/users/${widget.userId}';

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:image_picker/image_picker.dart';
 
 class CreateCommunity extends StatefulWidget {
   const CreateCommunity({super.key});
@@ -113,7 +113,6 @@ class CreateCommunityState extends State<CreateCommunity> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,7 +127,8 @@ class CreateCommunityState extends State<CreateCommunity> {
             ),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(hintText: 'Community Description'),
+              decoration:
+                  const InputDecoration(hintText: 'Community Description'),
             ),
             // Profile Picture Section
             GestureDetector(
@@ -141,16 +141,60 @@ class CreateCommunityState extends State<CreateCommunity> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: _communityProfilePicture != null
-                    ? Image.file(File(_communityProfilePicture!.path), fit: BoxFit.cover)
-                    : const Center(child: Text('Tap to select profile picture')),
+                    ? Image.file(File(_communityProfilePicture!.path),
+                        fit: BoxFit.cover)
+                    : const Center(
+                        child: Text('Tap to select profile picture')),
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _createCommunity,
-              child: _isLoading
-                  ? CircularProgressIndicator()
-                  : const Text('Create Community'),
+            SizedBox(
+                height: (20.0 / MediaQuery.of(context).size.height) *
+                    MediaQuery.of(context).size.height),
+            Container(
+              width: double.infinity,
+              height: (60 / MediaQuery.of(context).size.height) *
+                  MediaQuery.of(context).size.height,
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _createCommunity,
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return Colors.white;
+                      }
+                      return const Color(0xFF500450);
+                    },
+                  ),
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return const Color(0xFF500450);
+                      }
+                      return Colors.white;
+                    },
+                  ),
+                  elevation: WidgetStateProperty.all<double>(4.0),
+                  shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                    const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(35)),
+                    ),
+                  ),
+                ),
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Create Community',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
             ),
           ],
         ),

@@ -288,7 +288,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         final Map<String, dynamic> data = responseData['data'];
         await storage.write(key: 'yarnAccessToken', value: data['token']);
         await prefs.setString('user', jsonEncode({
-          // 'userId': data['userId'],
+          'userId': data['userId'],
           'username': data['username'],
           'firstName': firstName,
           'surname': surname,

@@ -6,6 +6,7 @@ import 'account_page.dart';
 import 'explore_page.dart';
 import 'home_page.dart';
 import 'like_page.dart';
+import 'package:geolocator/geolocator.dart';
 
 class MainApp extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
@@ -22,6 +23,28 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   final List<bool> _hasNotification = [false, false, false, false, false];
   DateTime? currentBackPressTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _getLocationPermission();
+  }
+
+
+  Future<void> _getLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+    }
+  }
 
   void _showCustomSnackBar(BuildContext context, String message,
       {bool isError = false}) {
@@ -226,7 +249,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
     switch (index) {
       case 0:
         return HomePage(
-          selectedIndex: _selectedIndex,
+            selectedIndex: _selectedIndex,
             onToggleDarkMode: widget.onToggleDarkMode,
             isDarkMode: widget.isDarkMode
         );

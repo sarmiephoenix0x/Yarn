@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class CreatePost extends StatefulWidget {
   const CreatePost({super.key});
@@ -151,7 +152,9 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
             .map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
-            child: Text('Post to $value'),
+            child: Text('Post to $value',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           );
         }).toList(),
       ),
@@ -228,27 +231,27 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                     onTap: _pickCoverPhoto,
                     child: _coverPhoto != null
                         ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(_coverPhoto!.path),
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    )
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_coverPhoto!.path),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          )
                         : Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey[300],
-                      ),
-                      child: const Icon(
-                        Icons.add_a_photo,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
+                            height: 200,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[300],
+                            ),
+                            child: const Icon(
+                              Icons.add_a_photo,
+                              size: 50,
+                              color: Colors.grey,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -309,30 +312,64 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                   children: [
                     FloatingActionButton.extended(
                       onPressed: _insertImage,
-                      icon: Icon(Icons.image, color: Theme.of(context).colorScheme.onSurface),
-                      label: Text('Add Image', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                      backgroundColor: Colors.grey,
+                      icon: Icon(Icons.image,
+                          color: Theme.of(context).colorScheme.onSurface),
+                      label: Text('Add Image',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface)),
+                      backgroundColor: const Color(0xFF500450),
                     ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _publishPost, // Disable button when loading
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.grey,
-                        ),
-                      ),
-                      child: _isLoading
-                          ? Row(
-                        children: [
-                          const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                    SizedBox(
+                        width: (16.0 / MediaQuery.of(context).size.height) *
+                            MediaQuery.of(context).size.height),
+                    Container(
+                      height: (60 / MediaQuery.of(context).size.height) *
+                          MediaQuery.of(context).size.height,
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _publishPost,
+                        style: ButtonStyle(
+                          backgroundColor:
+                              WidgetStateProperty.resolveWith<Color>(
+                            (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.pressed)) {
+                                return Colors.white;
+                              }
+                              return const Color(0xFF500450);
+                            },
                           ),
-                          SizedBox(width: 10),
-                          Text('Publishing...', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-                        ],
-                      )
-                          : Text('Publish', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                          foregroundColor:
+                              WidgetStateProperty.resolveWith<Color>(
+                            (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.pressed)) {
+                                return const Color(0xFF500450);
+                              }
+                              return Colors.white;
+                            },
+                          ),
+                          elevation: WidgetStateProperty.all<double>(4.0),
+                          shape:
+                              WidgetStateProperty.all<RoundedRectangleBorder>(
+                            const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Publish',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
                     ),
                   ],
                 ),

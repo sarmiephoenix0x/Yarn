@@ -943,17 +943,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Expanded(
             child: TextField(
               controller: commentController,
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Theme.of(context).colorScheme.onSurface,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
-                hintText: 'Add comment...',
+                hintText: 'Add a comment...',
+                hintStyle: TextStyle(
+                  color: Colors.grey[600],
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20.0),
                   borderSide: BorderSide.none,
                 ),
-                filled: true,
+                filled: false,
                 fillColor: Colors.grey[200],
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
+              minLines: 1,
+              maxLines: null,
+              cursorColor: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 10),

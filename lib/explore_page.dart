@@ -68,87 +68,24 @@ class _ExplorePageState extends State<ExplorePage>
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    Text(
-                      "Topic",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    Spacer(),
-                    const Text(
-                      "See all",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15.0,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.article_outlined, size: 100, color: Colors.grey),
+                  SizedBox(height: 20),
+                  Text(
+                    'No contents.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  // const SizedBox(height: 20),
+                  // ElevatedButton(
+                  //   onPressed: () => _fetchComments(),
+                  //   // Retry fetching comments
+                  //   child: const Text('Retry'),
+                  // ),
+                ],
               ),
-              topics("images/TrendingImg.png", "Health",
-                  "Russian warship: Moskva sinks in Black Sea"),
-              topics("images/TrendingImg.png", "Technology",
-                  "German warship: Moskva sinks in Black Sea"),
-              topics("images/TrendingImg.png", "Art",
-                  "Japanese warship: Moskva sinks in Black Sea"),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    Text(
-                      "Popular Topic",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      "See all",
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15.0,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              popular(
-                  "images/TrendingImg.png",
-                  "Europe",
-                  "Russian warship: Moskva sinks in Black Sea",
-                  "images/ProfileImg.png",
-                  "Anonymous",
-                  "4h ago"),
-              popular(
-                  "images/TrendingImg.png",
-                  "Europe",
-                  "Russian warship: Moskva sinks in Black Sea",
-                  "images/ProfileImg.png",
-                  "Anonymous",
-                  "4h ago"),
-              popular(
-                  "images/TrendingImg.png",
-                  "Europe",
-                  "Russian warship: Moskva sinks in Black Sea",
-                  "images/ProfileImg.png",
-                  "Anonymous",
-                  "4h ago"),
             ],
           ),
         ],

@@ -5,6 +5,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 import 'comments_page.dart';
@@ -24,21 +25,20 @@ class DetailsPage extends StatefulWidget {
   final String comments;
   final bool isLiked;
 
-  const DetailsPage(
-      {super.key,
-      required this.postId,
-      required this.postImg,
-      required this.authorImg,
-      required this.description,
-      required this.authorName,
-      required this.verified,
-      required this.anonymous,
-      required this.time,
-      required this.isFollowing,
-      required this.likes,
-      required this.comments,
-      required this.isLiked,
-      required this.userId});
+  const DetailsPage({super.key,
+    required this.postId,
+    required this.postImg,
+    required this.authorImg,
+    required this.description,
+    required this.authorName,
+    required this.verified,
+    required this.anonymous,
+    required this.time,
+    required this.isFollowing,
+    required this.likes,
+    required this.comments,
+    required this.isLiked,
+    required this.userId});
 
   @override
   DetailsPageState createState() => DetailsPageState();
@@ -59,10 +59,12 @@ class DetailsPageState extends State<DetailsPage> {
   int _current = 0;
   bool isFollowing = false;
   int likes = 0;
+  int? localUserId;
+  bool isMe = false;
 
   void _showPopupMenu(BuildContext context) async {
     final RenderBox renderBox =
-        _key.currentContext!.findRenderObject() as RenderBox;
+    _key.currentContext!.findRenderObject() as RenderBox;
     final Offset position = renderBox.localToGlobal(Offset.zero);
 
     await showMenu(
@@ -81,7 +83,10 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/share-box-line.png',
               ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.05,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width * 0.05,
               ),
               const Text(
                 'Share',
@@ -102,7 +107,10 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/feedback-line.png',
               ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.05,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width * 0.05,
               ),
               const Text(
                 'Report',
@@ -123,7 +131,10 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/save-line.png',
               ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.05,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width * 0.05,
               ),
               const Text(
                 'Save',
@@ -144,7 +155,10 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/basketball-line.png',
               ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.05,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width * 0.05,
               ),
               const Text(
                 'Open in browser',
@@ -182,6 +196,7 @@ class DetailsPageState extends State<DetailsPage> {
   @override
   void initState() {
     super.initState();
+    fetchLocalUserProfile();
     isFollowing = widget.isFollowing;
     isLiked = widget.isLiked; // Set initial liked state
     likes = int.parse(widget.likes);
@@ -195,6 +210,18 @@ class DetailsPageState extends State<DetailsPage> {
         }
       }
     });
+  }
+
+  Future<void> fetchLocalUserProfile() async {
+    localUserId = await getUserIdFromPrefs();
+    if (widget.userId == localUserId) {
+      setState(() {
+        isMe = true;
+      });
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('$isMe')),
+      // );
+    }
   }
 
   Future<void> _toggleLike() async {
@@ -220,8 +247,10 @@ class DetailsPageState extends State<DetailsPage> {
       final errorData = json.decode(response.body);
       // Handle error - you might want to show a dialog or a Snackbar
       print('Error toggling like: ${errorData['message']}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${errorData['message']}')),
+      _showCustomSnackBar(
+        context,
+        'Error: ${errorData['message']}',
+        isError: true,
       );
     }
   }
@@ -332,16 +361,44 @@ class DetailsPageState extends State<DetailsPage> {
     }
   }
 
+  Future<int?> getUserIdFromPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve the saved 'user' data
+    String? userData = prefs.getString('user');
+
+    // Check if the 'user' data exists
+    if (userData != null) {
+      // Decode the JSON-encoded string to a Map
+      Map<String, dynamic> userMap = jsonDecode(userData);
+
+      // Access the userId from the Map
+      return userMap['userId'];
+    }
+
+    // Return null if no 'user' data is found
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    Color originalIconColor = Theme.of(context).colorScheme.onSurface;
+    Color originalIconColor = Theme
+        .of(context)
+        .colorScheme
+        .onSurface;
     return Scaffold(
       body: OrientationBuilder(builder: (context, orientation) {
         return Center(
           child: SizedBox(
             height: orientation == Orientation.portrait
-                ? MediaQuery.of(context).size.height
-                : MediaQuery.of(context).size.height * 1.5,
+                ? MediaQuery
+                .of(context)
+                .size
+                .height
+                : MediaQuery
+                .of(context)
+                .size
+                .height * 1.5,
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
@@ -352,7 +409,10 @@ class DetailsPageState extends State<DetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1,
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.1,
                         ),
                         Row(
                           children: [
@@ -382,7 +442,10 @@ class DetailsPageState extends State<DetailsPage> {
                           ],
                         ),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05,
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.05,
                         ),
                         Row(
                           children: [
@@ -392,13 +455,23 @@ class DetailsPageState extends State<DetailsPage> {
                                   borderRadius: BorderRadius.circular(55),
                                   child: Container(
                                     width: (50 /
-                                            MediaQuery.of(context).size.width) *
-                                        MediaQuery.of(context).size.width,
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width) *
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width,
                                     height: (50 /
-                                            MediaQuery.of(context)
-                                                .size
-                                                .height) *
-                                        MediaQuery.of(context).size.height,
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height) *
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height,
                                     color: Colors.grey,
                                     child: Image.asset(
                                       'images/ProfileImg.png',
@@ -411,13 +484,23 @@ class DetailsPageState extends State<DetailsPage> {
                                   borderRadius: BorderRadius.circular(55),
                                   child: Container(
                                     width: (50 /
-                                            MediaQuery.of(context).size.width) *
-                                        MediaQuery.of(context).size.width,
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width) *
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width,
                                     height: (50 /
-                                            MediaQuery.of(context)
-                                                .size
-                                                .height) *
-                                        MediaQuery.of(context).size.height,
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height) *
+                                        MediaQuery
+                                            .of(context)
+                                            .size
+                                            .height,
                                     color: Colors.grey,
                                     child: Image.network(
                                       widget.authorImg,
@@ -433,7 +516,10 @@ class DetailsPageState extends State<DetailsPage> {
                                   ),
                                 ),
                             SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.01,
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.01,
                             ),
                             Expanded(
                               child: Column(
@@ -457,18 +543,22 @@ class DetailsPageState extends State<DetailsPage> {
                                           ),
                                       ],
                                     ),
-                                  ] else ...[
-                                    Text(
-                                      'Anonymous',
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
+                                  ] else
+                                    ...[
+                                      Text(
+                                        'Anonymous',
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
                                   SizedBox(
-                                    height: MediaQuery.of(context).size.height *
+                                    height: MediaQuery
+                                        .of(context)
+                                        .size
+                                        .height *
                                         0.01,
                                   ),
                                   Text(
@@ -485,59 +575,63 @@ class DetailsPageState extends State<DetailsPage> {
                             ),
                             const Spacer(),
                             if (widget.anonymous == false)
-                              InkWell(
-                                onTap: () {
-                                  // setState(() {
-                                  //   isFollowing = !isFollowing;
-                                  // });
+                              if(isMe == false)
+                                InkWell(
+                                  onTap: () {
+                                    // setState(() {
+                                    //   isFollowing = !isFollowing;
+                                    // });
 
-                                  if (isFollowing) {
-                                    unfollowUser();
-                                  } else {
-                                    followUser();
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: isFollowing
-                                        ? const Color(0xFF500450)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
+                                    if (isFollowing) {
+                                      unfollowUser();
+                                    } else {
+                                      followUser();
+                                    }
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
                                       color: isFollowing
-                                          ? Colors.transparent
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.2),
-                                      width: 2,
+                                          ? const Color(0xFF500450)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isFollowing
+                                            ? Colors.transparent
+                                            : Theme
+                                            .of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.2),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    child: isFollowing
+                                        ? Text(
+                                      "Following",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontFamily: 'Poppins',
+                                        color: Theme
+                                            .of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                    )
+                                        : Text(
+                                      "Follow",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontFamily: 'Poppins',
+                                        color: Theme
+                                            .of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
                                     ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  child: isFollowing
-                                      ? Text(
-                                          "Following",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontFamily: 'Poppins',
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                          ),
-                                        )
-                                      : Text(
-                                          "Follow",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontFamily: 'Poppins',
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                          ),
-                                        ),
-                                ),
-                              )
+                                )
                           ],
                         ),
                         if (widget.postImg.isNotEmpty)
@@ -571,7 +665,10 @@ class DetailsPageState extends State<DetailsPage> {
                             ),
                           ),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.03,
+                          height: MediaQuery
+                              .of(context)
+                              .size
+                              .height * 0.03,
                         ),
                         // Text(
                         //   "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
@@ -589,7 +686,7 @@ class DetailsPageState extends State<DetailsPage> {
                           child: Text(
                             widget.description,
                             style:
-                                TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                            TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                           ),
                         ),
                       ],
@@ -599,8 +696,14 @@ class DetailsPageState extends State<DetailsPage> {
                 Positioned(
                   bottom: 0,
                   child: Container(
-                    height: (70 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
+                    height: (70 / MediaQuery
+                        .of(context)
+                        .size
+                        .height) *
+                        MediaQuery
+                            .of(context)
+                            .size
+                            .height,
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -615,7 +718,10 @@ class DetailsPageState extends State<DetailsPage> {
                       ],
                     ),
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(children: [
@@ -645,19 +751,24 @@ class DetailsPageState extends State<DetailsPage> {
                             ],
                           ),
                           SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.06),
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.06),
                           Row(
                             children: [
                               IconButton(
                                 icon: Icon(Icons.comment,
-                                    color: Theme.of(context)
+                                    color: Theme
+                                        .of(context)
                                         .colorScheme
                                         .onSurface),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => CommentsPage(
+                                        builder: (context) =>
+                                            CommentsPage(
                                               key: UniqueKey(),
                                               postId: widget.postId,
                                             )),
