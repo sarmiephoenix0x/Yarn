@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/privacy.dart';
+import 'package:yarn/intro_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Settings extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
-  const Settings({super.key,required this.onToggleDarkMode, required this.isDarkMode});
+
+  const Settings(
+      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
 
   @override
   SettingsState createState() => SettingsState();
@@ -20,24 +25,20 @@ class SettingsState extends State<Settings>
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   int? _selectedRadioValue;
-  late bool _darkModeMoved;
+  bool _darkModeMoved = false;
 
   @override
   void initState() {
     super.initState();
-    _darkModeMoved = widget.isDarkMode;
+    _loadDarkModePreference();
     _initializePrefs();
   }
 
-  @override
-  void didUpdateWidget(Settings oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Update local state if the parent widget's dark mode value changes
-    if (oldWidget.isDarkMode != widget.isDarkMode) {
-      setState(() {
-        _darkModeMoved = widget.isDarkMode;
-      });
-    }
+  void _loadDarkModePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _darkModeMoved = prefs.getBool('isDarkMode') ?? false;
+    });
   }
 
   Future<void> _initializePrefs() async {
@@ -74,20 +75,108 @@ class SettingsState extends State<Settings>
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void _toggleDarkMode(bool value) {
+  void _toggleDarkMode(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _darkModeMoved = value; // Update the state
+      _darkModeMoved = value;
     });
+    await prefs.setBool('isDarkMode', value);
     widget.onToggleDarkMode(value);
-    // Simulate a delay to allow for transitions
-    Future.delayed(const Duration(milliseconds: 100), () {
-      // After the delay, you can ensure the switch reflects the current mode
-      if (_darkModeMoved != widget.isDarkMode) {
-        setState(() {
-          _darkModeMoved = widget.isDarkMode; // Adjust position
-        });
-      }
+  }
+
+  Future<void> _logout() async {
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    if (accessToken == null) {
+      _showCustomSnackBar(
+        context,
+        'You are not logged in.',
+        isError: true,
+      );
+
+      return;
+    }
+
+    await storage.delete(key: 'yarnAccessToken');
+    await prefs.remove('user');
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IntroPage(
+            onToggleDarkMode: widget.onToggleDarkMode,
+            isDarkMode: widget.isDarkMode),
+      ),
+    );
+    setState(() {
+      isLoading = false;
     });
+  }
+
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Confirm Logout'),
+              content: const Text('Are you sure you want to log out?'),
+              actions: <Widget>[
+                Row(
+                  children: [
+                    TextButton(
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontFamily: 'Inter'),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Dismiss the dialog
+                      },
+                    ),
+                    const Spacer(),
+                    if (isLoading)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.red,
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isLoading = true;
+                          });
+
+                          _logout().then((_) {
+                            // Navigator.of(context)
+                            //     .pop(); // Dismiss dialog after logout
+                          }).catchError((error) {
+                            setState(() {
+                              isLoading = false;
+                            });
+                          });
+                        },
+                        child: Text(
+                          'Logout',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontFamily: 'Inter'),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -118,7 +207,7 @@ class SettingsState extends State<Settings>
                               child: Image.asset(
                                 'images/BackButton.png',
                                 height: 25,
-                                color:Theme.of(context).colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             SizedBox(
@@ -133,7 +222,8 @@ class SettingsState extends State<Settings>
                                   fontFamily: 'Poppins',
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20.0,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -155,7 +245,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Bell.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -167,7 +259,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -183,7 +277,8 @@ class SettingsState extends State<Settings>
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => Privacy(key: UniqueKey()),
+                                      builder: (context) =>
+                                          Privacy(key: UniqueKey()),
                                     ),
                                   );
                                 },
@@ -192,7 +287,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Privacy.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -204,7 +301,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -222,7 +321,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/AccountSettings.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -234,7 +335,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -252,7 +355,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Language.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -264,7 +369,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -282,7 +389,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/Help.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -294,7 +403,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -312,7 +423,9 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/About.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
@@ -324,7 +437,9 @@ class SettingsState extends State<Settings>
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                   ],
@@ -342,19 +457,23 @@ class SettingsState extends State<Settings>
                                     Image.asset(
                                       'images/tabler_brightness-filled.png',
                                       height: 35,
-                                      color:Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                     SizedBox(
                                         width:
-                                        MediaQuery.of(context).size.width *
-                                            0.065),
+                                            MediaQuery.of(context).size.width *
+                                                0.065),
                                     Text(
                                       'Dark Mode',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontSize: 15.0,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                       ),
                                     ),
                                     const Spacer(),
@@ -371,14 +490,17 @@ class SettingsState extends State<Settings>
                                   horizontal: 20.0, vertical: 20),
                               child: InkWell(
                                 // Use InkWell for tap functionality
-                                onTap: () {},
+                                onTap: () {
+                                  _showLogoutConfirmationDialog();
+                                },
                                 child: Text(
                                   'Log out',
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 15.0,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),

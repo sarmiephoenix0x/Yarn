@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:yarn/user_profile.dart';
 
 class FollowingsPage extends StatefulWidget {
-  const FollowingsPage({super.key});
+  final int senderId;
+
+  const FollowingsPage({super.key, required this.senderId});
 
   @override
   _FollowingsPageState createState() => _FollowingsPageState();
@@ -191,7 +193,11 @@ class _FollowingsPageState extends State<FollowingsPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => UserProfile(key: UniqueKey(), userId: userId),
+            builder: (context) => UserProfile(
+              key: UniqueKey(),
+              userId: userId,
+              senderId: widget.senderId,
+            ),
           ),
         );
       },
@@ -230,6 +236,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
                   children: [
                     Text(
                       name,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,

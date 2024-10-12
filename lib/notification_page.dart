@@ -319,7 +319,8 @@ class NotificationPageState extends State<NotificationPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.1,
@@ -336,7 +337,7 @@ class NotificationPageState extends State<NotificationPage> {
                       ),
                     ),
                     const Spacer(),
-                    const Expanded(
+                    Expanded(
                       flex: 10,
                       child: Text(
                         'Notification',
@@ -345,7 +346,7 @@ class NotificationPageState extends State<NotificationPage> {
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.bold,
                           fontSize: 20.0,
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -353,17 +354,23 @@ class NotificationPageState extends State<NotificationPage> {
                     const Icon(Icons.more_vert),
                   ],
                 ),
-                //Remember to remove this once the backend is ready
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.05,
-                ),
-                notificationWidget(
-                    _profileImage,
-                    "Jane Doe is now following you",
-                    "4h ago",
-                    true),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.05,
+                SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                const Column(
+                  children: [
+                    Icon(Icons.article_outlined, size: 100, color: Colors.grey),
+                    SizedBox(height: 20),
+                    Text(
+                      'No contents.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                    // const SizedBox(height: 20),
+                    // ElevatedButton(
+                    //   onPressed: () => _fetchComments(),
+                    //   // Retry fetching comments
+                    //   child: const Text('Retry'),
+                    // ),
+                  ],
                 ),
                 // ...groupedNotifications.entries.map((entry) {
                 //   return Column(

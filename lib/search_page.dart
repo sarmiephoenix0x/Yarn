@@ -1,11 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'author_profile.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class SearchPage extends StatefulWidget {
   final int selectedIndex;
@@ -30,6 +31,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   List<dynamic> _pages = [];
   String _errorMessage = '';
   final storage = const FlutterSecureStorage();
+  int? userId;
 
   @override
   void initState() {
@@ -45,6 +47,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchPages() async {
+    userId = await getUserIdFromPrefs();
     setState(() {
       _isLoading = true; // Start loading
     });
@@ -93,6 +96,25 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
         _isLoading = false; // Stop loading after error
       });
     }
+  }
+
+  Future<int?> getUserIdFromPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve the saved 'user' data
+    String? userData = prefs.getString('user');
+
+    // Check if the 'user' data exists
+    if (userData != null) {
+      // Decode the JSON-encoded string to a Map
+      Map<String, dynamic> userMap = jsonDecode(userData);
+
+      // Access the userId from the Map
+      return userMap['userId'];
+    }
+
+    // Return null if no 'user' data is found
+    return null;
   }
 
   @override
@@ -177,8 +199,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                         Text(
                           'No contents.',
                           textAlign: TextAlign.center,
-                          style:
-                          TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
                         // const SizedBox(height: 20),
                         // ElevatedButton(
@@ -197,8 +218,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                         Text(
                           'No contents.',
                           textAlign: TextAlign.center,
-                          style:
-                          TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
                         // const SizedBox(height: 20),
                         // ElevatedButton(
@@ -647,6 +667,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
               profileImage: img,
               pageName: name,
               pageDescription: description,
+              senderId: userId!,
             ),
           ),
         );

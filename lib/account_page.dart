@@ -38,6 +38,7 @@ class _AccountPageState extends State<AccountPage>
   TabController? latestTabController;
   TabController? profileTab;
   String? userName;
+  String? occupation;
   int followers = 0;
   int following = 0;
   int posts = 0;
@@ -63,6 +64,7 @@ class _AccountPageState extends State<AccountPage>
 
   bool isLoading = true;
   Map<int, bool> _isLikedMap = {};
+  int? userId;
 
   @override
   void initState() {
@@ -213,7 +215,7 @@ class _AccountPageState extends State<AccountPage>
   }
 
   Future<void> fetchUserProfile() async {
-    int? userId = await getUserIdFromPrefs();
+    userId = await getUserIdFromPrefs();
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url = 'https://yarnapi.onrender.com/api/users/$userId';
     try {
@@ -233,11 +235,19 @@ class _AccountPageState extends State<AccountPage>
           following = responseData['data']['followingsCount'];
           posts = responseData['data']['postsCount'];
           userName = responseData['data']['username'];
-          _profileImage =
-              responseData['personalInfo']?['profilePictureUrl'] ?? '';
+          occupation = responseData['data']['occupation'];
+          _profileImage = responseData['personalInfo']?['profilePictureUrl'] != null 
+    ? responseData['personalInfo']['profilePictureUrl'] + '/download' 
+    : '';
           isLoading = false;
         });
         print("Profile Loaded${response.body}");
+        _showCustomSnackBar(
+          context,
+          _profileImage,
+          isError: true,
+        );
+        print(_profileImage);
       } else {
         print('Error fetching profile: ${response.statusCode}');
         setState(() {
@@ -326,7 +336,11 @@ class _AccountPageState extends State<AccountPage>
       int postId, TextEditingController commentController) async {
     final String comment = commentController.text.trim();
     if (comment.isEmpty) {
-      _showErrorDialog('Please enter a comment.');
+      _showCustomSnackBar(
+        context,
+        'Please enter a comment.',
+        isError: true,
+      );
       return;
     }
 
@@ -357,38 +371,30 @@ class _AccountPageState extends State<AccountPage>
         commentController.clear(); // Clear the input field after submission
       } catch (e) {
         print('Error parsing response: $e');
-        _showErrorDialog('Error adding comment. Invalid response from server.');
+        _showCustomSnackBar(
+          context,
+          'Error adding comment. Invalid response from server.',
+          isError: true,
+        );
       }
     } else {
       try {
         final errorData = json.decode(response.body);
-        _showErrorDialog(
-            'Error adding comment: ${errorData['message'] ?? 'Unknown error'}');
+        _showCustomSnackBar(
+          context,
+          'Error adding comment: ${errorData['message'] ?? 'Unknown error'}',
+          isError: true,
+        );
       } catch (e) {
         // If the response is not valid JSON, show the raw response text
         print('Error response: ${response.body}');
-        _showErrorDialog(
-            'Error adding comment. Server returned an unexpected response.');
+        _showCustomSnackBar(
+          context,
+          'Error adding comment. Server returned an unexpected response.',
+          isError: true,
+        );
       }
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -476,9 +482,14 @@ class _AccountPageState extends State<AccountPage>
                                     (80 / MediaQuery.of(context).size.height) *
                                         MediaQuery.of(context).size.height,
                                 color: Colors.grey,
-                                child: Image.file(
-                                  File(_profileImage),
+                                child: Image.network(
+                                  _profileImage,
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                        color: Colors
+                                            .grey); // Fallback if image fails
+                                  },
                                 ),
                               ),
                             ),
@@ -491,8 +502,10 @@ class _AccountPageState extends State<AccountPage>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          FollowersPage(key: UniqueKey())),
+                                      builder: (context) => FollowersPage(
+                                            key: UniqueKey(),
+                                            senderId: userId!,
+                                          )),
                                 );
                               },
                               child: Column(
@@ -528,8 +541,10 @@ class _AccountPageState extends State<AccountPage>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        FollowingsPage(key: UniqueKey()),
+                                    builder: (context) => FollowingsPage(
+                                      key: UniqueKey(),
+                                      senderId: userId!,
+                                    ),
                                   ),
                                 );
                               },
@@ -608,10 +623,10 @@ class _AccountPageState extends State<AccountPage>
                       //     ),
                       //   ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Text(
-                        "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+                        occupation ?? "No Bio",
                         overflow: TextOverflow.ellipsis,
                         softWrap: true,
                         maxLines: 3,
@@ -632,8 +647,10 @@ class _AccountPageState extends State<AccountPage>
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      EditProfilePage(key: UniqueKey()),
+                                  builder: (context) => EditProfilePage(
+                                    key: UniqueKey(),
+                                    profileImgUrl: _profileImage,
+                                  ),
                                 ),
                               );
                             },
@@ -1190,7 +1207,7 @@ class _AccountPageState extends State<AccountPage>
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
-    int userId = post['creatorId'];
+    int creatorUserId = post['creatorId'];
     int _current = 0;
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
@@ -1257,7 +1274,8 @@ class _AccountPageState extends State<AccountPage>
                 likes: likes.toString(),
                 comments: comments.toString(),
                 isLiked: isLiked,
-                userId: userId,
+                userId: creatorUserId,
+                senderId: userId!,
               ),
             ),
           );
@@ -1538,7 +1556,7 @@ class _AccountPageState extends State<AccountPage>
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
-    int userId = post['creatorId'];
+    int creatorUserId = post['creatorId'];
     int _current = 0;
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
@@ -1605,7 +1623,8 @@ class _AccountPageState extends State<AccountPage>
                 likes: likes.toString(),
                 comments: comments.toString(),
                 isLiked: isLiked,
-                userId: userId,
+                userId: creatorUserId,
+                senderId: userId!,
               ),
             ),
           );
@@ -2079,8 +2098,7 @@ class _AccountPageState extends State<AccountPage>
                   imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                        color: Colors.grey);
+                    return Container(color: Colors.grey);
                   },
                 ),
               ),

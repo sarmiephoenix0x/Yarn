@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:yarn/user_profile.dart';
 
 import 'comments_page.dart';
 
@@ -24,6 +25,7 @@ class DetailsPage extends StatefulWidget {
   final String likes;
   final String comments;
   final bool isLiked;
+  final int senderId;
 
   const DetailsPage({super.key,
     required this.postId,
@@ -38,7 +40,7 @@ class DetailsPage extends StatefulWidget {
     required this.likes,
     required this.comments,
     required this.isLiked,
-    required this.userId});
+    required this.userId, required this.senderId});
 
   @override
   DetailsPageState createState() => DetailsPageState();
@@ -447,192 +449,213 @@ class DetailsPageState extends State<DetailsPage> {
                               .size
                               .height * 0.05,
                         ),
-                        Row(
-                          children: [
-                            if (widget.anonymous == false)
-                              if (widget.authorImg.isEmpty)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(55),
-                                  child: Container(
-                                    width: (50 /
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width) *
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
-                                    height: (50 /
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height) *
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
-                                    color: Colors.grey,
-                                    child: Image.asset(
-                                      'images/ProfileImg.png',
-                                      fit: BoxFit.cover,
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    UserProfile(
+                                      key: UniqueKey(),
+                                      userId: widget.userId,
+                                      senderId: widget.senderId,
                                     ),
-                                  ),
-                                )
-                              else
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(55),
-                                  child: Container(
-                                    width: (50 /
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width) *
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
-                                    height: (50 /
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height) *
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
-                                    color: Colors.grey,
-                                    child: Image.network(
-                                      widget.authorImg,
-                                      // Use the communityProfilePictureUrl or a default image
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Container(
-                                            color: Colors
-                                                .grey); // Fallback if image fails
-                                      },
-                                    ),
-                                  ),
-                                ),
-                            SizedBox(
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.01,
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (widget.anonymous == false) ...[
-                                    Row(
-                                      children: [
-                                        Text(
-                                          widget.authorName,
-                                          style: const TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        if (widget.verified == true)
-                                          Image.asset(
-                                            'images/verified.png',
-                                            height: 20,
-                                          ),
-                                      ],
-                                    ),
-                                  ] else
-                                    ...[
-                                      Text(
-                                        'Anonymous',
-                                        style: const TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  SizedBox(
-                                    height: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .height *
-                                        0.01,
-                                  ),
-                                  Text(
-                                    widget.time,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 16,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
                               ),
-                            ),
-                            const Spacer(),
-                            if (widget.anonymous == false)
-                              if(isMe == false)
-                                InkWell(
-                                  onTap: () {
-                                    // setState(() {
-                                    //   isFollowing = !isFollowing;
-                                    // });
-
-                                    if (isFollowing) {
-                                      unfollowUser();
-                                    } else {
-                                      followUser();
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: isFollowing
-                                          ? const Color(0xFF500450)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isFollowing
-                                            ? Colors.transparent
-                                            : Theme
-                                            .of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.2),
-                                        width: 2,
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              if (widget.anonymous == false)
+                                if (widget.authorImg.isEmpty)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(55),
+                                    child: Container(
+                                      width: (50 /
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width,
+                                      height: (50 /
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height,
+                                      color: Colors.grey,
+                                      child: Image.asset(
+                                        'images/ProfileImg.png',
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    child: isFollowing
-                                        ? Text(
-                                      "Following",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontFamily: 'Poppins',
-                                        color: Theme
-                                            .of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    )
-                                        : Text(
-                                      "Follow",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontFamily: 'Poppins',
-                                        color: Theme
-                                            .of(context)
-                                            .colorScheme
-                                            .onSurface,
+                                  )
+                                else
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(55),
+                                    child: Container(
+                                      width: (50 /
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .width,
+                                      height: (50 /
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height) *
+                                          MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height,
+                                      color: Colors.grey,
+                                      child: Image.network(
+                                        widget.authorImg,
+                                        // Use the communityProfilePictureUrl or a default image
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Container(
+                                              color: Colors
+                                                  .grey); // Fallback if image fails
+                                        },
                                       ),
                                     ),
                                   ),
-                                )
-                          ],
+                              SizedBox(
+                                width: MediaQuery
+                                    .of(context)
+                                    .size
+                                    .width * 0.01,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (widget.anonymous == false) ...[
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              widget.authorName,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          if (widget.verified == true)
+                                            Image.asset(
+                                              'images/verified.png',
+                                              height: 20,
+                                            ),
+                                        ],
+                                      ),
+                                    ] else
+                                      ...[
+                                        Expanded(
+                                          child: Text(
+                                            'Anonymous',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    SizedBox(
+                                      height: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .height *
+                                          0.01,
+                                    ),
+                                    Text(
+                                      widget.time,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 16,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Spacer(),
+                              if (widget.anonymous == false)
+                                if (isMe == false)
+                                  InkWell(
+                                    onTap: () {
+                                      // setState(() {
+                                      //   isFollowing = !isFollowing;
+                                      // });
+
+                                      if (isFollowing) {
+                                        unfollowUser();
+                                      } else {
+                                        followUser();
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isFollowing
+                                            ? const Color(0xFF500450)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isFollowing
+                                              ? Colors.transparent
+                                              : Theme
+                                              .of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.2),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      child: isFollowing
+                                          ? Text(
+                                        "Following",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontFamily: 'Poppins',
+                                          color: Theme
+                                              .of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      )
+                                          : Text(
+                                        "Follow",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontFamily: 'Poppins',
+                                          color: Theme
+                                              .of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                            ],
+                          ),
                         ),
                         if (widget.postImg.isNotEmpty)
                           Padding(

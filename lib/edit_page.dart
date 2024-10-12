@@ -13,7 +13,11 @@ import 'package:intl/intl.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final String profileImgUrl;
+  const EditProfilePage({
+    super.key,
+    required this.profileImgUrl,
+  });
 
   @override
   EditProfilePageState createState() => EditProfilePageState();
@@ -60,6 +64,7 @@ class EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
+    _imagePath = widget.profileImgUrl;
     _getLocation();
     _loadCountries();
   }
@@ -106,60 +111,89 @@ class EditProfilePageState extends State<EditProfilePage> {
           await placemarkFromCoordinates(position.latitude, position.longitude);
 
       if (placemarks.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _detectedCountry = placemarks.first.country;
-            _detectedState = placemarks.first.administrativeArea;
-            _detectedCity = placemarks.first.locality;
-          });
-        }
+        Placemark place = placemarks.first;
+
+        // Detected country, state, and city
+        _detectedCountry = place.country;
+        _detectedState = place.administrativeArea;
+        _detectedCity = place.locality;
+
+        print(
+            'Detected country: $_detectedCountry, state: $_detectedState, city: $_detectedCity');
 
         if (_detectedCountry != null) {
-          csc.Country? detectedCountry = _countries.firstWhere(
-              (country) => country.name == _detectedCountry,
-              orElse: () => csc.Country(
-                  name: '',
-                  isoCode: '',
-                  phoneCode: '',
-                  flag: '',
-                  currency: '',
-                  latitude: '',
-                  longitude: ''));
+          // Ensure countries list is populated
+          if (_countries.isNotEmpty) {
+            csc.Country? detectedCountry = _countries.firstWhere(
+                (country) => country.name == _detectedCountry,
+                orElse: () => csc.Country(
+                    name: '',
+                    isoCode: '',
+                    phoneCode: '',
+                    flag: '',
+                    currency: '',
+                    latitude: '',
+                    longitude: ''));
 
-          if (detectedCountry.name.isNotEmpty) {
-            _selectedCountryIsoCode = detectedCountry.isoCode;
-            _selectedCountry = detectedCountry.name;
-            await _fetchStates(_selectedCountryIsoCode!);
+            if (detectedCountry.name.isNotEmpty) {
+              _selectedCountryIsoCode = detectedCountry.isoCode;
+              _selectedCountry = detectedCountry.name;
+
+              if (_selectedCountryIsoCode != null) {
+                print('Fetching states for: $_selectedCountry');
+                await _fetchStates(_selectedCountryIsoCode!);
+                print('Done fetching states');
+              } else {
+                print('No valid ISO code for the detected country.');
+              }
+            } else {
+              print('Detected country not found in the list.');
+            }
           } else {
-            print('Detected country not found.');
+            print('Countries list is empty.');
           }
         }
 
         if (_detectedState != null) {
-          csc.State? detectedState = _states.firstWhere(
-              (state) =>
-                  state.name.toLowerCase() == _detectedState!.toLowerCase(),
-              orElse: () => csc.State(
-                  name: '',
-                  isoCode: '',
-                  countryCode: '',
-                  latitude: '',
-                  longitude: ''));
+          // Ensure states list is populated
+          if (_states.isNotEmpty) {
+            csc.State? detectedState = _states.firstWhere(
+                (state) =>
+                    state.name.toLowerCase() == _detectedState!.toLowerCase(),
+                orElse: () => csc.State(
+                    name: '',
+                    isoCode: '',
+                    countryCode: '',
+                    latitude: '',
+                    longitude: ''));
 
-          if (detectedState.name.isNotEmpty) {
-            setState(() {
+            if (detectedState.name.isNotEmpty) {
               _selectedStateIsoCode = detectedState.isoCode;
               _selectedState = detectedState.name;
-            });
-            await _fetchCities(
-                _selectedStateIsoCode!, _selectedCountryIsoCode!);
+
+              if (_selectedStateIsoCode != null &&
+                  _selectedCountryIsoCode != null) {
+                print(
+                    'Fetching cities for state: $_selectedState and country: $_selectedCountry');
+                await _fetchCities(
+                    _selectedStateIsoCode!, _selectedCountryIsoCode!);
+              } else {
+                print('State or Country ISO code is null.');
+              }
+            } else {
+              print('Detected state not found in the list.');
+            }
           } else {
-            print('Detected state not found.');
+            print('States list is empty.');
           }
+        } else {
+          print('No state detected.');
         }
+      } else {
+        print('No placemarks found.');
       }
     } catch (e) {
-      print(e);
+      print('Error in _getAddressFromLatLng: $e');
     }
   }
 
@@ -171,13 +205,34 @@ class EditProfilePageState extends State<EditProfilePage> {
     // Fetch states for the selected country
     List<csc.State> states = await csc.getStatesOfCountry(countryIsoCode);
 
-    if (states.isNotEmpty) {
-      setState(() {
-        _states = states; // Assign the fetched states to the list
-        _selectedState = _detectedState;
-        _isLoadingState = false;
-      });
-      _fetchCities(_selectedStateIsoCode!, countryIsoCode);
+    // Debug: Print the fetched states
+    print('Fetched states: ${states.map((state) => state.name).toList()}');
+
+    if (_detectedState != null) {
+      csc.State? detectedState = states.firstWhere(
+          (state) =>
+              state.name.trim().toLowerCase() ==
+                  _detectedState!.trim().toLowerCase() ||
+              state.name.trim().toLowerCase() ==
+                  '${_detectedState!.trim()} State'.toLowerCase(),
+          orElse: () => csc.State(
+              name: '',
+              isoCode: '',
+              countryCode: '',
+              latitude: '',
+              longitude: ''));
+
+      if (detectedState.name.isNotEmpty) {
+        setState(() {
+          _states = states;
+          _selectedStateIsoCode = detectedState.isoCode;
+          _selectedState = detectedState.name;
+          _isLoadingState = false;
+        });
+        await _fetchCities(_selectedStateIsoCode!, _selectedCountryIsoCode!);
+      } else {
+        print('Detected state not found in the list.');
+      }
     } else {
       print('No states found for country $countryIsoCode');
       setState(() {
@@ -188,10 +243,15 @@ class EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _fetchCities(String stateIsoCode, String countryIsoCode) async {
-    if (stateIsoCode.isEmpty || countryIsoCode.isEmpty)
+    if (stateIsoCode.isEmpty || countryIsoCode.isEmpty) {
+      print(
+          'Invalid state or country ISO code. State: $stateIsoCode, Country: $countryIsoCode');
       return; // Ensure valid state and country codes
+    }
+
     print(
         'Fetching cities for countryIsoCode: $countryIsoCode and stateIsoCode: $stateIsoCode');
+
     setState(() {
       _isLoadingCity = true; // Start loading cities
     });
@@ -199,7 +259,8 @@ class EditProfilePageState extends State<EditProfilePage> {
     try {
       // Fetch the cities based on the selected state and country
       List<csc.City> cities =
-          await csc.getStateCities(stateIsoCode, countryIsoCode);
+          await csc.getStateCities(countryIsoCode, stateIsoCode);
+      print(cities);
       setState(() {
         _cities = cities;
         _selectedCity = _detectedCity;
@@ -271,8 +332,8 @@ class EditProfilePageState extends State<EditProfilePage> {
 
       // Log the server response body
       print('Server Response: ${response.data}'); // Log the response body
-      _showCustomSnackBar(context, 'Server Response: ${response.data}',
-          isError: true);
+      // _showCustomSnackBar(context, 'Server Response: ${response.data}',
+      //     isError: true);
 
       // Handle response status codes
       if (response.statusCode == 200) {
@@ -454,6 +515,23 @@ class EditProfilePageState extends State<EditProfilePage> {
                               fit: BoxFit.cover),
                         ),
                       )
+                    else if (_imagePath!.startsWith('http'))
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(55),
+                        child: Container(
+                          width: 111,
+                          height: 111,
+                          color: Colors.grey,
+                          child: Image.network(
+                            _imagePath!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons
+                                  .error); // Show an error icon if image fails to load
+                            },
+                          ),
+                        ),
+                      )
                     else
                       ClipRRect(
                         borderRadius: BorderRadius.circular(55),
@@ -614,7 +692,7 @@ class EditProfilePageState extends State<EditProfilePage> {
                     // Fetch cities after state is selected
                     if (_selectedStateIsoCode != null) {
                       await _fetchCities(
-                          _selectedState!, _selectedCountryIsoCode!);
+                          _selectedStateIsoCode!, _selectedCountryIsoCode!);
                     }
                   }
                 },
@@ -803,6 +881,9 @@ class EditProfilePageState extends State<EditProfilePage> {
                     // If user is updating only the profile image, skip form validation
                     if (_isProfileImageUpdateOnly) {
                       await _updateProfilePicture(); // Update profile picture only
+                      if (_formKey.currentState!.validate()) {
+                        await _updateProfile();
+                      }
                     } else {
                       // Validate the form and update the whole profile if valid
                       if (_formKey.currentState!.validate()) {

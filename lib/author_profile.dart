@@ -10,6 +10,7 @@ import 'details_page.dart';
 
 class AuthorProfilePage extends StatefulWidget {
   final int pageId;
+  final int senderId;
   final String profileImage;
   final String pageName;
   final String pageDescription;
@@ -17,6 +18,7 @@ class AuthorProfilePage extends StatefulWidget {
   const AuthorProfilePage({
     super.key,
     required this.pageId,
+    required this.senderId,
     required this.profileImage,
     required this.pageName,
     required this.pageDescription,
@@ -822,7 +824,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
-    int userId = post['creatorId'];
+    int creatorUserId = post['creatorId'];
     int _current = 0;
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
@@ -878,7 +880,8 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                 likes: likes.toString(),
                 comments: comments.toString(),
                 isLiked: isLiked,
-                userId: userId,
+                userId: creatorUserId,
+                senderId: widget.senderId,
               ),
             ),
           );

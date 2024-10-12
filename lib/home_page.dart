@@ -4,9 +4,12 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/user_profile.dart';
 
 import 'comments_page.dart';
 import 'details_page.dart';
+import 'messages_page.dart';
 import 'notification_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -39,10 +42,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool hasMore = true;
   final storage = const FlutterSecureStorage();
   Map<int, bool> _isLikedMap = {};
+  int? userId;
 
   @override
   void initState() {
     super.initState();
+    fetchUserProfilePic();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
     _fetchPosts();
@@ -53,6 +58,60 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
+  }
+
+  Future<void> fetchUserProfilePic() async {
+    userId = await getUserIdFromPrefs();
+    final String? accessToken = await storage.read(key: 'yarnAccessToken');
+    final url = 'https://yarnapi.onrender.com/api/users/$userId';
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        setState(() {
+          _profileImage =
+              responseData['personalInfo']?['profilePictureUrl'] ?? '';
+        });
+        print("Profile Pic Loaded${response.body}");
+      } else {
+        print('Error fetching profile Pic: ${response.statusCode}');
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (error) {
+      print('Error: $error');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<int?> getUserIdFromPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve the saved 'user' data
+    String? userData = prefs.getString('user');
+
+    // Check if the 'user' data exists
+    if (userData != null) {
+      // Decode the JSON-encoded string to a Map
+      Map<String, dynamic> userMap = jsonDecode(userData);
+
+      // Access the userId from the Map
+      return userMap['userId'];
+    }
+
+    // Return null if no 'user' data is found
+    return null;
   }
 
   Future<void> _fetchPosts({int pageNum = 1}) async {
@@ -269,6 +328,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       height: 50,
                     ),
                   ),
+                  InkWell(
+                    onTap: () {
+                      // int someReceiverId = 1;
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => ChatPage(receiverId: someReceiverId,
+                      //         senderId: userId!,
+                      //         receiverName: "Philip",
+                      //         profilePic: _profileImage), // Pass the receiverId
+                      //   ),
+                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MeassagesPage(
+                            key: UniqueKey(),
+                            senderId: userId!,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Image.asset(
+                      'images/ChatImg.png',
+                      height: 50,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -387,7 +473,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
-    int userId = post['creatorId'];
+    int creatorUserId = post['creatorId'];
     int _current = 0;
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
@@ -454,7 +540,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 likes: likes.toString(),
                 comments: comments.toString(),
                 isLiked: isLiked,
-                userId: userId,
+                userId: creatorUserId,
+                senderId: userId!,
               ),
             ),
           );
@@ -464,30 +551,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    if (!anonymous)
-                      if (authorImg.isEmpty)
-                        _buildProfilePlaceholder()
-                      else
-                        _buildProfileImage(authorImg),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.03),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAuthorDetails(authorName, verified, anonymous),
-                          if (postImg.isEmpty)
-                            _buildLocationAndTime(location, time),
-                        ],
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UserProfile(
+                        key: UniqueKey(),
+                        userId: creatorUserId,
+                        senderId: userId!,
                       ),
                     ),
-                    const Spacer(),
-                    // if (!anonymous) _buildFollowButton(isFollowing, authorName),
-                  ],
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    children: [
+                      if (!anonymous)
+                        if (authorImg.isEmpty)
+                          _buildProfilePlaceholder()
+                        else
+                          _buildProfileImage(authorImg),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAuthorDetails(
+                                authorName, verified, anonymous),
+                            if (postImg.isEmpty)
+                              _buildLocationAndTime(location, time),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // if (!anonymous) _buildFollowButton(isFollowing, authorName),
+                    ],
+                  ),
                 ),
               ),
               if (postImg.isNotEmpty) _buildPostImages(postImg),
@@ -760,26 +862,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildAuthorDetails(String authorName, bool verified, bool anonymous) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (!anonymous) ...[
           Row(
             children: [
-              Text(
-                authorName,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  authorName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               //if (verified) Image.asset('images/verified.png', height: 20),
             ],
           ),
-          Text(
-            '@$authorName',
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              color: Colors.grey,
+          Flexible(
+            child: Text(
+              '@$authorName',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.grey,
+              ),
             ),
           ),
         ] else
@@ -797,11 +905,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildLocationAndTime(String location, String time) {
     return Row(
       children: [
-        Text(
-          location,
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Text(
+            location,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         SizedBox(width: 10),
