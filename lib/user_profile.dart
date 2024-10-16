@@ -87,8 +87,9 @@ class _UserProfileState extends State<UserProfile>
           posts = responseData['data']['postsCount'];
           userName = responseData['data']['username'];
           occupation = responseData['data']['occupation'];
-          _profileImage =
-              responseData['personalInfo']?['profilePictureUrl'] ?? '';
+          _profileImage = responseData['personalInfo']?['profilePictureUrl'] != null 
+    ? responseData['personalInfo']['profilePictureUrl'] + '/download' 
+    : '';
           isLoading = false;
         });
         print("Profile Loaded${response.body}");
@@ -807,7 +808,9 @@ class _UserProfileState extends State<UserProfile>
   }
 
   Widget communityWidget(dynamic post) {
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
@@ -1156,7 +1159,9 @@ class _UserProfileState extends State<UserProfile>
   }
 
   Widget timeline(dynamic post) {
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =

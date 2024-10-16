@@ -266,7 +266,9 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                     itemBuilder: (context, index) {
                                       final page = _pages[index];
                                       return author(
-                                          page['pageProfilePictureUrl'] ?? '',
+  page['pageProfilePictureUrl'] != null 
+    ? "${page['pageProfilePictureUrl']}/download" 
+    : '',
                                           page['name'],
                                           page['description'],
                                           '${page['followers'].length} followers',

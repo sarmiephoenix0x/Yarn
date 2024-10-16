@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -9,8 +12,9 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
 import 'package:signalr_core/signalr_core.dart';
-import 'package:flutter_sound/flutter_sound.dart';
+
 import 'chat_provider.dart';
 
 class ChatSignalR {
@@ -22,10 +26,10 @@ class ChatSignalR {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     hubConnection = HubConnectionBuilder()
         .withUrl(
-            serverUrl,
-            HttpConnectionOptions(
-              accessTokenFactory: () async => accessToken,
-            ))
+        serverUrl,
+        HttpConnectionOptions(
+          accessTokenFactory: () async => accessToken,
+        ))
         .build();
 
     hubConnection.onclose((error) => print('Connection Closed: $error'));
@@ -109,7 +113,7 @@ class ChatService {
       // Check if the response status is 'Success'
       if (responseData['status'] == 'Success') {
         final List<dynamic> chats =
-            responseData['data']; // Extracting the list from 'data'
+        responseData['data']; // Extracting the list from 'data'
 
         // Sort chats by the last message's dateSent
         chats.sort((a, b) {
@@ -168,11 +172,10 @@ class ChatPage extends StatefulWidget {
   final String receiverName;
   final String profilePic;
 
-  ChatPage(
-      {required this.receiverId,
-      required this.senderId,
-      required this.receiverName,
-      required this.profilePic});
+  ChatPage({required this.receiverId,
+    required this.senderId,
+    required this.receiverName,
+    required this.profilePic});
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -183,16 +186,19 @@ class _ChatPageState extends State<ChatPage> {
   late ChatSignalR chatSignalR;
   List<dynamic> messages = [];
   TextEditingController _messageController = TextEditingController();
+  File? selectedAudioFile;
   List<File> selectedImages = [];
   bool messagesLoaded = false;
+  final record = AudioRecorder();
   final ScrollController _scrollController = ScrollController();
   bool isSending = false;
-  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  FlutterSoundPlayer _player = FlutterSoundPlayer();
-  bool _isRecording = false;
-  bool _isPlaying = false;
-  String _currentPlayingFilePath = '';
-  String? selectedAudioFile;
+  bool isRecording = false;
+  bool isAudioMessage = false;
+  AudioPlayer _audioPlayer = AudioPlayer();
+  Duration totalDuration = Duration();
+  Duration currentPosition = Duration();
+  bool isPlaying = false;
+  bool isSwipedUp = false;
 
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
@@ -211,7 +217,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> initSignalR() async {
-    await _checkPermissions();
     try {
       await chatSignalR.initSignalR(); // Wait for SignalR initialization
       chatSignalR.onMessageReceived((messageId) async {
@@ -235,7 +240,7 @@ class _ChatPageState extends State<ChatPage> {
 
         // Find the chatId based on the receiverId
         final chat = chats.firstWhere(
-          (chat) => chat['lastMessage']['receiverId'] == widget.receiverId,
+              (chat) => chat['lastMessage']['receiverId'] == widget.receiverId,
           // Access receiverId from lastMessage
           orElse: () => null,
         );
@@ -274,16 +279,11 @@ class _ChatPageState extends State<ChatPage> {
         isSending = true; // Start sending animation
       });
 
-      File? audioFile;
-      if (selectedAudioFile != null) {
-        audioFile = File(selectedAudioFile!); // Convert the path to a File
-      }
-
       await chatService.sendMessage(
         receiverId: widget.receiverId,
         text:
-            _messageController.text.isNotEmpty ? _messageController.text : null,
-        audioFile: audioFile,
+        _messageController.text.isNotEmpty ? _messageController.text : null,
+        audioFile: selectedAudioFile,
         images: selectedImages.isNotEmpty ? selectedImages : null,
       );
 
@@ -293,7 +293,7 @@ class _ChatPageState extends State<ChatPage> {
           'text': _messageController.text,
           'senderId': widget.senderId,
           'imageUrls': selectedImages.map((image) => image.path).toList(),
-          'audioUrl': selectedAudioFile,
+          'audioUrl': selectedAudioFile?.path,
           'isSent': false, // Initially set to false
         });
         _messageController.clear();
@@ -316,70 +316,14 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> _checkPermissions() async {
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException("Microphone permission not granted");
-    }
-  }
-
-  Future<void> _startRecording() async {
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException("Microphone permission not granted");
-    }
-
-    Directory tempDir = await getTemporaryDirectory();
-    String filePath =
-        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.aac';
-
-    // Start recording using startRecorder
-    await _recorder.startRecorder(toFile: filePath);
-
-    setState(() {
-      _isRecording = true;
-      selectedAudioFile = null;
-    });
-  }
-
-  Future<void> _stopRecording() async {
-    String? filePath = await _recorder.stopRecorder();
-    setState(() {
-      _isRecording = false;
-      selectedAudioFile = filePath; // Save the file path
-    });
-  }
-
-  Future<void> _togglePlayPause(String filePath) async {
-    if (_isPlaying && _currentPlayingFilePath == filePath) {
-      // Stop playing
-      await _player.stopPlayer();
+  Future<void> selectAudio() async {
+    FilePickerResult? result =
+    await FilePicker.platform.pickFiles(type: FileType.audio);
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        _isPlaying = false;
-        _currentPlayingFilePath = '';
-      });
-    } else {
-      // Start playing
-      await _player.startPlayer(
-        fromURI: filePath,
-        whenFinished: () {
-          setState(() {
-            _isPlaying = false;
-            _currentPlayingFilePath = '';
-          });
-        },
-      );
-      setState(() {
-        _isPlaying = true;
-        _currentPlayingFilePath = filePath;
+        selectedAudioFile = File(result.files.single.path!);
       });
     }
-  }
-
-  void _deleteVoiceNote() {
-    setState(() {
-      selectedAudioFile = null;
-    });
   }
 
   Future<void> selectImages() async {
@@ -392,6 +336,102 @@ class _ChatPageState extends State<ChatPage> {
       });
     }
   }
+
+  /// Request permissions for microphone and storage
+  Future<bool> requestPermissions() async {
+    final micStatus = await Permission.microphone.request();
+    final storageStatus = await Permission.storage.request();
+    return micStatus.isGranted && storageStatus.isGranted;
+  }
+
+  /// Get a valid file path for saving the recording
+  Future<String> getFilePath() async {
+    final directory =
+    await getApplicationDocumentsDirectory(); // Use a writable directory
+    return '${directory
+        .path}/voice_note.m4a'; // You can change the file name as needed
+  }
+
+  // Function to start recording when button is pressed
+  void startRecording() async {
+    if (await requestPermissions()) {
+      setState(() {
+        isRecording = true;
+      });
+      final path = await getFilePath();
+      await record.start(const RecordConfig(), path: path);
+    } else {
+      print('Permissions not granted');
+    }
+  }
+
+// Function to stop recording and replace input field with audio player UI
+  void stopRecording() async {
+    final path = await record.stop();
+    if (path != null) {
+      setState(() {
+        selectedAudioFile = File(path);
+        isRecording = false;
+        isAudioMessage = true; // Flag to show audio player UI
+      });
+    }
+  }
+
+// Function to cancel recording
+  void cancelRecording() async {
+    await record.cancel();
+    setState(() {
+      isRecording = false;
+      isAudioMessage = false;
+    });
+  }
+
+  void playAudio(String path) async {
+    // Play audio from the specified path
+    await _audioPlayer.play(
+        DeviceFileSource(path)); // Use DeviceFileSource for local file playback
+
+    // Audio started playing successfully
+    isPlaying = true;
+    _audioPlayer.onDurationChanged.listen((Duration duration) {
+      totalDuration = duration;
+    });
+    _audioPlayer.onPositionChanged.listen((Duration position) {
+      currentPosition = position;
+    });
+  }
+
+  void pauseAudio() async {
+    // Pause the currently playing audio
+    await _audioPlayer.pause();
+    isPlaying = false;
+  }
+
+  void seekAudio(Duration position) async {
+    // Seek to a specific position in the audio
+    await _audioPlayer.seek(position);
+  }
+
+  void stopAudio() async {
+    await _audioPlayer.stop();
+    isPlaying = false;
+    currentPosition = Duration(); // Reset position to 0
+  }
+
+  String formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+
+  // Helper function to format the recording duration into minutes and seconds
+String _formatRecordingTime() {
+  final minutes = currentPosition.inMinutes.remainder(60);
+  final seconds = currentPosition.inSeconds.remainder(60);
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
 
   Future<void> selectImagesFromGallery() async {
     final pickedImages = await ImagePicker().pickMultiImage();
@@ -416,24 +456,26 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageBubble(Map<String, dynamic> message, bool isSentByMe) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bool isDarkMode = Theme
+        .of(context)
+        .brightness == Brightness.dark;
 
     // Define colors for sender (right) and receiver (left)
     Color senderBubbleColor =
-        isDarkMode ? Color(0xFF7A0D7D) : Color(0xFF500450);
+    isDarkMode ? Color(0xFF7A0D7D) : Color(0xFF500450);
     Color receiverBubbleColor =
-        isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
+    isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300;
 
     Color senderTextColor = Colors.white;
     Color receiverTextColor = isDarkMode ? Colors.white : Colors.black87;
 
     // Ensure isSent is not null and provide a default value (false if null)
-    // bool isSent = message['isSent'] ?? false;
+    bool isSent = message['isSent'] ?? false;
 
     // Define the sent status icon
-    // Icon sentStatusIcon = isSent
-    //     ? Icon(Icons.check_circle, color: Colors.green, size: 16)
-    //     : Icon(Icons.hourglass_empty, color: Colors.orange, size: 16);
+    Icon sentStatusIcon = isSent
+        ? Icon(Icons.check_circle, color: Colors.green, size: 16)
+        : Icon(Icons.hourglass_empty, color: Colors.orange, size: 16);
 
     return Align(
       alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -441,7 +483,10 @@ class _ChatPageState extends State<ChatPage> {
         padding: EdgeInsets.all(10),
         margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         constraints:
-            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6),
+        BoxConstraints(maxWidth: MediaQuery
+            .of(context)
+            .size
+            .width * 0.6),
         decoration: BoxDecoration(
           color: isSentByMe ? senderBubbleColor : receiverBubbleColor,
           borderRadius: BorderRadius.only(
@@ -454,59 +499,55 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Audio message handling
+            // Content of the message bubble
             if (message['audioUrl'] != null)
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   IconButton(
-                    icon: Icon(
-                      _isPlaying &&
-                              _currentPlayingFilePath ==
-                                  '${message['audioUrl']}/download'
-                          ? Icons.pause
-                          : Icons.play_arrow,
-                    ),
-                    onPressed: () =>
-                        _togglePlayPause('${message['audioUrl']}/download'),
+                    icon:
+                    Icon(Icons.play_circle_outline, color: senderTextColor),
+                    onPressed: () {
+if (message['audioUrl'].startsWith('http')) {
+                      // Play from network URL with "/download" appended
+                      AudioPlayer().play(UrlSource('${message['audioUrl']}/download'));
+                    } else {
+                      // Play from local file
+                       AudioPlayer().play(message['audioUrl']);
+                    }
+                     
+                    },
                   ),
-                  const Text(
-                    'Voice Note',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontFamily: 'Inter',
+                  if (message['text'] != null)
+                    Text(
+                      message['text'],
+                      style: TextStyle(color: senderTextColor),
                     ),
-                  ),
                 ],
-              ),
-
-            // Image message handling (can be multiple images)
-            if (message['imageUrls'] != null && message['imageUrls'].isNotEmpty)
-              Column(
-                children: message['imageUrls'].map<Widget>((imageUrl) {
-                  return imageUrl.startsWith('http')
-                      ? Image.network(
-                          '$imageUrl/download',
-                          fit: BoxFit.cover,
-                        )
-                      : Image.file(
-                          File(imageUrl),
-                          fit: BoxFit.cover,
-                        );
-                }).toList(),
-              ),
-
-            // Text message handling
-            if (message['text'] != null && message['text'].isNotEmpty)
-              Text(
-                message['text'],
-                style: TextStyle(
-                  color: isSentByMe ? senderTextColor : receiverTextColor,
-                  fontSize: 16,
+              )
+            else if (message['imageUrls'] != null &&
+              message['imageUrls'].isNotEmpty)
+            // Handle image message - check if it's a local file or a network URL
+            message['imageUrls'][0].startsWith('http')
+                ? Image.network(
+                    '${message['imageUrls'][0]}/download',
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(message['imageUrls'][0]),
+                    fit: BoxFit.cover,
+                  )
+              else
+                Text(
+                  message['text'] ?? 'Audio/Image',
+                  style: TextStyle(
+                    color: isSentByMe ? senderTextColor : receiverTextColor,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-
-            // Uncomment if you want to show the sent status icon
+            // // Add some spacing before the icon
             // SizedBox(height: 8),
+            // // Sent status icon placed below the content
             // sentStatusIcon,
           ],
         ),
@@ -540,7 +581,7 @@ class _ChatPageState extends State<ChatPage> {
                         chatPreviewText: "Sent An Audio",
                         imageUrl: widget.profilePic,
                         timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                        DateFormat('dd/MM/yyyy').format(DateTime.now()),
                       );
                       Provider.of<ChatProvider>(context, listen: false)
                           .addOrUpdateChat(newChat);
@@ -555,7 +596,7 @@ class _ChatPageState extends State<ChatPage> {
                         chatPreviewText: "Sent An Image",
                         imageUrl: widget.profilePic,
                         timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                        DateFormat('dd/MM/yyyy').format(DateTime.now()),
                       );
                       Provider.of<ChatProvider>(context, listen: false)
                           .addOrUpdateChat(newChat);
@@ -570,7 +611,7 @@ class _ChatPageState extends State<ChatPage> {
                         chatPreviewText: message['text']!,
                         imageUrl: widget.profilePic,
                         timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                        DateFormat('dd/MM/yyyy').format(DateTime.now()),
                       );
 
                       Provider.of<ChatProvider>(context, listen: false)
@@ -583,7 +624,10 @@ class _ChatPageState extends State<ChatPage> {
               },
             ),
           ),
-          _buildTextField(), // Show input field or audio UI
+          if (isRecording)
+            _buildVoiceRecorder() // Show recorder UI when recording
+          else
+            _buildInputField(), // Show input field or audio UI
         ],
       ),
     );
@@ -612,24 +656,147 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildVoiceRecorder() {
+  return GestureDetector(
+    onTapDown: (details) {
+      startRecording(); // Start recording when the user taps down
+      setState(() {
+        isRecording = true; // Update the UI to show recording state
+      });
+    },
+    onTapUp: (details) {
+      if (!isSwipedUp) {
+        stopRecording(); // Stop recording when the user releases the tap
+        setState(() {
+          isRecording = false;
+          isAudioMessage = true; // Show the audio message UI after recording
+        });
+      }
+    },
+    onLongPressStart: (details) {
+      startRecording(); // Start recording when the user long-presses
+      setState(() {
+        isRecording = true;
+      });
+    },
+    onLongPressEnd: (details) {
+      if (!isSwipedUp) {
+        stopRecording(); // Stop recording on release
+        setState(() {
+          isRecording = false;
+          isAudioMessage = true; // Show the audio message UI after recording
+        });
+      } else {
+        cancelRecording(); // Cancel recording if swiped down
+      }
+    },
+    onVerticalDragUpdate: (details) {
+      if (details.delta.dy < 0) {
+        // Swiped up to keep recording without holding
+        isSwipedUp = true;
+      } else {
+        // Swiped down to cancel recording
+        isSwipedUp = false;
+        cancelRecording();
+        setState(() {
+          isRecording = false; // Reset the recording state
+          isAudioMessage = false; // Go back to the regular input field
+        });
+      }
+    },
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        // Background for the recording UI
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(isRecording ? 1.0 : 0.8),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Icon(Icons.mic, color: Colors.white, size: 32),
+        ),
+        if (isRecording) // Show additional UI when recording is active
+          Positioned(
+            bottom: -50,
+            child: Column(
+              children: [
+                // Text showing "Swipe up to keep recording" and "Swipe down to cancel"
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_upward, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      "Swipe up to lock recording",
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_downward, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      "Swipe down to cancel",
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        if (isRecording) // Display the recording timer at the top
+          Positioned(
+            top: -30,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.mic, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text(
+                    _formatRecordingTime(),
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+
+  Widget _buildInputField() {
+    return isAudioMessage
+        ? _buildAudioMessageUI() // Display audio message UI
+        : _buildTextField(); // Display regular input field
+  }
+
   Widget _buildTextField() {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
-        if (_isRecording)
-          InkWell(
-            onTap: _isRecording ? _stopRecording : _startRecording,
-            child: const Icon(
-              Icons.mic,
-            ),
-          )
-        else
-          InkWell(
-            onTap: _isRecording ? _stopRecording : _startRecording,
-            child: const Icon(
-              Icons.stop,
-            ),
-          ),
+        _buildAnimatedButton(Icons.mic, () {
+          setState(() {
+            isRecording = true;
+          });
+        }),
         const SizedBox(width: 8),
         IconButton(
           icon: Icon(Icons.image,
@@ -637,53 +804,69 @@ class _ChatPageState extends State<ChatPage> {
           onPressed: selectImagesFromGallery, // Implement this method
         ),
         Expanded(
-          child: selectedAudioFile == null
-              ? TextField(
-                  controller: _messageController,
-                  minLines: 1,
-                  maxLines: null,
-                  decoration: InputDecoration(
-                    hintText: "Type a message",
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 20),
-                  ),
-                )
-              : Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _isPlaying &&
-                                _currentPlayingFilePath == selectedAudioFile
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                      ),
-                      onPressed: () => _togglePlayPause(selectedAudioFile!),
-                    ),
-                    const Text(
-                      'Voice Note',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: _deleteVoiceNote,
-                    ),
-                  ],
-                ),
+          child: TextField(
+            controller: _messageController,
+            minLines: 1,
+            maxLines: null,
+            decoration: InputDecoration(
+              hintText: "Type a message",
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            ),
+          ),
         ),
         const SizedBox(width: 8),
         _buildAnimatedButton(Icons.send, () {
           sendMessage(); // Implement send message functionality
         }),
+      ],
+    );
+  }
+
+  Widget _buildAudioMessageUI() {
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+          onPressed: () {
+            setState(() {
+              isPlaying = !isPlaying;
+            });
+            isPlaying
+                ? playAudio(selectedAudioFile!.path) // Play audio
+                : pauseAudio(); // Pause audio
+          },
+        ),
+        Expanded(
+          child: Slider(
+            value: currentPosition.inMilliseconds.toDouble(),
+            max: totalDuration.inMilliseconds.toDouble(),
+            onChanged: (value) {
+              seekAudio(Duration(milliseconds: value.toInt()));
+            },
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.send),
+          onPressed: () {
+            sendMessage(); // Send the audio message
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            cancelRecording(); // Cancel and reset to text input
+            setState(() {
+              isAudioMessage = false;
+            });
+          },
+        ),
       ],
     );
   }

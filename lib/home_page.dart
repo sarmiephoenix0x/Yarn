@@ -77,8 +77,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final responseData = json.decode(response.body);
 
         setState(() {
-          _profileImage =
-              responseData['personalInfo']?['profilePictureUrl'] ?? '';
+          _profileImage = responseData['personalInfo']?['profilePictureUrl'] != null 
+    ? responseData['personalInfo']['profilePictureUrl'] + '/download' 
+    : '';
         });
         print("Profile Pic Loaded${response.body}");
       } else {
@@ -459,7 +460,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =

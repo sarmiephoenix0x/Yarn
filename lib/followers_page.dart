@@ -115,7 +115,9 @@ class _FollowersPageState extends State<FollowersPage> {
         itemBuilder: (context, index) {
           final follower = followersList[index];
           return user(
-            follower['profilepictureurl'] ?? '',
+  follower['profilepictureurl'] != null 
+    ? follower['profilepictureurl'] + '/download' 
+    : '',
             follower['username'],
             follower['isFollowing'],
             follower['userId'],

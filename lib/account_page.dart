@@ -1193,7 +1193,9 @@ class _AccountPageState extends State<AccountPage>
   // }
 
   Widget communityWidget(dynamic post) {
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
@@ -1542,7 +1544,9 @@ class _AccountPageState extends State<AccountPage>
   }
 
   Widget timeline(dynamic post) {
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =

@@ -810,7 +810,9 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
 
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
-    String authorImg = post['headerImageUrl'] ?? '';
+    String authorImg = post['headerImageUrl'] != null 
+  ? "${post['headerImageUrl']}/download" 
+  : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
