@@ -430,44 +430,9 @@ class _ChatPageState extends State<ChatPage> {
   //   }
   // }
 
-  void _showCustomSnackBar(BuildContext context, String message,
-      {bool isError = false}) {
-    final snackBar = SnackBar(
-      content: Row(
-        children: [
-          Icon(
-            isError ? Icons.error_outline : Icons.check_circle_outline,
-            color: isError ? Colors.red : Colors.green,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: isError ? Colors.red : Colors.green,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.all(10),
-      duration: const Duration(seconds: 3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
   Future<void> _checkPermissions() async {
     var status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
-      _showCustomSnackBar(
-        context,
-        'Microphone permission not granted',
-        isError: true,
-      );
       print("Microphone permission not granted");
       return;
     }

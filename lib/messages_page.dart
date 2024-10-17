@@ -26,6 +26,8 @@ class _MeassagesPageState extends State<MeassagesPage> {
   @override
   void initState() {
     super.initState();
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    chatProvider.loadChatsLocally();
     // _fetchFollowers();
   }
 

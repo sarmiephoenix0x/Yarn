@@ -379,26 +379,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   InkWell(
                     onTap: () {
-                      int someReceiverId = 1;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatPage(
-                              receiverId: someReceiverId,
-                              senderId: userId!,
-                              receiverName: "Philip",
-                              profilePic: _profileImage), // Pass the receiverId
-                        ),
-                      );
+                      // int someReceiverId = 1;
                       // Navigator.push(
                       //   context,
                       //   MaterialPageRoute(
-                      //     builder: (context) => MeassagesPage(
-                      //       key: UniqueKey(),
-                      //       senderId: userId!,
-                      //     ),
+                      //     builder: (context) => ChatPage(
+                      //         receiverId: someReceiverId,
+                      //         senderId: userId!,
+                      //         receiverName: "Philip",
+                      //         profilePic: _profileImage), // Pass the receiverId
                       //   ),
                       // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MeassagesPage(
+                            key: UniqueKey(),
+                            senderId: userId!,
+                          ),
+                        ),
+                      );
                     },
                     child: Image.asset(
                       'images/ChatImg.png',
