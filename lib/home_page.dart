@@ -5,12 +5,15 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/chat_page.dart';
 import 'package:yarn/user_profile.dart';
 
 import 'comments_page.dart';
 import 'details_page.dart';
 import 'messages_page.dart';
 import 'notification_page.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
   final int selectedIndex;
@@ -43,10 +46,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final storage = const FlutterSecureStorage();
   Map<int, bool> _isLikedMap = {};
   int? userId;
+  String? _detectedCountry;
+  String? _detectedState;
+  String? _detectedCity;
+  Position? _position;
 
   @override
   void initState() {
     super.initState();
+    _getLocation();
     fetchUserProfilePic();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -58,6 +66,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
+  }
+
+  Future<void> _getLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+    }
+
+    _position = await Geolocator.getCurrentPosition();
+    await _getAddressFromLatLng(_position!); // Fetch address
+  }
+
+  Future<void> _getAddressFromLatLng(Position position) async {
+    try {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+
+        // Detected country, state, and city
+        _detectedCountry = place.country;
+        _detectedState = place.administrativeArea;
+        _detectedCity = place.locality;
+
+        print(
+            'Detected country: $_detectedCountry, state: $_detectedState, city: $_detectedCity');
+      }
+    } catch (e) {
+      print('Error in _getAddressFromLatLng: $e');
+    }
   }
 
   Future<void> fetchUserProfilePic() async {
@@ -77,9 +124,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final responseData = json.decode(response.body);
 
         setState(() {
-          _profileImage = responseData['personalInfo']?['profilePictureUrl'] != null 
-    ? responseData['personalInfo']['profilePictureUrl'] + '/download' 
-    : '';
+          _profileImage = responseData['personalInfo']?['profilePictureUrl'] !=
+                  null
+              ? responseData['personalInfo']['profilePictureUrl'] + '/download'
+              : '';
         });
         print("Profile Pic Loaded${response.body}");
       } else {
@@ -135,8 +183,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return;
       }
 
-      final url =
-          Uri.parse('https://yarnapi.onrender.com/api/posts/home/$pageNum');
+      final url = Uri.parse(
+          'https://yarnapi.onrender.com/api/posts/home/$_detectedCity/$pageNum');
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
       });
@@ -331,25 +379,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   InkWell(
                     onTap: () {
-                      // int someReceiverId = 1;
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => ChatPage(receiverId: someReceiverId,
-                      //         senderId: userId!,
-                      //         receiverName: "Philip",
-                      //         profilePic: _profileImage), // Pass the receiverId
-                      //   ),
-                      // );
+                      int someReceiverId = 1;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MeassagesPage(
-                            key: UniqueKey(),
-                            senderId: userId!,
-                          ),
+                          builder: (context) => ChatPage(
+                              receiverId: someReceiverId,
+                              senderId: userId!,
+                              receiverName: "Philip",
+                              profilePic: _profileImage), // Pass the receiverId
                         ),
                       );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => MeassagesPage(
+                      //       key: UniqueKey(),
+                      //       senderId: userId!,
+                      //     ),
+                      //   ),
+                      // );
                     },
                     child: Image.asset(
                       'images/ChatImg.png',
@@ -460,9 +509,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
-    String authorImg = post['headerImageUrl'] != null 
-  ? "${post['headerImageUrl']}/download" 
-  : '';
+    String authorImg = post['headerImageUrl'] != null
+        ? "${post['headerImageUrl']}/download"
+        : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =

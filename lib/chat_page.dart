@@ -12,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'chat_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 
 class ChatSignalR {
   final String serverUrl = "https://yarnapi.onrender.com/chatHub";
@@ -193,6 +195,9 @@ class _ChatPageState extends State<ChatPage> {
   bool _isPlaying = false;
   String _currentPlayingFilePath = '';
   String? selectedAudioFile;
+  List<Map<String, dynamic>> unsentMessages = [];
+  List<Map<String, dynamic>> pendingImageMessages = [];
+  StreamSubscription<ConnectivityResult>? connectivitySubscription;
 
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
@@ -203,11 +208,29 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    // _recorder.openRecorder();
+    _player.openPlayer();
+    connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      if (result != ConnectivityResult.none) {
+        _retrySendingMessages(); // Retry sending text messages
+        _retrySendingImageMessages(); // Retry sending image messages
+      }
+    });
     chatService = ChatService();
     chatSignalR = ChatSignalR();
 
     // Initialize SignalR and listen for incoming messages
     initSignalR();
+  }
+
+  @override
+  void dispose() {
+    connectivitySubscription?.cancel();
+    _recorder.stopRecorder();
+    _player.stopPlayer();
+    super.dispose();
   }
 
   Future<void> initSignalR() async {
@@ -270,42 +293,26 @@ class _ChatPageState extends State<ChatPage> {
     if (_messageController.text.isNotEmpty ||
         selectedImages.isNotEmpty ||
         selectedAudioFile != null) {
-      setState(() {
-        isSending = true; // Start sending animation
-      });
-
-      File? audioFile;
-      if (selectedAudioFile != null) {
-        audioFile = File(selectedAudioFile!); // Convert the path to a File
-      }
-
-      await chatService.sendMessage(
-        receiverId: widget.receiverId,
-        text:
+      // Create a message object to display immediately
+      final message = {
+        'text':
             _messageController.text.isNotEmpty ? _messageController.text : null,
-        audioFile: audioFile,
-        images: selectedImages.isNotEmpty ? selectedImages : null,
-      );
+        'senderId': widget.senderId,
+        'imageUrls': selectedImages.map((image) => image.path).toList(),
+        'audioUrl': selectedAudioFile,
+        'isSent': false, // Initially set to false
+        'timeSent': DateTime.now(), // Add a timestamp for ordering
+      };
 
-      // Add the message directly to the list after sending
+      // Add the message to the list to display it immediately
       setState(() {
-        messages.add({
-          'text': _messageController.text,
-          'senderId': widget.senderId,
-          'imageUrls': selectedImages.map((image) => image.path).toList(),
-          'audioUrl': selectedAudioFile,
-          'isSent': false, // Initially set to false
-        });
+        messages.add(message);
         _messageController.clear();
         selectedImages.clear();
         selectedAudioFile = null;
-        isSending = false;
       });
 
-      setState(() {
-        messages.last['isSent'] = true; // Update to true after send
-      });
-
+      // Scroll to the bottom after adding the new message
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -313,53 +320,233 @@ class _ChatPageState extends State<ChatPage> {
           curve: Curves.easeOut,
         );
       });
+
+      // Try sending the message to the server
+      try {
+        File? audioFile;
+        if (selectedAudioFile != null) {
+          audioFile = File(selectedAudioFile!); // Convert the path to a File
+        }
+
+        await chatService.sendMessage(
+          receiverId: widget.receiverId,
+          text: message['text'] as String?, // Cast text to String?
+          audioFile: audioFile, // This seems fine, assuming it's a File or null
+          images: (message['imageUrls'] as List<dynamic>?)
+              ?.map((imagePath) => File(imagePath as String))
+              .toList(), // Convert image paths to List<File>
+        );
+
+        // If successful, update the message to "sent"
+        setState(() {
+          message['isSent'] = true;
+        });
+      } catch (e) {
+        // If sending fails (e.g., no network), store the message in the unsent queue
+        _storeUnsentMessage(message);
+      }
     }
+  }
+
+  void _storeUnsentMessage(Map<String, dynamic> message) {
+    unsentMessages.add(message);
+    // Optionally, you can persist this queue locally using shared preferences or secure storage
+  }
+
+  Future<void> _retrySendingMessages() async {
+    for (var message in List<Map<String, dynamic>>.from(unsentMessages)) {
+      try {
+        File? audioFile;
+        if (message['audioUrl'] != null) {
+          audioFile = File(message['audioUrl']); // Convert the path to a File
+        }
+
+        await chatService.sendMessage(
+          receiverId: widget.receiverId,
+          text: message['text'],
+          audioFile: audioFile,
+          images: message['imageUrls'].isNotEmpty ? message['imageUrls'] : null,
+        );
+
+        // Update the message to "sent" and remove it from the unsent queue
+        setState(() {
+          message['isSent'] = true;
+        });
+        unsentMessages.remove(message); // Remove from the queue
+      } catch (e) {
+        // If it fails again, keep it in the queue
+        print("Failed to resend message: $e");
+      }
+    }
+  }
+
+  // Future<void> sendMessage() async {
+  //   if (_messageController.text.isNotEmpty ||
+  //       selectedImages.isNotEmpty ||
+  //       selectedAudioFile != null) {
+  //     setState(() {
+  //       isSending = true; // Start sending animation
+  //     });
+
+  //     File? audioFile;
+  //     if (selectedAudioFile != null) {
+  //       audioFile = File(selectedAudioFile!); // Convert the path to a File
+  //     }
+
+  //     await chatService.sendMessage(
+  //       receiverId: widget.receiverId,
+  //       text:
+  //           _messageController.text.isNotEmpty ? _messageController.text : null,
+  //       audioFile: audioFile,
+  //       images: selectedImages.isNotEmpty ? selectedImages : null,
+  //     );
+
+  //     // Add the message directly to the list after sending
+  //     setState(() {
+  //       messages.add({
+  //         'text': _messageController.text,
+  //         'senderId': widget.senderId,
+  //         'imageUrls': selectedImages.map((image) => image.path).toList(),
+  //         'audioUrl': selectedAudioFile,
+  //         'isSent': false, // Initially set to false
+  //       });
+  //       _messageController.clear();
+  //       selectedImages.clear();
+  //       selectedAudioFile = null;
+  //       isSending = false;
+  //     });
+
+  //     setState(() {
+  //       messages.last['isSent'] = true; // Update to true after send
+  //     });
+
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       _scrollController.animateTo(
+  //         _scrollController.position.maxScrollExtent,
+  //         duration: const Duration(milliseconds: 300),
+  //         curve: Curves.easeOut,
+  //       );
+  //     });
+  //   }
+  // }
+
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<void> _checkPermissions() async {
     var status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException("Microphone permission not granted");
+      _showCustomSnackBar(
+        context,
+        'Microphone permission not granted',
+        isError: true,
+      );
+      print("Microphone permission not granted");
+      return;
     }
   }
 
   Future<void> _startRecording() async {
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException("Microphone permission not granted");
+    try {
+      // Check and request necessary permissions
+      await _checkPermissions();
+
+      // Stop any currently playing audio
+      if (_isPlaying) {
+        await _player.stopPlayer();
+        setState(() {
+          _isPlaying = false;
+          _currentPlayingFilePath = '';
+        });
+      }
+
+      // Open the recorder
+      await _recorder.openRecorder();
+
+      // Define file path for recording
+      Directory tempDir = await getTemporaryDirectory();
+      String filePath =
+          '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.aac';
+
+      // Start recording
+      await _recorder.startRecorder(toFile: filePath, codec: Codec.aacADTS);
+
+      setState(() {
+        _isRecording = true;
+        selectedAudioFile = null;
+      });
+    } catch (e) {
+      print("Error while starting recorder: $e");
     }
-
-    Directory tempDir = await getTemporaryDirectory();
-    String filePath =
-        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.aac';
-
-    // Start recording using startRecorder
-    await _recorder.startRecorder(toFile: filePath);
-
-    setState(() {
-      _isRecording = true;
-      selectedAudioFile = null;
-    });
   }
 
   Future<void> _stopRecording() async {
-    String? filePath = await _recorder.stopRecorder();
-    setState(() {
-      _isRecording = false;
-      selectedAudioFile = filePath; // Save the file path
-    });
+    try {
+      // Stop the recorder
+      String? filePath = await _recorder.stopRecorder();
+
+      setState(() {
+        _isRecording = false;
+        selectedAudioFile = filePath; // Save the recorded file path
+      });
+
+      if (_currentPlayingFilePath != '') {
+        await _player.startPlayer(fromURI: _currentPlayingFilePath);
+        setState(() {
+          _isPlaying = true;
+        });
+      }
+    } catch (e) {
+      print("Error while stopping recorder: $e");
+    }
   }
 
   Future<void> _togglePlayPause(String filePath) async {
     if (_isPlaying && _currentPlayingFilePath == filePath) {
-      // Stop playing
+      // If currently playing, stop the player
       await _player.stopPlayer();
       setState(() {
         _isPlaying = false;
         _currentPlayingFilePath = '';
       });
     } else {
-      // Start playing
+      // If playing a different file, stop the current audio first
+      if (_isPlaying) {
+        await _player.stopPlayer();
+        setState(() {
+          _isPlaying = false;
+          _currentPlayingFilePath = '';
+        });
+      }
+
+      // Start playing the new file
       await _player.startPlayer(
         fromURI: filePath,
         whenFinished: () {
@@ -382,6 +569,17 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  // Helper function to determine whether to append '/download' or not
+  String _getAudioPath(String audioUrl) {
+    // If it's a network file (from backend), append /download
+    if (audioUrl.startsWith('http')) {
+      return '$audioUrl/download';
+    } else {
+      // Otherwise, return the local file path
+      return audioUrl;
+    }
+  }
+
   Future<void> selectImages() async {
     final ImagePicker _picker = ImagePicker();
     final List<XFile>? images = await _picker.pickMultiImage();
@@ -393,27 +591,114 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> selectImagesFromGallery() async {
-    final pickedImages = await ImagePicker().pickMultiImage();
-    if (pickedImages != null) {
-      for (var pickedImage in pickedImages) {
-        File imageFile = File(pickedImage.path);
+  Future<void> _retrySendingImageMessages() async {
+    List<Map<String, dynamic>> messagesToRemove = [];
+
+    for (var pendingMessage in pendingImageMessages) {
+      try {
         await chatService.sendMessage(
-          receiverId: widget.receiverId,
-          images: [imageFile],
+          receiverId: pendingMessage['receiverId'],
+          images: [pendingMessage['imageFile']],
         );
 
+        // Mark the message as sent in the message list
+        setState(() {
+          final index = messages.indexWhere((msg) =>
+              msg['imageUrls'] != null &&
+              msg['imageUrls'].contains(pendingMessage['imageFile'].path));
+          if (index != -1) {
+            messages[index]['isSent'] = true; // Update to true after send
+          }
+        });
+
+        // Remove successfully sent message from pending list
+        messagesToRemove.add(pendingMessage);
+      } catch (e) {
+        // If sending fails, keep it in the pending list for another retry
+      }
+    }
+
+    // Remove messages that have been successfully sent from the pending list
+    setState(() {
+      pendingImageMessages.removeWhere((msg) => messagesToRemove.contains(msg));
+    });
+  }
+
+  Future<void> selectImagesFromGallery() async {
+    final pickedImages = await ImagePicker().pickMultiImage();
+
+    if (pickedImages != null) {
+      List<Map<String, dynamic>> unsentMessages = [];
+
+      for (var pickedImage in pickedImages) {
+        File imageFile = File(pickedImage.path);
+
+        // Add the image message to the messages list immediately
         setState(() {
           messages.add({
             'text': null,
             'senderId': widget.senderId,
-            'imageUrls': [imageFile.path],
+            'imageUrls': [imageFile.path], // Add the image path
             'audioUrl': null,
+            'isSent': false, // Initially set isSent to false
           });
         });
+
+        // Add the unsent message to the pending list
+        unsentMessages.add({
+          'receiverId': widget.receiverId,
+          'imageFile': imageFile,
+        });
+      }
+
+      // Send the images to the server in the background
+      for (var unsentMessage in unsentMessages) {
+        try {
+          await chatService.sendMessage(
+            receiverId: unsentMessage['receiverId'],
+            images: [unsentMessage['imageFile']],
+          );
+
+          // Mark the message as sent in the message list
+          setState(() {
+            final index = messages.indexWhere((msg) =>
+                msg['imageUrls'] != null &&
+                msg['imageUrls'].contains(unsentMessage['imageFile'].path));
+            if (index != -1) {
+              messages[index]['isSent'] = true; // Update to true after send
+            }
+          });
+        } catch (e) {
+          // Add unsent message to pendingImageMessages for retry
+          setState(() {
+            pendingImageMessages.add(unsentMessage);
+          });
+        }
       }
     }
   }
+
+  // Future<void> selectImagesFromGallery() async {
+  //   final pickedImages = await ImagePicker().pickMultiImage();
+  //   if (pickedImages != null) {
+  //     for (var pickedImage in pickedImages) {
+  //       File imageFile = File(pickedImage.path);
+  //       await chatService.sendMessage(
+  //         receiverId: widget.receiverId,
+  //         images: [imageFile],
+  //       );
+
+  //       setState(() {
+  //         messages.add({
+  //           'text': null,
+  //           'senderId': widget.senderId,
+  //           'imageUrls': [imageFile.path],
+  //           'audioUrl': null,
+  //         });
+  //       });
+  //     }
+  //   }
+  // }
 
   Widget _buildMessageBubble(Map<String, dynamic> message, bool isSentByMe) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -426,14 +711,6 @@ class _ChatPageState extends State<ChatPage> {
 
     Color senderTextColor = Colors.white;
     Color receiverTextColor = isDarkMode ? Colors.white : Colors.black87;
-
-    // Ensure isSent is not null and provide a default value (false if null)
-    // bool isSent = message['isSent'] ?? false;
-
-    // Define the sent status icon
-    // Icon sentStatusIcon = isSent
-    //     ? Icon(Icons.check_circle, color: Colors.green, size: 16)
-    //     : Icon(Icons.hourglass_empty, color: Colors.orange, size: 16);
 
     return Align(
       alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -462,12 +739,12 @@ class _ChatPageState extends State<ChatPage> {
                     icon: Icon(
                       _isPlaying &&
                               _currentPlayingFilePath ==
-                                  '${message['audioUrl']}/download'
+                                  _getAudioPath(message['audioUrl'])
                           ? Icons.pause
                           : Icons.play_arrow,
                     ),
                     onPressed: () =>
-                        _togglePlayPause('${message['audioUrl']}/download'),
+                        _togglePlayPause(_getAudioPath(message['audioUrl'])),
                   ),
                   const Text(
                     'Voice Note',
@@ -504,10 +781,6 @@ class _ChatPageState extends State<ChatPage> {
                   fontSize: 16,
                 ),
               ),
-
-            // Uncomment if you want to show the sent status icon
-            // SizedBox(height: 8),
-            // sentStatusIcon,
           ],
         ),
       ),
@@ -614,77 +887,81 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildTextField() {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      children: [
-        if (_isRecording)
-          InkWell(
-            onTap: _isRecording ? _stopRecording : _startRecording,
-            child: const Icon(
-              Icons.mic,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        children: [
+          if (_isRecording)
+            InkWell(
+              onTap: _isRecording ? _stopRecording : _startRecording,
+              child: const Icon(
+                Icons.stop,
+              ),
+            )
+          else
+            InkWell(
+              onTap: _isRecording ? _stopRecording : _startRecording,
+              child: const Icon(
+                Icons.mic,
+              ),
             ),
-          )
-        else
-          InkWell(
-            onTap: _isRecording ? _stopRecording : _startRecording,
-            child: const Icon(
-              Icons.stop,
-            ),
+          SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+          IconButton(
+            icon: Icon(Icons.image,
+                color: isDarkMode ? Color(0xFF7A0D7D) : Color(0xFF500450)),
+            onPressed: selectImagesFromGallery, // Implement this method
           ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: Icon(Icons.image,
-              color: isDarkMode ? Color(0xFF7A0D7D) : Color(0xFF500450)),
-          onPressed: selectImagesFromGallery, // Implement this method
-        ),
-        Expanded(
-          child: selectedAudioFile == null
-              ? TextField(
-                  controller: _messageController,
-                  minLines: 1,
-                  maxLines: null,
-                  decoration: InputDecoration(
-                    hintText: "Type a message",
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
+          Expanded(
+            child: selectedAudioFile == null
+                ? TextField(
+                    controller: _messageController,
+                    minLines: 1,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      hintText: "Type a message",
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 20),
+                  )
+                : Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _isPlaying &&
+                                  _currentPlayingFilePath == selectedAudioFile
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                        ),
+                        onPressed: () => _togglePlayPause(selectedAudioFile!),
+                      ),
+                      const Text(
+                        'Voice Note',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: _deleteVoiceNote,
+                      ),
+                    ],
                   ),
-                )
-              : Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _isPlaying &&
-                                _currentPlayingFilePath == selectedAudioFile
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                      ),
-                      onPressed: () => _togglePlayPause(selectedAudioFile!),
-                    ),
-                    const Text(
-                      'Voice Note',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: _deleteVoiceNote,
-                    ),
-                  ],
-                ),
-        ),
-        const SizedBox(width: 8),
-        _buildAnimatedButton(Icons.send, () {
-          sendMessage(); // Implement send message functionality
-        }),
-      ],
+          ),
+          if (selectedAudioFile == null)
+            SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+          _buildAnimatedButton(Icons.send, () {
+            sendMessage(); // Implement send message functionality
+          }),
+        ],
+      ),
     );
   }
 }
