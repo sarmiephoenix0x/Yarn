@@ -35,7 +35,7 @@ class _FollowersPageState extends State<FollowersPage> {
       isLoading = true;
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi.onrender.com/api/users/followers';
+    final url = 'https://yarnapi-n2dw.onrender.com/api/users/followers';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -52,7 +52,7 @@ class _FollowersPageState extends State<FollowersPage> {
             responseData['data'] is List) {
           setState(() {
             followersList =
-            responseData['data']; // Update to use responseData['data']
+                responseData['data']; // Update to use responseData['data']
             isLoading = false;
           });
         } else {
@@ -84,46 +84,46 @@ class _FollowersPageState extends State<FollowersPage> {
       ),
       body: isLoading
           ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF500450)))
+              child: CircularProgressIndicator(color: Color(0xFF500450)))
           : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
-          : followersList.isEmpty
-          ? Center(
-        // Display this if the timeline posts list is empty
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.people,
-                size: 100, color: Colors.grey),
-            const SizedBox(height: 20),
-            const Text(
-              'No followers found.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _fetchFollowers(),
-              // Retry fetching timeline posts
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      )
-          : ListView.builder(
-        itemCount: followersList.length,
-        itemBuilder: (context, index) {
-          final follower = followersList[index];
-          return user(
-  follower['profilepictureurl'] != null 
-    ? follower['profilepictureurl'] + '/download' 
-    : '',
-            follower['username'],
-            follower['isFollowing'],
-            follower['userId'],
-          );
-        },
-      ),
+              ? Center(child: Text(errorMessage))
+              : followersList.isEmpty
+                  ? Center(
+                      // Display this if the timeline posts list is empty
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.people,
+                              size: 100, color: Colors.grey),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'No followers found.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () => _fetchFollowers(),
+                            // Retry fetching timeline posts
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: followersList.length,
+                      itemBuilder: (context, index) {
+                        final follower = followersList[index];
+                        return user(
+                          follower['profilepictureurl'] != null
+                              ? follower['profilepictureurl'] + '/download'
+                              : '',
+                          follower['username'],
+                          follower['isFollowing'],
+                          follower['userId'],
+                        );
+                      },
+                    ),
     );
   }
 
@@ -131,7 +131,7 @@ class _FollowersPageState extends State<FollowersPage> {
     isFollowing = isFollowingMap[userId.toString()] ?? false;
     Future<void> followUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi.onrender.com/api/pages/$userId/follow';
+      final url = 'https://yarnapi-n2dw.onrender.com/api/pages/$userId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -164,7 +164,8 @@ class _FollowersPageState extends State<FollowersPage> {
 
     Future<void> unfollowUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi.onrender.com/api/pages/$userId/unfollow';
+      final url =
+          'https://yarnapi-n2dw.onrender.com/api/pages/$userId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -200,11 +201,11 @@ class _FollowersPageState extends State<FollowersPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                UserProfile(
-                  key: UniqueKey(),
-                  userId: userId, senderId: widget.senderId,
-                ),
+            builder: (context) => UserProfile(
+              key: UniqueKey(),
+              userId: userId,
+              senderId: widget.senderId,
+            ),
           ),
         );
       },
@@ -218,38 +219,23 @@ class _FollowersPageState extends State<FollowersPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(55),
                 child: Container(
-                  width: (50 / MediaQuery
-                      .of(context)
-                      .size
-                      .width) *
-                      MediaQuery
-                          .of(context)
-                          .size
-                          .width,
-                  height: (50 / MediaQuery
-                      .of(context)
-                      .size
-                      .height) *
-                      MediaQuery
-                          .of(context)
-                          .size
-                          .height,
+                  width: (50 / MediaQuery.of(context).size.width) *
+                      MediaQuery.of(context).size.width,
+                  height: (50 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height,
                   color: Colors.grey,
                   child: img.isNotEmpty
                       ? Image.network(
-                    img,
-                    fit: BoxFit.cover,
-                  )
+                          img,
+                          fit: BoxFit.cover,
+                        )
                       : Image.asset(
-                    'images/ProfileImg.png',
-                    fit: BoxFit.cover,
-                  ),
+                          'images/ProfileImg.png',
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
-              SizedBox(width: MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.02),
+              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
               Expanded(
                 flex: 10,
                 child: Column(
@@ -298,24 +284,24 @@ class _FollowersPageState extends State<FollowersPage> {
                     ),
                   ),
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: isFollowing
                       ? const Text(
-                    "Following",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      color: Colors.white,
-                    ),
-                  )
+                          "Following",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text(
-                    "+ Follow",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      color: Color(0xFF500450),
-                    ),
-                  ),
+                          "+ Follow",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            color: Color(0xFF500450),
+                          ),
+                        ),
                 ),
               )
             ],

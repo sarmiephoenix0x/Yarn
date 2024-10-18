@@ -110,7 +110,7 @@ class NewsSourcesState extends State<NewsSources>
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up-details');
+        Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up-details');
 
     final request = http.MultipartRequest('POST', url)
       ..headers['Authorization'] = 'Bearer $accessToken'
@@ -255,7 +255,7 @@ class NewsSourcesState extends State<NewsSources>
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     try {
       final response = await http.get(
-        Uri.parse('https://yarnapi.onrender.com/api/communities/'),
+        Uri.parse('https://yarnapi-n2dw.onrender.com/api/communities/'),
         headers: {
           'Authorization': 'Bearer $accessToken',
         },

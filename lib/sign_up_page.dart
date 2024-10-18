@@ -86,7 +86,7 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
     });
     // Send the POST request
     // final response = await http.post(
-    //   Uri.parse('https://yarnapi.onrender.com/api/auth/sign-up'),
+    //   Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up'),
     //   headers: {'Content-Type': 'application/json'},
     //   body: jsonEncode({
     //     'username': username,

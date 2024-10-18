@@ -54,7 +54,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _getLocation();
     fetchUserProfilePic();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -110,7 +109,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> fetchUserProfilePic() async {
     userId = await getUserIdFromPrefs();
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi.onrender.com/api/users/$userId';
+    final url = 'https://yarnapi-n2dw.onrender.com/api/users/$userId';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -124,12 +123,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final responseData = json.decode(response.body);
 
         setState(() {
-          _profileImage = responseData['personalInfo']?['profilePictureUrl'] !=
-                  null
-              ? responseData['personalInfo']['profilePictureUrl'] + '/download'
-              : '';
+          final profilePictureUrl = responseData['data']['personalInfo']
+                  ?['profilePictureUrl']
+              ?.toString()
+              .trim();
+
+          _profileImage =
+              (profilePictureUrl != null && profilePictureUrl.isNotEmpty)
+                  ? '$profilePictureUrl/download'
+                  : '';
         });
+
         print("Profile Pic Loaded${response.body}");
+        print(_profileImage);
       } else {
         print('Error fetching profile Pic: ${response.statusCode}');
         setState(() {
@@ -164,9 +170,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchPosts({int pageNum = 1}) async {
-    setState(() {
-      isLoading = true;
-    });
+    await _getLocation();
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -177,14 +186,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           'Authentication failed. Please log in again.',
           isError: true,
         );
-        setState(() {
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
         return;
       }
 
       final url = Uri.parse(
-          'https://yarnapi.onrender.com/api/posts/home/$_detectedCity/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum');
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
       });
@@ -206,19 +217,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             'No posts to display at the moment.',
             isError: false,
           );
-          setState(() {
-            hasMore = false;
-            isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              hasMore = false;
+              isLoading = false;
+            });
+          }
           return;
         }
-
-        setState(() {
-          posts.addAll(fetchedPosts);
-          currentPage = pageNum;
-          hasMore = fetchedPosts.length > 0;
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            posts.addAll(fetchedPosts);
+            currentPage = pageNum;
+            hasMore = fetchedPosts.length > 0;
+            isLoading = false;
+          });
+        }
       } else if (response.statusCode == 400) {
         print('Error 400: ${response.body}');
         _showCustomSnackBar(
@@ -242,9 +256,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         isError: true,
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -291,8 +307,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri =
-        Uri.parse('https://yarnapi.onrender.com/api/posts/$postId/comments');
+    final uri = Uri.parse(
+        'https://yarnapi-n2dw.onrender.com/api/posts/$postId/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -533,7 +549,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-        'https://yarnapi.onrender.com/api/posts/toggle-like/${post['postId']}',
+        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}',
       );
 
       // Optimistically update the like status and likes count immediately

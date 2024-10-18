@@ -26,14 +26,13 @@ class _CommentsPageState extends State<CommentsPage> {
     _fetchComments();
   }
 
-
   Future<void> _fetchComments() async {
     setState(() {
       isLoading = true;
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi.onrender.com/api/posts/${widget.postId}/comments';
+        'https://yarnapi-n2dw.onrender.com/api/posts/${widget.postId}/comments';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -43,7 +42,7 @@ class _CommentsPageState extends State<CommentsPage> {
       );
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-
+        print(response.body);
         if (responseData['status'] == 'Success' &&
             responseData['data'] is List) {
           setState(() {
@@ -84,8 +83,8 @@ class _CommentsPageState extends State<CommentsPage> {
     }
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri =
-    Uri.parse('https://yarnapi.onrender.com/api/posts/${widget.postId}/comments');
+    final uri = Uri.parse(
+        'https://yarnapi-n2dw.onrender.com/api/posts/${widget.postId}/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -167,8 +166,6 @@ class _CommentsPageState extends State<CommentsPage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -180,44 +177,44 @@ class _CommentsPageState extends State<CommentsPage> {
           Expanded(
             child: isLoading
                 ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF500450)))
+                    child: CircularProgressIndicator(color: Color(0xFF500450)))
                 : errorMessage.isNotEmpty
-                ? Center(child: Text(errorMessage))
-                : commentsList.isEmpty
-                ? Center(
-              // Display this if the comments list is empty
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.people,
-                      size: 100, color: Colors.grey),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No comments found.',
-                    textAlign: TextAlign.center,
-                    style:
-                    TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => _fetchComments(),
-                    // Retry fetching comments
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-                : ListView.builder(
-              itemCount: commentsList.length,
-              itemBuilder: (context, index) {
-                final comments = commentsList[index];
-                return comment(
-                  comments['commentor'] ?? 'Unknown User',
-                  comments['text'],
-                  comments['dateCommented'],
-                );
-              },
-            ),
+                    ? Center(child: Text(errorMessage))
+                    : commentsList.isEmpty
+                        ? Center(
+                            // Display this if the comments list is empty
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.people,
+                                    size: 100, color: Colors.grey),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'No comments found.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () => _fetchComments(),
+                                  // Retry fetching comments
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: commentsList.length,
+                            itemBuilder: (context, index) {
+                              final comments = commentsList[index];
+                              return comment(
+                                comments['commentor'] ?? 'Unknown User',
+                                comments['text'],
+                                comments['dateCommented'],
+                              );
+                            },
+                          ),
           ),
           const Divider(height: 1),
           Padding(

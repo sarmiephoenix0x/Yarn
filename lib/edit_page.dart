@@ -300,7 +300,7 @@ class EditProfilePageState extends State<EditProfilePage> {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
 
       Response response = await _dio.patch(
-        'https://yarnapi.onrender.com/api/users/personal-info',
+        'https://yarnapi-n2dw.onrender.com/api/users/personal-info',
         // data: {
         //   "firstName": _firstName,
         //   "surname": _surname,
@@ -384,7 +384,7 @@ class EditProfilePageState extends State<EditProfilePage> {
           "file": await MultipartFile.fromFile(_imagePath!),
         });
         Response response = await _dio.patch(
-          'https://yarnapi.onrender.com/api/users/update-profile-picture',
+          'https://yarnapi-n2dw.onrender.com/api/users/update-profile-picture',
           data: formData,
           options: Options(
             headers: {

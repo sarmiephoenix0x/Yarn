@@ -229,7 +229,7 @@ class DetailsPageState extends State<DetailsPage> {
   Future<void> _toggleLike() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final uri = Uri.parse(
-        'https://yarnapi.onrender.com/api/posts/toggle-like/${widget.postId}');
+        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${widget.postId}');
 
     final response = await http.patch(
       uri,
@@ -298,7 +298,7 @@ class DetailsPageState extends State<DetailsPage> {
   Future<void> followUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi.onrender.com/api/users/follow/${widget.userId}';
+        'https://yarnapi-n2dw.onrender.com/api/users/follow/${widget.userId}';
     try {
       final response = await http.patch(
         Uri.parse(url),
@@ -332,7 +332,7 @@ class DetailsPageState extends State<DetailsPage> {
   Future<void> unfollowUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi.onrender.com/api/users/unfollow/${widget.userId}';
+        'https://yarnapi-n2dw.onrender.com/api/users/unfollow/${widget.userId}';
     try {
       final response = await http.patch(
         Uri.parse(url),

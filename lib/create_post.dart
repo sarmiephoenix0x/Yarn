@@ -83,7 +83,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
 
     // Prepare the request
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri = Uri.parse('https://yarnapi.onrender.com/api/posts/');
+    final uri = Uri.parse('https://yarnapi-n2dw.onrender.com/api/posts/');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $accessToken'
       ..fields['content'] = content

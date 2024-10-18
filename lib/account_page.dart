@@ -104,7 +104,7 @@ class _AccountPageState extends State<AccountPage>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi.onrender.com/api/posts/my-timeline/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/my-timeline/$pageNum');
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -148,7 +148,7 @@ class _AccountPageState extends State<AccountPage>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi.onrender.com/api/posts/my-community/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -217,7 +217,7 @@ class _AccountPageState extends State<AccountPage>
   Future<void> fetchUserProfile() async {
     userId = await getUserIdFromPrefs();
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi.onrender.com/api/users/$userId';
+    final url = 'https://yarnapi-n2dw.onrender.com/api/users/$userId';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -229,36 +229,42 @@ class _AccountPageState extends State<AccountPage>
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            followers = responseData['data']['followersCount'];
+            following = responseData['data']['followingsCount'];
+            posts = responseData['data']['postsCount'];
+            userName = responseData['data']['username'];
+            occupation = responseData['data']['occupation'];
+            final profilePictureUrl = responseData['data']['personalInfo']
+                    ?['profilePictureUrl']
+                ?.toString()
+                .trim();
 
-        setState(() {
-          followers = responseData['data']['followersCount'];
-          following = responseData['data']['followingsCount'];
-          posts = responseData['data']['postsCount'];
-          userName = responseData['data']['username'];
-          occupation = responseData['data']['occupation'];
-          _profileImage = responseData['personalInfo']?['profilePictureUrl'] != null 
-    ? responseData['personalInfo']['profilePictureUrl'] + '/download' 
-    : '';
-          isLoading = false;
-        });
+            _profileImage =
+                (profilePictureUrl != null && profilePictureUrl.isNotEmpty)
+                    ? '$profilePictureUrl/download'
+                    : '';
+            isLoading = false;
+          });
+        }
         print("Profile Loaded${response.body}");
-        _showCustomSnackBar(
-          context,
-          _profileImage,
-          isError: true,
-        );
         print(_profileImage);
       } else {
         print('Error fetching profile: ${response.statusCode}');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (error) {
+      print('Error: $error');
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
       }
-    } catch (error) {
-      print('Error: $error');
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
@@ -345,8 +351,8 @@ class _AccountPageState extends State<AccountPage>
     }
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri =
-        Uri.parse('https://yarnapi.onrender.com/api/posts/$postId/comments');
+    final uri = Uri.parse(
+        'https://yarnapi-n2dw.onrender.com/api/posts/$postId/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -1193,9 +1199,9 @@ class _AccountPageState extends State<AccountPage>
   // }
 
   Widget communityWidget(dynamic post) {
-    String authorImg = post['headerImageUrl'] != null 
-  ? "${post['headerImageUrl']}/download" 
-  : '';
+    String authorImg = post['headerImageUrl'] != null
+        ? "${post['headerImageUrl']}/download"
+        : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
@@ -1217,7 +1223,7 @@ class _AccountPageState extends State<AccountPage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-        'https://yarnapi.onrender.com/api/posts/toggle-like/${post['postId']}',
+        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}',
       );
 
       // Optimistically update the like status and likes count immediately
@@ -1544,9 +1550,9 @@ class _AccountPageState extends State<AccountPage>
   }
 
   Widget timeline(dynamic post) {
-    String authorImg = post['headerImageUrl'] != null 
-  ? "${post['headerImageUrl']}/download" 
-  : '';
+    String authorImg = post['headerImageUrl'] != null
+        ? "${post['headerImageUrl']}/download"
+        : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
@@ -1568,7 +1574,7 @@ class _AccountPageState extends State<AccountPage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-        'https://yarnapi.onrender.com/api/posts/toggle-like/${post['postId']}',
+        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}',
       );
 
       // Optimistically update the like status and likes count immediately

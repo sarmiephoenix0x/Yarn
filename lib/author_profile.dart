@@ -86,7 +86,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
       }
 
       final url = Uri.parse(
-          'https://yarnapi.onrender.com/api/posts/page/${widget.pageId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/page/${widget.pageId}/$pageNum');
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
       });
@@ -183,7 +183,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   Future<void> followUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi.onrender.com/api/pages/${widget.pageId}/follow';
+        'https://yarnapi-n2dw.onrender.com/api/pages/${widget.pageId}/follow';
     try {
       final response = await http.patch(
         Uri.parse(url),
@@ -217,7 +217,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   Future<void> unfollowUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi.onrender.com/api/pages/${widget.pageId}/unfollow';
+        'https://yarnapi-n2dw.onrender.com/api/pages/${widget.pageId}/unfollow';
     try {
       final response = await http.patch(
         Uri.parse(url),
@@ -261,8 +261,8 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     }
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri =
-        Uri.parse('https://yarnapi.onrender.com/api/posts/$postId/comments');
+    final uri = Uri.parse(
+        'https://yarnapi-n2dw.onrender.com/api/posts/$postId/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -810,9 +810,9 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
 
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
-    String authorImg = post['headerImageUrl'] != null 
-  ? "${post['headerImageUrl']}/download" 
-  : '';
+    String authorImg = post['headerImageUrl'] != null
+        ? "${post['headerImageUrl']}/download"
+        : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
@@ -834,7 +834,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi.onrender.com/api/posts/toggle-like/${post['postId']}');
+          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       final response = await http.patch(
         uri,

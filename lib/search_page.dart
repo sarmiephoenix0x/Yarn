@@ -55,7 +55,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
 
-      final url = 'https://yarnapi.onrender.com/api/pages';
+      final url = 'https://yarnapi-n2dw.onrender.com/api/pages';
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -266,9 +266,9 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                     itemBuilder: (context, index) {
                                       final page = _pages[index];
                                       return author(
-  page['pageProfilePictureUrl'] != null 
-    ? "${page['pageProfilePictureUrl']}/download" 
-    : '',
+                                          page['pageProfilePictureUrl'] != null
+                                              ? "${page['pageProfilePictureUrl']}/download"
+                                              : '',
                                           page['name'],
                                           page['description'],
                                           '${page['followers'].length} followers',
@@ -594,7 +594,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     isFollowing = isFollowingMap[pageId.toString()] ?? false;
     Future<void> followUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi.onrender.com/api/pages/$pageId/follow';
+      final url = 'https://yarnapi-n2dw.onrender.com/api/pages/$pageId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -627,7 +627,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
     Future<void> unfollowUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi.onrender.com/api/pages/$pageId/unfollow';
+      final url =
+          'https://yarnapi-n2dw.onrender.com/api/pages/$pageId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),
