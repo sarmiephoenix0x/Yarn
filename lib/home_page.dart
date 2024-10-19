@@ -170,12 +170,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchPosts({int pageNum = 1}) async {
-    await _getLocation();
     if (mounted) {
       setState(() {
         isLoading = true;
       });
     }
+
+    await _getLocation();
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
