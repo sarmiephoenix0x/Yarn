@@ -115,15 +115,35 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       _isLoading = false; // Stop loading after the response
     });
 
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      print('Post created successfully: ${responseData['message']}');
-      Navigator.pop(context); // Navigate back or clear the fields
-    } else {
-      final errorData = json.decode(response.body);
+    // Check if the response is empty
+    if (response.body.isEmpty) {
       _showCustomSnackBar(
         context,
-        'Error creating post: ${errorData['message']}',
+        'Error: No response received from the server.',
+        isError: true,
+      );
+      return;
+    }
+
+    // Try to parse the response as JSON
+    try {
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        print('Post created successfully: ${responseData['message']}');
+        Navigator.pop(context); // Navigate back or clear the fields
+      } else {
+        _showCustomSnackBar(
+          context,
+          'Error creating post: ${responseData['message']}',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      // If parsing fails, handle the error gracefully
+      _showCustomSnackBar(
+        context,
+        'Unexpected error occurred: ${response.body}',
         isError: true,
       );
     }

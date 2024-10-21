@@ -9,7 +9,14 @@ import 'package:yarn/successful_psw_reset_page.dart';
 class ResetPassword extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
-  const ResetPassword({super.key, required this.onToggleDarkMode, required this.isDarkMode});
+  final int userId;
+  final String otp;
+  const ResetPassword(
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      required this.userId,
+      required this.otp});
 
   @override
   ResetPasswordState createState() => ResetPasswordState();
@@ -32,82 +39,69 @@ class ResetPasswordState extends State<ResetPassword>
   @override
   void initState() {
     super.initState();
-    _initializePrefs();
   }
 
-  Future<void> _initializePrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
-
-  Future<void> _resetPassword() async {
-    final String password = passwordController.text.trim();
-    final String passwordConfirmation = password2Controller.text.trim();
-
-    if (password.isEmpty ||
-        passwordConfirmation.isEmpty) {
-      _showCustomSnackBar(
-        context,
-        'All fields are required.',
-        isError: true,
-      );
-
-      return;
-    }
-
-
-    if (password.length < 6) {
-      _showCustomSnackBar(
-        context,
-        'New Password must be at least 6 characters.',
-        isError: true,
-      );
-
-      return;
-    }
-
-    if (password != passwordConfirmation) {
-      _showCustomSnackBar(
-        context,
-        'Passwords do not match.',
-        isError: true,
-      );
-
-      return;
-    }
-
+  Future<void> resetPassword() async {
+    // Show loading indicator
     setState(() {
       isLoading = true;
     });
 
-    final response = await http.post(
-      Uri.parse('https://script.teendev.dev/signal/api/passowrd/reset'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'password': password,
-        'password_confirmation': passwordConfirmation,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      _showCustomSnackBar(
-        context,
-        'Password reset successful.',
-        isError: false,
+    try {
+      // Send the POST request
+      final response = await http.post(
+        Uri.parse('https://yarnapi-n2dw.onrender.com/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': widget.userId,
+          'OTP': widget.otp,
+          'password': passwordController.text.trim(),
+          'confirmPassword': password2Controller.text.trim(),
+        }),
       );
 
-      Navigator.pop(context);
-    } else {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      _showCustomSnackBar(
-        context,
-        'Error: ${responseData['error']}',
-        isError: true,
-      );
+      final responseData = json.decode(response.body);
+
+      print('Response Data: $responseData');
+
+      if (response.statusCode == 200) {
+        // Fetch userId and OTP from response
+        final int userId = responseData['data']['userId'];
+        final String returnedOtp = responseData['data']['username'];
+        final String token = responseData['data']['token'];
+
+        print("$returnedOtp$token");
+
+        // Navigate to another page and pass userId and OTP
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SuccessfulResetPage(
+                key: UniqueKey(),
+                onToggleDarkMode: widget.onToggleDarkMode,
+                isDarkMode: widget.isDarkMode),
+          ),
+        );
+      } else if (response.statusCode == 400) {
+        setState(() {
+          isLoading = false;
+        });
+        final String message = responseData['message'];
+        _showCustomSnackBar(context, 'Error: $message', isError: true);
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        _showCustomSnackBar(context, 'An unexpected error occurred.',
+            isError: true);
+      }
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      _showCustomSnackBar(context, 'Network error. Please try again.',
+          isError: true);
     }
-
-    setState(() {
-      isLoading = false;
-    });
   }
 
   void _showCustomSnackBar(BuildContext context, String message,
@@ -164,7 +158,7 @@ class ResetPasswordState extends State<ResetPassword>
                             child: Image.asset(
                               'images/BackButton.png',
                               height: 25,
-                              color:Theme.of(context).colorScheme.onSurface,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const Spacer(),
@@ -289,20 +283,12 @@ class ResetPasswordState extends State<ResetPassword>
                       MediaQuery.of(context).size.height,
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (password2Controller.text.isNotEmpty &&
                               isLoading == false ||
                           passwordController.text.isNotEmpty &&
                               isLoading == false) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                SuccessfulResetPage(key: UniqueKey(),
-                                    onToggleDarkMode: widget.onToggleDarkMode,
-                                    isDarkMode: widget.isDarkMode),
-                          ),
-                        );
+                        await resetPassword();
                       } else {
                         _showCustomSnackBar(
                           context,

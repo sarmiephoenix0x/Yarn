@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:yarn/reset_password.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SignUpOTPPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
-  const SignUpOTPPage({super.key, required this.onToggleDarkMode, required this.isDarkMode});
+  final String phoneNumber;
+  const SignUpOTPPage(
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      required this.phoneNumber});
 
   @override
   SignUpOTPPageState createState() => SignUpOTPPageState();
@@ -15,6 +22,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
   List<TextEditingController> controllers = [];
   List<FocusNode> focusNodes = [];
   List<String> inputs = List.generate(4, (index) => '');
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -42,43 +50,128 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
 
   void onKeyPressed(String value, int index) {
     setState(() {
-      if (value.isEmpty) {
-        // Handle backspace
-        for (int i = inputs.length - 1; i >= 0; i--) {
-          if (inputs[i].isNotEmpty) {
-            inputs[i] = '';
-            if (i > 0) {
-              FocusScope.of(context).requestFocus(focusNodes[i - 1]);
-            }
-            controllers[i].selection =
-                TextSelection.collapsed(offset: controllers[i].text.length);
-            break;
-          }
-        }
-      } else if (index != -1) {
-        // Handle text input
+      if (value.isEmpty && index > 0) {
+        // Handle backspace by moving back focus
+        FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+      } else if (value.isNotEmpty) {
         inputs[index] = value;
-        controllers[index].selection =
-            TextSelection.collapsed(offset: controllers[index].text.length);
 
+        // Move focus to the next field after input
         if (index < _numberOfFields - 1) {
-          // Move focus to the next field
           FocusScope.of(context).requestFocus(focusNodes[index + 1]);
         }
 
+        // Ensure the current field shows the correct value
+        controllers[index].text = value;
+        controllers[index].selection =
+            TextSelection.collapsed(offset: controllers[index].text.length);
+
+        // Check if all fields are filled
         bool allFieldsFilled = inputs.every((element) => element.isNotEmpty);
         if (allFieldsFilled) {
-          // Handle all fields filled case
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => CreateAccount_Profile_Page(
-          //         key: UniqueKey(), isLoadedFromFirstPage: "false"),
-          //   ),
-          // );
+          // Handle case when all fields are filled
         }
       }
     });
+  }
+
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<void> submitOtp() async {
+    // Ensure all OTP fields are filled
+    String otpCode = '';
+    for (var controller in controllers) {
+      if (controller.text.isEmpty) {
+        _showCustomSnackBar(context, 'Please fill all OTP fields',
+            isError: true);
+        return; // Stop execution if any field is empty
+      }
+      otpCode += controller.text;
+    }
+
+    // Show loading indicator
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Send the POST request
+      final response = await http.post(
+        Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/otp-submit'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phone': widget.phoneNumber, 'OTP': otpCode}),
+      );
+
+      final responseData = json.decode(response.body);
+
+      print('Response Data: $responseData');
+
+      if (response.statusCode == 200) {
+        // Fetch userId and OTP from response
+        final int userId = responseData['data']['userId'];
+        final String returnedOtp = responseData['data']['OTP'];
+
+        // Navigate to another page and pass userId and OTP
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResetPassword(
+              key: UniqueKey(),
+              onToggleDarkMode: widget.onToggleDarkMode,
+              isDarkMode: widget.isDarkMode,
+              userId: userId, // Pass userId
+              otp: returnedOtp, // Pass OTP
+            ),
+          ),
+        );
+      } else if (response.statusCode == 400) {
+        setState(() {
+          isLoading = false;
+        });
+        final String message = responseData['message'];
+        _showCustomSnackBar(context, 'Error: $message', isError: true);
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        _showCustomSnackBar(context, 'An unexpected error occurred.',
+            isError: true);
+      }
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      _showCustomSnackBar(context, 'Network error. Please try again.',
+          isError: true);
+    }
   }
 
   @override
@@ -107,7 +200,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                             child: Image.asset(
                               'images/BackButton.png',
                               height: 25,
-                              color:Theme.of(context).colorScheme.onSurface,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const Spacer(),
@@ -127,9 +220,9 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                       ),
                     ),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-                    const Center(
+                    Center(
                       child: Text(
-                        "Enter the OTP sent to +234-1234-5678-9",
+                        "Enter the OTP sent to ${widget.phoneNumber}",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 15.0,
@@ -158,11 +251,13 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
-                            cursorColor: Theme.of(context).colorScheme.onSurface,
+                            cursorColor:
+                                Theme.of(context).colorScheme.onSurface,
                             enabled: index == 0 ||
                                 controllers[index - 1].text.isNotEmpty,
                             onChanged: (value) {
@@ -223,16 +318,8 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                               MediaQuery.of(context).size.height,
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ResetPassword(key: UniqueKey(),
-                                          onToggleDarkMode: widget.onToggleDarkMode,
-                                          isDarkMode: widget.isDarkMode),
-                                ),
-                              );
+                            onPressed: () async {
+                              await submitOtp();
                             },
                             style: ButtonStyle(
                               backgroundColor:
@@ -262,13 +349,19 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                                 ),
                               ),
                             ),
-                            child: const Text(
-                              'Next',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: isLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Next',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

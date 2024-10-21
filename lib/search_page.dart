@@ -48,9 +48,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   Future<void> _fetchPages() async {
     userId = await getUserIdFromPrefs();
-    setState(() {
-      _isLoading = true; // Start loading
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true; // Start loading
+      });
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -71,30 +73,37 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
         // Check if the 'status' is "Success" and extract the 'data' array
         if (jsonResponse['status'] == 'Success') {
           final List<dynamic> pages = jsonResponse['data'];
-
-          setState(() {
-            _pages = pages; // Set the pages list
-            _isLoading = false; // Stop loading after success
-          });
+          if (mounted) {
+            setState(() {
+              _pages = pages; // Set the pages list
+              _isLoading = false; // Stop loading after success
+            });
+          }
         } else {
+          if (mounted) {
+            setState(() {
+              _errorMessage =
+                  'Failed to load pages'; // Handle unexpected responses
+              _isLoading = false; // Stop loading after failure
+            });
+          }
+        }
+      } else {
+        if (mounted) {
           setState(() {
-            _errorMessage =
-                'Failed to load pages'; // Handle unexpected responses
+            _errorMessage = 'Failed to load pages';
             _isLoading = false; // Stop loading after failure
           });
         }
-      } else {
-        setState(() {
-          _errorMessage = 'Failed to load pages';
-          _isLoading = false; // Stop loading after failure
-        });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage =
-            'An error occurred: $e'; // Include the exception in the error message for debugging
-        _isLoading = false; // Stop loading after error
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'An error occurred: $e'; // Include the exception in the error message for debugging
+          _isLoading = false; // Stop loading after error
+        });
+      }
     }
   }
 
