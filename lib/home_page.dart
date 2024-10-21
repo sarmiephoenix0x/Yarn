@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/chat_page.dart';
 import 'package:yarn/user_profile.dart';
-
 import 'comments_page.dart';
 import 'details_page.dart';
 import 'messages_page.dart';
@@ -533,8 +532,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
-        post['creatorCity'] ?? 'Some location'; // Replace with actual location if available
+    String location = post['creatorCity'] ??
+        'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
@@ -622,16 +621,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: [
               InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserProfile(
-                        key: UniqueKey(),
-                        userId: creatorUserId,
-                        senderId: userId!,
+                  if (anonymous == false) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfile(
+                          key: UniqueKey(),
+                          userId: creatorUserId,
+                          senderId: userId!,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),

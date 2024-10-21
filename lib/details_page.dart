@@ -426,16 +426,18 @@ class DetailsPageState extends State<DetailsPage> {
                         ),
                         InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => UserProfile(
-                                  key: UniqueKey(),
-                                  userId: widget.userId,
-                                  senderId: widget.senderId,
+                            if (widget.anonymous == false) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserProfile(
+                                    key: UniqueKey(),
+                                    userId: widget.userId,
+                                    senderId: widget.senderId,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            }
                           },
                           child: Row(
                             children: [

@@ -7,7 +7,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/settings.dart';
-
 import 'comments_page.dart';
 import 'create_community.dart';
 import 'create_page.dart';
@@ -16,6 +15,7 @@ import 'details_page.dart';
 import 'followers_page.dart';
 import 'followings_page.dart';
 import 'edit_page.dart';
+import 'package:yarn/user_profile.dart';
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
@@ -1206,8 +1206,8 @@ class _AccountPageState extends State<AccountPage>
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
-        post['creatorCity'] ?? 'Some location'; // Replace with actual location if available
+    String location = post['creatorCity'] ??
+        'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
@@ -1293,30 +1293,47 @@ class _AccountPageState extends State<AccountPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    if (!anonymous)
-                      if (authorImg.isEmpty)
-                        _buildProfilePlaceholder()
-                      else
-                        _buildProfileImage(authorImg),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.03),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAuthorDetails(authorName, verified, anonymous),
-                          if (postImg.isEmpty)
-                            _buildLocationAndTime(location, time),
-                        ],
+              InkWell(
+                onTap: () {
+                  if (anonymous == false) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfile(
+                          key: UniqueKey(),
+                          userId: creatorUserId,
+                          senderId: userId!,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    // if (!anonymous) _buildFollowButton(isFollowing, authorName),
-                  ],
+                    );
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    children: [
+                      if (!anonymous)
+                        if (authorImg.isEmpty)
+                          _buildProfilePlaceholder()
+                        else
+                          _buildProfileImage(authorImg),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAuthorDetails(
+                                authorName, verified, anonymous),
+                            if (postImg.isEmpty)
+                              _buildLocationAndTime(location, time),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // if (!anonymous) _buildFollowButton(isFollowing, authorName),
+                    ],
+                  ),
                 ),
               ),
               if (postImg.isNotEmpty) _buildPostImages(postImg),
@@ -1557,8 +1574,8 @@ class _AccountPageState extends State<AccountPage>
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
-        post['creatorCity'] ?? 'Some location'; // Replace with actual location if available
+    String location = post['creatorCity'] ??
+        'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
@@ -1644,30 +1661,47 @@ class _AccountPageState extends State<AccountPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    if (!anonymous)
-                      if (authorImg.isEmpty)
-                        _buildProfilePlaceholder()
-                      else
-                        _buildProfileImage(authorImg),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.03),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAuthorDetails(authorName, verified, anonymous),
-                          if (postImg.isEmpty)
-                            _buildLocationAndTime(location, time),
-                        ],
+              InkWell(
+                onTap: () {
+                  if (anonymous == false) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfile(
+                          key: UniqueKey(),
+                          userId: creatorUserId,
+                          senderId: userId!,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    // if (!anonymous) _buildFollowButton(isFollowing, authorName),
-                  ],
+                    );
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    children: [
+                      if (!anonymous)
+                        if (authorImg.isEmpty)
+                          _buildProfilePlaceholder()
+                        else
+                          _buildProfileImage(authorImg),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAuthorDetails(
+                                authorName, verified, anonymous),
+                            if (postImg.isEmpty)
+                              _buildLocationAndTime(location, time),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // if (!anonymous) _buildFollowButton(isFollowing, authorName),
+                    ],
+                  ),
                 ),
               ),
               if (postImg.isNotEmpty) _buildPostImages(postImg),
