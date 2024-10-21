@@ -198,6 +198,7 @@ class _ChatPageState extends State<ChatPage> {
   List<Map<String, dynamic>> unsentMessages = [];
   List<Map<String, dynamic>> pendingImageMessages = [];
   StreamSubscription<ConnectivityResult>? connectivitySubscription;
+  bool isLoading = true;
 
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
@@ -271,6 +272,7 @@ class _ChatPageState extends State<ChatPage> {
           setState(() {
             messages = fetchedMessages;
             messagesLoaded = true; // Set the flag after loading
+            isLoading = false;
           });
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -534,11 +536,11 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  // Helper function to determine whether to append '/download' or not
+  // Helper function to determine whether to append '/download?project=66e4476900275deffed4' or not
   String _getAudioPath(String audioUrl) {
-    // If it's a network file (from backend), append /download
+    // If it's a network file (from backend), append /download?project=66e4476900275deffed4
     if (audioUrl.startsWith('http')) {
-      return '$audioUrl/download';
+      return '$audioUrl/download?project=66e4476900275deffed4';
     } else {
       // Otherwise, return the local file path
       return audioUrl;
@@ -727,7 +729,7 @@ class _ChatPageState extends State<ChatPage> {
                 children: message['imageUrls'].map<Widget>((imageUrl) {
                   return imageUrl.startsWith('http')
                       ? Image.network(
-                          '$imageUrl/download',
+                          '$imageUrl/download?project=66e4476900275deffed4',
                           fit: BoxFit.cover,
                         )
                       : Image.file(
@@ -759,67 +761,88 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              reverse: false, // Change this to false for top-to-bottom display
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                final isLastMessage = index == messages.length - 1;
+            child: isLoading
+                ? Center(
+                    child: CircularProgressIndicator(color: Color(0xFF500450)))
+                : messages.isEmpty
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.article_outlined,
+                              size: 100, color: Colors.grey),
+                          SizedBox(height: 20),
+                          Text(
+                            'No recent chats.',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        reverse:
+                            false, // Change this to false for top-to-bottom display
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          final isLastMessage = index == messages.length - 1;
 
-                if (isLastMessage) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    // Check if the "audioUrl" is not null and not empty
-                    if (message["audioUrl"] != null &&
-                        message["audioUrl"]!.isNotEmpty) {
-                      final newChat = Chat(
-                        id: widget.receiverId.toString(),
-                        username: widget.receiverName,
-                        chatPreviewText: "Sent An Audio",
-                        imageUrl: widget.profilePic,
-                        timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                      );
-                      Provider.of<ChatProvider>(context, listen: false)
-                          .addOrUpdateChat(newChat);
-                    }
+                          if (isLastMessage) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              // Check if the "audioUrl" is not null and not empty
+                              if (message["audioUrl"] != null &&
+                                  message["audioUrl"]!.isNotEmpty) {
+                                final newChat = Chat(
+                                  id: widget.receiverId.toString(),
+                                  username: widget.receiverName,
+                                  chatPreviewText: "Sent An Audio",
+                                  imageUrl: widget.profilePic,
+                                  timeStamp: DateFormat('dd/MM/yyyy')
+                                      .format(DateTime.now()),
+                                );
+                                Provider.of<ChatProvider>(context,
+                                        listen: false)
+                                    .addOrUpdateChat(newChat);
+                              }
 
-                    // Check if the "imageUrls" is not null and not empty
-                    if (message["imageUrls"] != null &&
-                        message["imageUrls"]!.isNotEmpty) {
-                      final newChat = Chat(
-                        id: widget.receiverId.toString(),
-                        username: widget.receiverName,
-                        chatPreviewText: "Sent An Image",
-                        imageUrl: widget.profilePic,
-                        timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                      );
-                      Provider.of<ChatProvider>(context, listen: false)
-                          .addOrUpdateChat(newChat);
-                    }
+                              // Check if the "imageUrls" is not null and not empty
+                              if (message["imageUrls"] != null &&
+                                  message["imageUrls"]!.isNotEmpty) {
+                                final newChat = Chat(
+                                  id: widget.receiverId.toString(),
+                                  username: widget.receiverName,
+                                  chatPreviewText: "Sent An Image",
+                                  imageUrl: widget.profilePic,
+                                  timeStamp: DateFormat('dd/MM/yyyy')
+                                      .format(DateTime.now()),
+                                );
+                                Provider.of<ChatProvider>(context,
+                                        listen: false)
+                                    .addOrUpdateChat(newChat);
+                              }
 
-                    // Check if the "text" is not null and not empty
-                    if (message["text"] != null &&
-                        message["text"]!.isNotEmpty) {
-                      final newChat = Chat(
-                        id: widget.receiverId.toString(),
-                        username: widget.receiverName,
-                        chatPreviewText: message['text']!,
-                        imageUrl: widget.profilePic,
-                        timeStamp:
-                            DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                      );
+                              // Check if the "text" is not null and not empty
+                              if (message["text"] != null &&
+                                  message["text"]!.isNotEmpty) {
+                                final newChat = Chat(
+                                  id: widget.receiverId.toString(),
+                                  username: widget.receiverName,
+                                  chatPreviewText: message['text']!,
+                                  imageUrl: widget.profilePic,
+                                  timeStamp: DateFormat('dd/MM/yyyy')
+                                      .format(DateTime.now()),
+                                );
 
-                      Provider.of<ChatProvider>(context, listen: false)
-                          .addOrUpdateChat(newChat);
-                    }
-                  });
-                }
-                final isSentByMe = message['senderId'] == widget.senderId;
-                return _buildMessageBubble(message, isSentByMe);
-              },
-            ),
+                                Provider.of<ChatProvider>(context,
+                                        listen: false)
+                                    .addOrUpdateChat(newChat);
+                              }
+                            });
+                          }
+                          final isSentByMe =
+                              message['senderId'] == widget.senderId;
+                          return _buildMessageBubble(message, isSentByMe);
+                        },
+                      ),
           ),
           _buildTextField(), // Show input field or audio UI
         ],

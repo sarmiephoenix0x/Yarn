@@ -27,20 +27,22 @@ class DetailsPage extends StatefulWidget {
   final bool isLiked;
   final int senderId;
 
-  const DetailsPage({super.key,
-    required this.postId,
-    required this.postImg,
-    required this.authorImg,
-    required this.description,
-    required this.authorName,
-    required this.verified,
-    required this.anonymous,
-    required this.time,
-    required this.isFollowing,
-    required this.likes,
-    required this.comments,
-    required this.isLiked,
-    required this.userId, required this.senderId});
+  const DetailsPage(
+      {super.key,
+      required this.postId,
+      required this.postImg,
+      required this.authorImg,
+      required this.description,
+      required this.authorName,
+      required this.verified,
+      required this.anonymous,
+      required this.time,
+      required this.isFollowing,
+      required this.likes,
+      required this.comments,
+      required this.isLiked,
+      required this.userId,
+      required this.senderId});
 
   @override
   DetailsPageState createState() => DetailsPageState();
@@ -66,7 +68,7 @@ class DetailsPageState extends State<DetailsPage> {
 
   void _showPopupMenu(BuildContext context) async {
     final RenderBox renderBox =
-    _key.currentContext!.findRenderObject() as RenderBox;
+        _key.currentContext!.findRenderObject() as RenderBox;
     final Offset position = renderBox.localToGlobal(Offset.zero);
 
     await showMenu(
@@ -85,10 +87,7 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/share-box-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Share',
@@ -109,10 +108,7 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/feedback-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Report',
@@ -133,10 +129,7 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/save-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Save',
@@ -157,10 +150,7 @@ class DetailsPageState extends State<DetailsPage> {
                 'images/basketball-line.png',
               ),
               SizedBox(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.05,
+                width: MediaQuery.of(context).size.width * 0.05,
               ),
               const Text(
                 'Open in browser',
@@ -384,23 +374,14 @@ class DetailsPageState extends State<DetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    Color originalIconColor = Theme
-        .of(context)
-        .colorScheme
-        .onSurface;
+    Color originalIconColor = Theme.of(context).colorScheme.onSurface;
     return Scaffold(
       body: OrientationBuilder(builder: (context, orientation) {
         return Center(
           child: SizedBox(
             height: orientation == Orientation.portrait
-                ? MediaQuery
-                .of(context)
-                .size
-                .height
-                : MediaQuery
-                .of(context)
-                .size
-                .height * 1.5,
+                ? MediaQuery.of(context).size.height
+                : MediaQuery.of(context).size.height * 1.5,
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
@@ -411,10 +392,7 @@ class DetailsPageState extends State<DetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: MediaQuery
-                              .of(context)
-                              .size
-                              .height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.1,
                         ),
                         Row(
                           children: [
@@ -444,22 +422,18 @@ class DetailsPageState extends State<DetailsPage> {
                           ],
                         ),
                         SizedBox(
-                          height: MediaQuery
-                              .of(context)
-                              .size
-                              .height * 0.05,
+                          height: MediaQuery.of(context).size.height * 0.05,
                         ),
                         InkWell(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    UserProfile(
-                                      key: UniqueKey(),
-                                      userId: widget.userId,
-                                      senderId: widget.senderId,
-                                    ),
+                                builder: (context) => UserProfile(
+                                  key: UniqueKey(),
+                                  userId: widget.userId,
+                                  senderId: widget.senderId,
+                                ),
                               ),
                             );
                           },
@@ -471,23 +445,15 @@ class DetailsPageState extends State<DetailsPage> {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (50 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
                                       height: (50 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
                                       color: Colors.grey,
                                       child: Image.asset(
                                         'images/ProfileImg.png',
@@ -500,23 +466,15 @@ class DetailsPageState extends State<DetailsPage> {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (50 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
                                       height: (50 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
                                       color: Colors.grey,
                                       child: Image.network(
                                         widget.authorImg,
@@ -532,10 +490,7 @@ class DetailsPageState extends State<DetailsPage> {
                                     ),
                                   ),
                               SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.01,
+                                width: MediaQuery.of(context).size.width * 0.01,
                               ),
                               Expanded(
                                 child: Column(
@@ -562,26 +517,21 @@ class DetailsPageState extends State<DetailsPage> {
                                             ),
                                         ],
                                       ),
-                                    ] else
-                                      ...[
-                                        Expanded(
-                                          child: Text(
-                                            'Anonymous',
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                    ] else ...[
+                                      Text(
+                                        'Anonymous',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ],
+                                      ),
+                                    ],
                                     SizedBox(
-                                      height: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .height *
-                                          0.01,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.01,
                                     ),
                                     Text(
                                       widget.time,
@@ -619,11 +569,10 @@ class DetailsPageState extends State<DetailsPage> {
                                         border: Border.all(
                                           color: isFollowing
                                               ? Colors.transparent
-                                              : Theme
-                                              .of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.2),
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.2),
                                           width: 2,
                                         ),
                                       ),
@@ -631,27 +580,25 @@ class DetailsPageState extends State<DetailsPage> {
                                           horizontal: 12, vertical: 6),
                                       child: isFollowing
                                           ? Text(
-                                        "Following",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Poppins',
-                                          color: Theme
-                                              .of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                        ),
-                                      )
+                                              "Following",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontFamily: 'Poppins',
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
+                                              ),
+                                            )
                                           : Text(
-                                        "Follow",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Poppins',
-                                          color: Theme
-                                              .of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                        ),
-                                      ),
+                                              "Follow",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontFamily: 'Poppins',
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
+                                              ),
+                                            ),
                                     ),
                                   )
                             ],
@@ -688,10 +635,7 @@ class DetailsPageState extends State<DetailsPage> {
                             ),
                           ),
                         SizedBox(
-                          height: MediaQuery
-                              .of(context)
-                              .size
-                              .height * 0.03,
+                          height: MediaQuery.of(context).size.height * 0.03,
                         ),
                         // Text(
                         //   "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
@@ -709,7 +653,7 @@ class DetailsPageState extends State<DetailsPage> {
                           child: Text(
                             widget.description,
                             style:
-                            TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                                TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                           ),
                         ),
                       ],
@@ -719,14 +663,8 @@ class DetailsPageState extends State<DetailsPage> {
                 Positioned(
                   bottom: 0,
                   child: Container(
-                    height: (70 / MediaQuery
-                        .of(context)
-                        .size
-                        .height) *
-                        MediaQuery
-                            .of(context)
-                            .size
-                            .height,
+                    height: (70 / MediaQuery.of(context).size.height) *
+                        MediaQuery.of(context).size.height,
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -741,10 +679,7 @@ class DetailsPageState extends State<DetailsPage> {
                       ],
                     ),
                     child: SizedBox(
-                      width: MediaQuery
-                          .of(context)
-                          .size
-                          .width,
+                      width: MediaQuery.of(context).size.width,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(children: [
@@ -774,24 +709,19 @@ class DetailsPageState extends State<DetailsPage> {
                             ],
                           ),
                           SizedBox(
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.06),
+                              width: MediaQuery.of(context).size.width * 0.06),
                           Row(
                             children: [
                               IconButton(
                                 icon: Icon(Icons.comment,
-                                    color: Theme
-                                        .of(context)
+                                    color: Theme.of(context)
                                         .colorScheme
                                         .onSurface),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) =>
-                                            CommentsPage(
+                                        builder: (context) => CommentsPage(
                                               key: UniqueKey(),
                                               postId: widget.postId,
                                             )),

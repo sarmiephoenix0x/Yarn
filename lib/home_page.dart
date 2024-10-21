@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
           _profileImage =
               (profilePictureUrl != null && profilePictureUrl.isNotEmpty)
-                  ? '$profilePictureUrl/download'
+                  ? '$profilePictureUrl/download?project=66e4476900275deffed4'
                   : '';
         });
 
@@ -527,14 +527,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
     String authorImg = post['headerImageUrl'] != null
-        ? "${post['headerImageUrl']}/download"
+        ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
     String location =
-        'Some location'; // Replace with actual location if available
+        post['creatorCity'] ?? 'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';

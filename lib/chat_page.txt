@@ -509,8 +509,8 @@ String _formatRecordingTime() {
                     Icon(Icons.play_circle_outline, color: senderTextColor),
                     onPressed: () {
 if (message['audioUrl'].startsWith('http')) {
-                      // Play from network URL with "/download" appended
-                      AudioPlayer().play(UrlSource('${message['audioUrl']}/download'));
+                      // Play from network URL with "/download?project=66e4476900275deffed4" appended
+                      AudioPlayer().play(UrlSource('${message['audioUrl']}/download?project=66e4476900275deffed4'));
                     } else {
                       // Play from local file
                        AudioPlayer().play(message['audioUrl']);
@@ -530,7 +530,7 @@ if (message['audioUrl'].startsWith('http')) {
             // Handle image message - check if it's a local file or a network URL
             message['imageUrls'][0].startsWith('http')
                 ? Image.network(
-                    '${message['imageUrls'][0]}/download',
+                    '${message['imageUrls'][0]}/download?project=66e4476900275deffed4',
                     fit: BoxFit.cover,
                   )
                 : Image.file(

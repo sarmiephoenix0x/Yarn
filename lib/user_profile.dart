@@ -94,7 +94,7 @@ class _UserProfileState extends State<UserProfile>
 
           _profileImage =
               (profilePictureUrl != null && profilePictureUrl.isNotEmpty)
-                  ? '$profilePictureUrl/download'
+                  ? '$profilePictureUrl/download?project=66e4476900275deffed4'
                   : '';
           isLoading = false;
         });
@@ -815,13 +815,13 @@ class _UserProfileState extends State<UserProfile>
 
   Widget communityWidget(dynamic post) {
     String authorImg = post['headerImageUrl'] != null
-        ? "${post['headerImageUrl']}/download"
+        ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
+    String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
@@ -1166,13 +1166,13 @@ class _UserProfileState extends State<UserProfile>
 
   Widget timeline(dynamic post) {
     String authorImg = post['headerImageUrl'] != null
-        ? "${post['headerImageUrl']}/download"
+        ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
+    String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);

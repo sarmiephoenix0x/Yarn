@@ -111,7 +111,8 @@ class _FollowingsPageState extends State<FollowingsPage> {
                         final following = followingsList[index];
                         return user(
                           following['profilepictureurl'] != null
-                              ? following['profilepictureurl'] + '/download'
+                              ? following['profilepictureurl'] +
+                                  '/download?project=66e4476900275deffed4'
                               : '',
                           following['username'],
                           following['isFollowing'],
