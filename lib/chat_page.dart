@@ -98,9 +98,15 @@ class ChatService {
 
   // Fetch all chats
   Future<List<dynamic>> fetchChats() async {
+    final authorizationHeader = dio.options.headers["Authorization"];
+
+    if (authorizationHeader == null) {
+      // Handle the case where Authorization header is missing
+      throw Exception('Authorization header is missing.');
+    }
     final response = await http.get(
       Uri.parse("$apiUrl/chats/"),
-      headers: {"Authorization": dio.options.headers["Authorization"]!},
+      headers: {"Authorization": authorizationHeader},
     );
 
     print("Response body: ${response.body}");
@@ -197,6 +203,7 @@ class _ChatPageState extends State<ChatPage> {
   String? selectedAudioFile;
   List<Map<String, dynamic>> unsentMessages = [];
   List<Map<String, dynamic>> pendingImageMessages = [];
+  List<Map<String, dynamic>> pendingAudioMessages = [];
   StreamSubscription<ConnectivityResult>? connectivitySubscription;
   bool isLoading = true;
 
@@ -217,6 +224,8 @@ class _ChatPageState extends State<ChatPage> {
       if (result != ConnectivityResult.none) {
         _retrySendingMessages(); // Retry sending text messages
         _retrySendingImageMessages(); // Retry sending image messages
+        // _retrySendingAudioMessages();
+        retryMessageLoad();
       }
     });
     chatService = ChatService();
@@ -252,15 +261,22 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  Future<void> retryMessageLoad() async {
+    await loadMessages();
+  }
+
   Future<void> loadMessages() async {
     if (!messagesLoaded) {
+      setState(() {
+        isLoading = true; // Show loading spinner while fetching
+      });
+
       try {
         final List<dynamic> chats = await chatService.fetchChats();
 
         // Find the chatId based on the receiverId
         final chat = chats.firstWhere(
           (chat) => chat['lastMessage']['receiverId'] == widget.receiverId,
-          // Access receiverId from lastMessage
           orElse: () => null,
         );
 
@@ -269,26 +285,77 @@ class _ChatPageState extends State<ChatPage> {
 
           // Fetch messages for the found chatId
           final fetchedMessages = await chatService.fetchMessages(chatId);
+
+          if (fetchedMessages.isNotEmpty) {
+            setState(() {
+              messages = fetchedMessages;
+              messagesLoaded = true;
+              isLoading = false; // Stop loading spinner
+            });
+
+            // Scroll to the bottom of the messages list
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            });
+          } else {
+            // Show a snack bar only if no messages are returned
+            setState(() {
+              isLoading = false;
+            });
+            _showCustomSnackBar(context, 'No messages available.',
+                isError: true);
+          }
+        } else {
           setState(() {
-            messages = fetchedMessages;
-            messagesLoaded = true; // Set the flag after loading
             isLoading = false;
           });
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          });
-        } else {
-          print('Chat not found for receiverId: ${widget.receiverId}');
+          _showCustomSnackBar(context, 'No chats found for the selected user.',
+              isError: true);
         }
       } catch (e) {
-        print("Error fetching messages: $e");
+        // Only show the error if the messages weren't loaded earlier
+        if (!messagesLoaded) {
+          setState(() {
+            isLoading = false; // Stop loading spinner
+          });
+          print("Error fetching messages: $e");
+        }
       }
     }
+  }
+
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<void> sendMessage() async {
@@ -311,7 +378,6 @@ class _ChatPageState extends State<ChatPage> {
         messages.add(message);
         _messageController.clear();
         selectedImages.clear();
-        selectedAudioFile = null;
       });
 
       // Scroll to the bottom after adding the new message
@@ -333,7 +399,7 @@ class _ChatPageState extends State<ChatPage> {
         await chatService.sendMessage(
           receiverId: widget.receiverId,
           text: message['text'] as String?, // Cast text to String?
-          audioFile: audioFile, // This seems fine, assuming it's a File or null
+          audioFile: audioFile, // Send audio file
           images: (message['imageUrls'] as List<dynamic>?)
               ?.map((imagePath) => File(imagePath as String))
               .toList(), // Convert image paths to List<File>
@@ -342,10 +408,14 @@ class _ChatPageState extends State<ChatPage> {
         // If successful, update the message to "sent"
         setState(() {
           message['isSent'] = true;
+          selectedAudioFile = null; // Clear after successful send
         });
       } catch (e) {
-        // If sending fails (e.g., no network), store the message in the unsent queue
+        // If sending fails, store the message in the unsent queue
         _storeUnsentMessage(message);
+        setState(() {
+          selectedAudioFile = null; // Clear if there's an error
+        });
       }
     }
   }
@@ -431,6 +501,44 @@ class _ChatPageState extends State<ChatPage> {
   //     });
   //   }
   // }
+
+  Future<void> _retrySendingAudioMessages() async {
+    List<Map<String, dynamic>> messagesToRemove = [];
+
+    for (var pendingMessage in pendingAudioMessages) {
+      try {
+        File? audioFile;
+        if (pendingMessage['audioUrl'] != null) {
+          audioFile = File(pendingMessage['audioUrl']); // Convert path to File
+        }
+
+        await chatService.sendMessage(
+          receiverId: pendingMessage['receiverId'],
+          audioFile: audioFile, // Send the audio file
+        );
+
+        // Mark the message as sent in the message list
+        setState(() {
+          final index = messages.indexWhere((msg) =>
+              msg['audioUrl'] != null &&
+              msg['audioUrl'] == pendingMessage['audioUrl']);
+          if (index != -1) {
+            messages[index]['isSent'] = true; // Update to true after send
+          }
+        });
+
+        // Remove successfully sent message from pending list
+        messagesToRemove.add(pendingMessage);
+      } catch (e) {
+        // If sending fails, keep it in the pending list for another retry
+      }
+    }
+
+    // Remove messages that have been successfully sent from the pending list
+    setState(() {
+      pendingAudioMessages.removeWhere((msg) => messagesToRemove.contains(msg));
+    });
+  }
 
   Future<void> _checkPermissions() async {
     var status = await Permission.microphone.request();
@@ -761,10 +869,11 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: isLoading
+            child: isLoading == true
                 ? Center(
-                    child: CircularProgressIndicator(color: Color(0xFF500450)))
-                : messages.isEmpty
+                    child: CircularProgressIndicator(color: Color(0xFF500450)),
+                  )
+                : (messages.isEmpty
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
@@ -779,8 +888,7 @@ class _ChatPageState extends State<ChatPage> {
                       )
                     : ListView.builder(
                         controller: _scrollController,
-                        reverse:
-                            false, // Change this to false for top-to-bottom display
+                        reverse: false, // Display messages top to bottom
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final message = messages[index];
@@ -788,7 +896,6 @@ class _ChatPageState extends State<ChatPage> {
 
                           if (isLastMessage) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
-                              // Check if the "audioUrl" is not null and not empty
                               if (message["audioUrl"] != null &&
                                   message["audioUrl"]!.isNotEmpty) {
                                 final newChat = Chat(
@@ -804,7 +911,6 @@ class _ChatPageState extends State<ChatPage> {
                                     .addOrUpdateChat(newChat);
                               }
 
-                              // Check if the "imageUrls" is not null and not empty
                               if (message["imageUrls"] != null &&
                                   message["imageUrls"]!.isNotEmpty) {
                                 final newChat = Chat(
@@ -820,7 +926,6 @@ class _ChatPageState extends State<ChatPage> {
                                     .addOrUpdateChat(newChat);
                               }
 
-                              // Check if the "text" is not null and not empty
                               if (message["text"] != null &&
                                   message["text"]!.isNotEmpty) {
                                 final newChat = Chat(
@@ -831,19 +936,20 @@ class _ChatPageState extends State<ChatPage> {
                                   timeStamp: DateFormat('dd/MM/yyyy')
                                       .format(DateTime.now()),
                                 );
-
                                 Provider.of<ChatProvider>(context,
                                         listen: false)
                                     .addOrUpdateChat(newChat);
                               }
                             });
                           }
+
                           final isSentByMe =
                               message['senderId'] == widget.senderId;
                           return _buildMessageBubble(message, isSentByMe);
                         },
-                      ),
+                      )),
           ),
+
           _buildTextField(), // Show input field or audio UI
         ],
       ),

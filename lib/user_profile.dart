@@ -5,6 +5,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:yarn/followers_page.dart';
+import 'package:yarn/followings_page.dart';
 
 import 'chat_page.dart';
 import 'comments_page.dart';
@@ -431,9 +433,14 @@ class _UserProfileState extends State<UserProfile>
                                     (80 / MediaQuery.of(context).size.height) *
                                         MediaQuery.of(context).size.height,
                                 color: Colors.grey,
-                                child: Image.file(
-                                  File(_profileImage),
+                                child: Image.network(
+                                  _profileImage,
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                        color: Colors
+                                            .grey); // Fallback if image fails
+                                  },
                                 ),
                               ),
                             ),
@@ -441,54 +448,81 @@ class _UserProfileState extends State<UserProfile>
                               width: MediaQuery.of(context).size.width * 0.02),
                           Expanded(
                             flex: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  followers.toString(),
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18.0,
+                            child: InkWell(
+                              onTap: () {
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //       builder: (context) => FollowersPage(
+                                //             key: UniqueKey(),
+                                //             senderId: widget.userId,
+                                //           )),
+                                // );
+                              },
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    followers.toString(),
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18.0,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  "Followers",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 16.0,
-                                    color: Colors.grey,
+                                  const Text(
+                                    "Followers",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16.0,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           Expanded(
                             flex: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  following.toString(),
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18.0,
+                            child: InkWell(
+                              onTap: () {
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (context) => FollowingsPage(
+                                //       key: UniqueKey(),
+                                //       senderId: widget.userId,
+                                //     ),
+                                //   ),
+                                // );
+                              },
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    following.toString(),
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18.0,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  "Following",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 16.0,
-                                    color: Colors.grey,
+                                  const Text(
+                                    "Following",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16.0,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           Expanded(
@@ -554,10 +588,12 @@ class _UserProfileState extends State<UserProfile>
                         children: [
                           InkWell(
                             onTap: () {
-                              if (isFollowing) {
-                                unfollowUser();
-                              } else {
-                                followUser();
+                              if (widget.userId != widget.senderId) {
+                                if (isFollowing) {
+                                  unfollowUser();
+                                } else {
+                                  followUser();
+                                }
                               }
                             },
                             child: Container(
@@ -604,17 +640,19 @@ class _UserProfileState extends State<UserProfile>
                           const Spacer(),
                           InkWell(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatPage(
-                                    receiverId: widget.userId,
-                                    receiverName: userName ?? 'Unknown User',
-                                    profilePic: _profileImage,
-                                    senderId: widget.senderId,
-                                  ), // Pass the receiverId
-                                ),
-                              );
+                              if (widget.userId != widget.senderId) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatPage(
+                                      receiverId: widget.userId,
+                                      receiverName: userName ?? 'Unknown User',
+                                      profilePic: _profileImage,
+                                      senderId: widget.senderId,
+                                    ), // Pass the receiverId
+                                  ),
+                                );
+                              }
                             },
                             child: Container(
                               width: (150 / MediaQuery.of(context).size.width) *

@@ -122,13 +122,14 @@ class _MeassagesPageState extends State<MeassagesPage> {
     } else if (chat.imageUrl.isNotEmpty) {
       badgeChildren.add(
         ClipRRect(
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(55),
           child: Container(
             width: (50 / MediaQuery.of(context).size.width) *
                 MediaQuery.of(context).size.width,
             height: (50 / MediaQuery.of(context).size.height) *
                 MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
+              color: Colors.grey,
               shape: BoxShape.circle,
               border: Border.all(
                 color: const Color(0xFF5A5ABA),
@@ -136,8 +137,11 @@ class _MeassagesPageState extends State<MeassagesPage> {
               ),
             ),
             child: Image.network(
-              chat.imageUrl[0],
+              chat.imageUrl,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(color: Colors.grey); // Fallback if image fails
+              },
             ),
           ),
         ),

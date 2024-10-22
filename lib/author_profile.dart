@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:yarn/comments_page.dart';
+import 'package:yarn/user_profile.dart';
 
 import 'details_page.dart';
 
@@ -43,6 +45,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   int currentPage = 0;
   bool hasMore = true;
   final storage = const FlutterSecureStorage();
+  Map<int, bool> _isLikedMap = {};
 
   @override
   void initState() {
@@ -372,9 +375,14 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                           height: (80 / MediaQuery.of(context).size.height) *
                               MediaQuery.of(context).size.height,
                           color: Colors.grey,
-                          child: Image.file(
-                            File(widget.profileImage),
+                          child: Image.network(
+                            widget.profileImage,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                  color:
+                                      Colors.grey); // Fallback if image fails
+                            },
                           ),
                         ),
                       ),
@@ -809,7 +817,6 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   }
 
   Widget _buildPostItem(dynamic post) {
-    // Extract necessary data from the post
     String authorImg = post['headerImageUrl'] != null
         ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
         : '';
@@ -817,12 +824,12 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location =
-        post['creatorCity'] ?? 'Some location'; // Replace with actual location if available
+    String location = post['creatorCity'] ??
+        'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
-    bool isLiked = false; // Assume you have a way to track likes
+    bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
@@ -834,7 +841,16 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
+        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}',
+      );
+
+      // Optimistically update the like status and likes count immediately
+      setState(() {
+        _isLikedMap[post['postId']] = !isLiked; // Toggle like
+        likes = _isLikedMap[post['postId']] == true
+            ? likes + 1
+            : likes - 1; // Update like count
+      });
 
       final response = await http.patch(
         uri,
@@ -844,16 +860,18 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
         },
       );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          // Toggle the liked state and update the like count
-          isLiked = !isLiked;
-          likes = isLiked ? likes + 1 : likes - 1;
-        });
-        print(isLiked);
-      } else {
+      if (response.statusCode != 200) {
         final errorData = json.decode(response.body);
-        // Handle error - you might want to show a dialog or a Snackbar
+
+        // Revert the optimistic update if the server request fails
+        setState(() {
+          _isLikedMap[post['postId']] = !isLiked; // Revert like
+          likes = _isLikedMap[post['postId']] == true
+              ? likes + 1
+              : likes - 1; // Revert like count
+        });
+
+        // Show error message
         print('Error toggling like: ${errorData['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${errorData['message']}')),
@@ -893,30 +911,47 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  children: [
-                    if (!anonymous)
-                      if (authorImg.isEmpty)
-                        _buildProfilePlaceholder()
-                      else
-                        _buildProfileImage(authorImg),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.03),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAuthorDetails(authorName, verified, anonymous),
-                          if (postImg.isEmpty)
-                            _buildLocationAndTime(location, time),
-                        ],
+              InkWell(
+                onTap: () {
+                  if (anonymous == false) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfile(
+                          key: UniqueKey(),
+                          userId: creatorUserId,
+                          senderId: widget.senderId,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    // if (!anonymous) _buildFollowButton(isFollowing, authorName),
-                  ],
+                    );
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    children: [
+                      if (!anonymous)
+                        if (authorImg.isEmpty)
+                          _buildProfilePlaceholder()
+                        else
+                          _buildProfileImage(authorImg),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAuthorDetails(
+                                authorName, verified, anonymous),
+                            if (postImg.isEmpty)
+                              _buildLocationAndTime(location, time),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // if (!anonymous) _buildFollowButton(isFollowing, authorName),
+                    ],
+                  ),
                 ),
               ),
               if (postImg.isNotEmpty) _buildPostImages(postImg),
@@ -955,7 +990,15 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                       children: [
                         IconButton(
                           icon: const Icon(Icons.comment),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => CommentsPage(
+                                      key: UniqueKey(),
+                                      postId: post['postId'])),
+                            );
+                          },
                         ),
                         Text(
                           comments.toString(),
@@ -1083,7 +1126,15 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                       children: [
                         IconButton(
                           icon: const Icon(Icons.comment),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => CommentsPage(
+                                      key: UniqueKey(),
+                                      postId: post['postId'])),
+                            );
+                          },
                         ),
                         Text(
                           comments.toString(),
