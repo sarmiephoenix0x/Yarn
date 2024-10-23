@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/chat_provider.dart';
 import 'package:yarn/privacy.dart';
 import 'package:yarn/intro_page.dart';
 import 'package:http/http.dart' as http;
@@ -95,6 +97,10 @@ class SettingsState extends State<Settings>
 
       return;
     }
+
+    // Clear saved chats before logging out
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    chatProvider.clearChats(); // Clear chats from the provider
 
     await storage.delete(key: 'yarnAccessToken');
     await prefs.remove('user');

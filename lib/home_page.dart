@@ -13,6 +13,7 @@ import 'messages_page.dart';
 import 'notification_page.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:signalr_core/signalr_core.dart';
 
 class HomePage extends StatefulWidget {
   final int selectedIndex;
@@ -43,16 +44,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int currentPage = 0;
   bool hasMore = true;
   final storage = const FlutterSecureStorage();
-  Map<int, bool> _isLikedMap = {};
+  Map<int, bool> _isLikedMap =
+      {}; // Map to store the like status of each post by postId
+  Map<int, int> _likesMap =
+      {}; // Map to store the number of likes for each post by postId
+  Map<int, int> _commentsMap =
+      {}; // Map to store the number of comments for each post by postId
   int? userId;
   String? _detectedCountry;
   String? _detectedState;
   String? _detectedCity;
   Position? _position;
+  HubConnection? _hubConnection;
 
   @override
   void initState() {
     super.initState();
+    _startSignalRConnection();
     fetchUserProfilePic();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -64,6 +72,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
+  }
+
+  void _startSignalRConnection() async {
+    _hubConnection = HubConnectionBuilder()
+        .withUrl("https://yarnapi-n2dw.onrender.com/postHub")
+        .build();
+
+    _hubConnection?.onclose((error) {
+      print("Connection closed: $error");
+    });
+
+    _hubConnection?.on("PostLiked", (message) {
+      print("Post Liked Signal");
+      int postId = message![0];
+      setState(() {
+        _isLikedMap[postId] = true;
+        _likesMap[postId] = (_likesMap[postId] ?? 0) + 1;
+      });
+    });
+
+    _hubConnection?.on("PostUnliked", (message) {
+      print("Post UnLiked Signal");
+      int postId = message![0];
+      setState(() {
+        _isLikedMap[postId] = false;
+        _likesMap[postId] = (_likesMap[postId] ?? 0) - 1;
+      });
+    });
+
+    _hubConnection?.on("PostCommented", (message) {
+      int postId = message![0];
+      setState(() {
+        _commentsMap[postId] = (_commentsMap[postId] ?? 0) + 1;
+      });
+    });
+
+    await _hubConnection?.start();
+    print("SignalR connection started");
   }
 
   Future<void> _getLocation() async {
@@ -143,9 +189,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     } catch (error) {
       print('Error: $error');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -549,15 +597,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-        'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}',
-      );
+          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       // Optimistically update the like status and likes count immediately
       setState(() {
-        _isLikedMap[post['postId']] = !isLiked; // Toggle like
-        likes = _isLikedMap[post['postId']] == true
-            ? likes + 1
-            : likes - 1; // Update like count
+        _isLikedMap[post['postId']] = !(_isLikedMap[post['postId']] ?? false);
+
+        likes = _isLikedMap[post['postId']] == true ? likes + 1 : likes - 1;
       });
 
       final response = await http.patch(
@@ -570,20 +616,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       if (response.statusCode != 200) {
         final errorData = json.decode(response.body);
-
-        // Revert the optimistic update if the server request fails
         setState(() {
-          _isLikedMap[post['postId']] = !isLiked; // Revert like
-          likes = _isLikedMap[post['postId']] == true
-              ? likes + 1
-              : likes - 1; // Revert like count
-        });
+          // Revert optimistic update
+          _isLikedMap[post['postId']] = !(_isLikedMap[post['postId']] ?? false);
 
-        // Show error message
-        print('Error toggling like: ${errorData['message']}');
+          likes = _isLikedMap[post['postId']] == true ? likes + 1 : likes - 1;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${errorData['message']}')),
-        );
+            SnackBar(content: Text('Error: ${errorData['message']}')));
       }
     }
 

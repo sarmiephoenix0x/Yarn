@@ -73,7 +73,7 @@ class ForgotPasswordState extends State<ForgotPassword>
     final response = await http.post(
       Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'emailOrPhone': phoneNumber}),
+      body: jsonEncode({'email': emailController.text.trim()}),
     );
 
 // Check if the response is in JSON format or plain text
@@ -89,7 +89,7 @@ class ForgotPasswordState extends State<ForgotPassword>
     }
 
     if (response.statusCode == 200) {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => SignUpOTPPage(
@@ -97,9 +97,21 @@ class ForgotPasswordState extends State<ForgotPassword>
             onToggleDarkMode: widget.onToggleDarkMode,
             isDarkMode: widget.isDarkMode,
             phoneNumber: phoneNumber,
+            email: emailController.text.trim(),
           ),
         ),
       );
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => SignUpOTPPage(
+      //       key: UniqueKey(),
+      //       onToggleDarkMode: widget.onToggleDarkMode,
+      //       isDarkMode: widget.isDarkMode,
+      //       phoneNumber: phoneNumber,
+      //     ),
+      //   ),
+      // );
     } else if (response.statusCode == 400) {
       final responseData = json.decode(response.body);
       setState(() {
@@ -561,15 +573,7 @@ class ForgotPasswordState extends State<ForgotPassword>
                       onPressed: () async {
                         if (_selectedRadioValue == 1) {
                           if (emailController.text.isNotEmpty) {
-                            // Navigator.pushReplacement(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => SignUpOTPPage(
-                            //         key: UniqueKey(),
-                            //         onToggleDarkMode: widget.onToggleDarkMode,
-                            //         isDarkMode: widget.isDarkMode),
-                            //   ),
-                            // );
+                            await forgotPassword();
                           } else {
                             _showCustomSnackBar(
                               context,

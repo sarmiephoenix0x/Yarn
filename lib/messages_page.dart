@@ -79,13 +79,20 @@ class _MeassagesPageState extends State<MeassagesPage> {
 
   Widget _buildChatList(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
+
+    // Filter chats to exclude the account owner based on their ID
+    final filteredChats = chatProvider.chats
+        .where((chat) =>
+            chat.id != widget.senderId.toString()) // Convert senderId to String
+        .toList();
+
     return ListView.builder(
-      itemCount: chatProvider.chats.length,
+      itemCount: filteredChats.length,
       reverse: true,
       shrinkWrap: true,
       controller: chatsScrollController,
       itemBuilder: (context, index) {
-        final chat = chatProvider.chats[index];
+        final chat = filteredChats[index];
         final latestPreviewText = chatProvider.getChatPreviewText(chat.id);
 
         return _buildMessage(chat, latestPreviewText, false);

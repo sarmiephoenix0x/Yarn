@@ -82,6 +82,12 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
+  void clearChats() {
+    _chats.clear(); // Clear the chat list in memory
+    saveChatsLocally(); // Save the cleared state to SharedPreferences
+    notifyListeners(); // Notify any listeners about the update
+  }
+
   String getChatPreviewText(String id) {
     final chat = _chats.firstWhere((c) => c.id == id,
         orElse: () => Chat(

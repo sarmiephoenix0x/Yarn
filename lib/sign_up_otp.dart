@@ -7,11 +7,13 @@ class SignUpOTPPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
   final String phoneNumber;
+  final String email;
   const SignUpOTPPage(
       {super.key,
       required this.onToggleDarkMode,
       required this.isDarkMode,
-      required this.phoneNumber});
+      required this.phoneNumber,
+      required this.email});
 
   @override
   SignUpOTPPageState createState() => SignUpOTPPageState();
@@ -127,7 +129,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
       final response = await http.post(
         Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/otp-submit'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': widget.phoneNumber, 'OTP': otpCode}),
+        body: jsonEncode({'email': widget.email, 'OTP': otpCode}),
       );
 
       final responseData = json.decode(response.body);
@@ -222,7 +224,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
                     SizedBox(height: MediaQuery.of(context).size.height * 0.03),
                     Center(
                       child: Text(
-                        "Enter the OTP sent to ${widget.phoneNumber}",
+                        "Enter the OTP sent to ${widget.email}",
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 15.0,

@@ -207,11 +207,13 @@ class _ChatPageState extends State<ChatPage> {
   StreamSubscription<ConnectivityResult>? connectivitySubscription;
   bool isLoading = true;
 
+/*
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
     messagesLoaded = false; // Reset to load messages again
     await loadMessages(); // Load the messages when returning to the chat
   }
+*/
 
   @override
   void initState() {
@@ -262,6 +264,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> retryMessageLoad() async {
+    messagesLoaded = false;
     await loadMessages();
   }
 
@@ -274,9 +277,13 @@ class _ChatPageState extends State<ChatPage> {
       try {
         final List<dynamic> chats = await chatService.fetchChats();
 
-        // Find the chatId based on the receiverId
+        // Find the chat based on both senderId and receiverId
         final chat = chats.firstWhere(
-          (chat) => chat['lastMessage']['receiverId'] == widget.receiverId,
+          (chat) =>
+              (chat['lastMessage']['receiverId'] == widget.receiverId &&
+                  chat['lastMessage']['senderId'] == widget.senderId) ||
+              (chat['lastMessage']['receiverId'] == widget.senderId &&
+                  chat['lastMessage']['senderId'] == widget.receiverId),
           orElse: () => null,
         );
 
@@ -302,7 +309,6 @@ class _ChatPageState extends State<ChatPage> {
               );
             });
           } else {
-            // Show a snack bar only if no messages are returned
             setState(() {
               isLoading = false;
             });
@@ -313,11 +319,13 @@ class _ChatPageState extends State<ChatPage> {
           setState(() {
             isLoading = false;
           });
-          _showCustomSnackBar(context, 'No chats found for the selected user.',
-              isError: true);
+          _showCustomSnackBar(
+            context,
+            'No chats found for the selected user.',
+            isError: true,
+          );
         }
       } catch (e) {
-        // Only show the error if the messages weren't loaded earlier
         if (!messagesLoaded) {
           setState(() {
             isLoading = false; // Stop loading spinner
@@ -745,9 +753,11 @@ class _ChatPageState extends State<ChatPage> {
           });
         } catch (e) {
           // Add unsent message to pendingImageMessages for retry
-          setState(() {
-            pendingImageMessages.add(unsentMessage);
-          });
+          if (mounted) {
+            setState(() {
+              pendingImageMessages.add(unsentMessage);
+            });
+          }
         }
       }
     }
