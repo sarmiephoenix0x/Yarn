@@ -142,14 +142,14 @@ class _UserProfileState extends State<UserProfile>
       } else {
         _showCustomSnackBar(
           context,
-          'Failed to load timeline posts.',
+          'Failed to load timeline yarns.',
           isError: true,
         );
       }
     } catch (e) {
       _showCustomSnackBar(
         context,
-        'Failed to load timeline posts.',
+        'Failed to load timeline yarns.',
         isError: true,
       );
     } finally {
@@ -186,14 +186,14 @@ class _UserProfileState extends State<UserProfile>
       } else {
         _showCustomSnackBar(
           context,
-          'Failed to load community posts.',
+          'Failed to load community yarns.',
           isError: true,
         );
       }
     } catch (e) {
       _showCustomSnackBar(
         context,
-        'Failed to load community posts.',
+        'Failed to load community yarns.',
         isError: true,
       );
     } finally {
@@ -540,7 +540,7 @@ class _UserProfileState extends State<UserProfile>
                                   ),
                                 ),
                                 const Text(
-                                  "Posts",
+                                  "Yarns",
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
@@ -730,7 +730,7 @@ class _UserProfileState extends State<UserProfile>
                                               size: 100, color: Colors.grey),
                                           const SizedBox(height: 20),
                                           const Text(
-                                            'No timeline posts available at the moment.',
+                                            'No timeline yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
@@ -768,7 +768,7 @@ class _UserProfileState extends State<UserProfile>
                                                         EdgeInsets.symmetric(
                                                             vertical: 16),
                                                     child: Text(
-                                                        'No more timeline posts'),
+                                                        'No more timeline yarns'),
                                                   ),
                                                 );
                                         }
@@ -794,7 +794,7 @@ class _UserProfileState extends State<UserProfile>
                                               size: 100, color: Colors.grey),
                                           const SizedBox(height: 20),
                                           const Text(
-                                            'No community posts available at the moment.',
+                                            'No community yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
@@ -832,7 +832,7 @@ class _UserProfileState extends State<UserProfile>
                                                         EdgeInsets.symmetric(
                                                             vertical: 16),
                                                     child: Text(
-                                                        'No more community posts'),
+                                                        'No more community yarns'),
                                                   ),
                                                 );
                                         }

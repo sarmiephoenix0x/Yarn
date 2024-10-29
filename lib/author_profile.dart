@@ -147,9 +147,11 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
         isError: true,
       );
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -454,7 +456,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                             ),
                           ),
                           Text(
-                            "Posts",
+                            "Yarns",
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: 'Poppins',
@@ -598,7 +600,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                     size: 100, color: Colors.grey),
                                 const SizedBox(height: 20),
                                 const Text(
-                                  'No posts available at the moment.',
+                                  'No yarns available at the moment.',
                                   style: TextStyle(
                                       fontSize: 18, color: Colors.grey),
                                 ),
@@ -630,7 +632,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                         child: Padding(
                                           padding: EdgeInsets.symmetric(
                                               vertical: 16),
-                                          child: Text('No more posts'),
+                                          child: Text('No more yarns'),
                                         ),
                                       );
                               }

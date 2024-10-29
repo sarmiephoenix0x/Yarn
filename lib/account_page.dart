@@ -595,7 +595,7 @@ class _AccountPageState extends State<AccountPage>
                                   ),
                                 ),
                                 const Text(
-                                  "Posts",
+                                  "Yarns",
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
@@ -767,7 +767,7 @@ class _AccountPageState extends State<AccountPage>
                                               size: 100, color: Colors.grey),
                                           const SizedBox(height: 20),
                                           const Text(
-                                            'No timeline posts available at the moment.',
+                                            'No timeline yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
@@ -805,7 +805,7 @@ class _AccountPageState extends State<AccountPage>
                                                         EdgeInsets.symmetric(
                                                             vertical: 16),
                                                     child: Text(
-                                                        'No more timeline posts'),
+                                                        'No more timeline yarns'),
                                                   ),
                                                 );
                                         }
@@ -831,7 +831,7 @@ class _AccountPageState extends State<AccountPage>
                                               size: 100, color: Colors.grey),
                                           const SizedBox(height: 20),
                                           const Text(
-                                            'No community posts available at the moment.',
+                                            'No community yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
@@ -869,7 +869,7 @@ class _AccountPageState extends State<AccountPage>
                                                         EdgeInsets.symmetric(
                                                             vertical: 16),
                                                     child: Text(
-                                                        'No more community posts'),
+                                                        'No more community yarns'),
                                                   ),
                                                 );
                                         }
@@ -892,9 +892,10 @@ class _AccountPageState extends State<AccountPage>
         backgroundColor: const Color(0xFF500450),
         shape: const CircleBorder(),
         child: Image.asset(
-    'images/User-talk.png',
-    fit: BoxFit.cover,
-  ),
+          'images/User-talk.png',
+          height: 30,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
