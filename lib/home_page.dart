@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     _hubConnection?.on("PostLiked", (message) {
-      print("Post Liked Signal");
+      print("Yarn Liked Signal");
       int postId = message![0];
       setState(() {
         _isLikedMap[postId] = true;
@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     _hubConnection?.on("PostUnliked", (message) {
-      print("Post UnLiked Signal");
+      print("Yarn UnLiked Signal");
       int postId = message![0];
       setState(() {
         _isLikedMap[postId] = false;
@@ -259,10 +259,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
         if (fetchedPosts.isEmpty) {
-          print('No posts available');
+          print('No yarns available');
           _showCustomSnackBar(
             context,
-            'No posts to display at the moment.',
+            'No yarns to display at the moment.',
             isError: false,
           );
           if (mounted) {
@@ -285,7 +285,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         print('Error 400: ${response.body}');
         _showCustomSnackBar(
           context,
-          'Failed to load posts. Bad request.',
+          'Failed to load yarns. Bad request.',
           isError: true,
         );
       } else {
@@ -300,7 +300,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       print('Exception: $e');
       _showCustomSnackBar(
         context,
-        'Failed to load posts.',
+        'Failed to load yarns.',
         isError: true,
       );
     } finally {
@@ -486,7 +486,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 size: 100, color: Colors.grey),
                             const SizedBox(height: 20),
                             const Text(
-                              'No posts available at the moment.',
+                              'No yarns available at the moment.',
                               style:
                                   TextStyle(fontSize: 18, color: Colors.grey),
                             ),
@@ -518,7 +518,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     child: Padding(
                                       padding:
                                           EdgeInsets.symmetric(vertical: 16),
-                                      child: Text('No more posts'),
+                                      child: Text('No more yarns'),
                                     ),
                                   );
                           }

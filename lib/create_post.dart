@@ -130,12 +130,12 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        print('Post created successfully: ${responseData['message']}');
+        print('Yarn created successfully: ${responseData['message']}');
         Navigator.pop(context); // Navigate back or clear the fields
       } else {
         _showCustomSnackBar(
           context,
-          'Error creating post: ${responseData['message']}',
+          'Error creating yarn: ${responseData['message']}',
           isError: true,
         );
       }
@@ -172,7 +172,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
             .map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
-            child: Text('Post to $value',
+            child: Text('Yarn to $value',
                 style:
                     TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           );
@@ -184,7 +184,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   // Switch to choose anonymity option
   Widget _anonymousSwitch() {
     return SwitchListTile(
-      title: const Text('Post Anonymously'),
+      title: const Text('Yarn Anonymously'),
       value: _isAnonymous,
       onChanged: (bool value) {
         setState(() {
@@ -229,7 +229,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Post'),
+        title: const Text('Create Yarn'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.background,
@@ -288,7 +288,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                       focusNode: _titleFocusNode,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
-                        hintText: 'Enter post title...',
+                        hintText: 'Enter yarn title...',
                         hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       style: const TextStyle(

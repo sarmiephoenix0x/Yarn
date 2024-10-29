@@ -123,14 +123,14 @@ class _AccountPageState extends State<AccountPage>
       } else {
         _showCustomSnackBar(
           context,
-          'Failed to load timeline posts.',
+          'Failed to load timeline yarns.',
           isError: true,
         );
       }
     } catch (e) {
       _showCustomSnackBar(
         context,
-        'Failed to load timeline posts.',
+        'Failed to load timeline yarns.',
         isError: true,
       );
     } finally {
@@ -167,14 +167,14 @@ class _AccountPageState extends State<AccountPage>
       } else {
         _showCustomSnackBar(
           context,
-          'Failed to load community posts.',
+          'Failed to load community yarns.',
           isError: true,
         );
       }
     } catch (e) {
       _showCustomSnackBar(
         context,
-        'Failed to load community posts.',
+        'Failed to load community yarns.',
         isError: true,
       );
     } finally {
@@ -295,7 +295,7 @@ class _AccountPageState extends State<AccountPage>
           children: [
             ListTile(
               leading: Icon(Icons.post_add),
-              title: Text('Create Post'),
+              title: Text('Create Yarn'),
               onTap: () {
                 Navigator.push(
                   context,
@@ -891,7 +891,10 @@ class _AccountPageState extends State<AccountPage>
         },
         backgroundColor: const Color(0xFF500450),
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Image.asset(
+    'images/User-talk.png',
+    fit: BoxFit.cover,
+  ),
       ),
     );
   }
