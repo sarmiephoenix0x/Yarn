@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/community.dart';
 import 'package:yarn/create_post.dart';
 import 'package:yarn/intro_page.dart';
 import 'package:http/http.dart' as http;
@@ -120,58 +121,79 @@ class AnalyticsState extends State<Analytics>
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: Row(
-                                children: [
-                                  Image.asset(
-                                    'images/Community.png',
-                                    height: 50,
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.02),
-                                  Expanded(
-                                    flex: 10,
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          'Join Communities to grow your audience',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 17.0,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Connecting with new communities may help you get more engagement',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 17.0,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                          ),
-                                        ),
-                                      ],
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CommunityPage(key: UniqueKey()),
                                     ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      size: 30,
-                                      Icons.navigate_next,
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Image.asset(
+                                      'images/Community.png',
+                                      height: 50,
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurface,
                                     ),
-                                    onPressed: () {},
-                                  ),
-                                ],
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.02),
+                                    Expanded(
+                                      flex: 10,
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'Join Communities to grow your audience',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 17.0,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Connecting with new communities may help you get more engagement',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 17.0,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        size: 30,
+                                        Icons.navigate_next,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                CommunityPage(key: UniqueKey()),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             SizedBox(
