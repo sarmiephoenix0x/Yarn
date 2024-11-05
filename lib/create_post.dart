@@ -185,7 +185,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Yarn'),
+        title: const Text('Yarn'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
