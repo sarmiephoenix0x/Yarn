@@ -24,6 +24,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   final FocusNode _bodyFocusNode = FocusNode();
   String? _postType = 'timeline'; // Default post type
   bool _isAnonymous = false; // Default anonymity option
+  String? _postCategory = 'Information';
   List<XFile>? _selectedImages = []; // Store selected images
   final storage = const FlutterSecureStorage();
   bool _isLoading = false; // Loader state for the publish button
@@ -205,10 +206,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                     _buildTitleSection(),
                     const SizedBox(height: 20),
                     // Post Type Dropdown
-                    _postTypeDropdown(),
-                    const SizedBox(height: 20),
-                    // Anonymous Switch
-                    _anonymousSwitch(),
+                    _buildCollapsibleFilters(),
                     const SizedBox(height: 20),
                     // Image Preview Section
                     if (_selectedImages!.isNotEmpty)
@@ -345,13 +343,47 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     );
   }
 
+  // Post Category Dropdown
+  Widget _postCategoryDropdown() {
+    Icon categoryIcon;
+    Color categoryColor;
+
+    if (_postCategory == 'Information') {
+      categoryIcon = Icon(Icons.info, color: Colors.blue);
+      categoryColor = Colors.blue;
+    } else if (_postCategory == 'Alert/Emergency') {
+      categoryIcon = Icon(Icons.warning, color: Colors.red);
+      categoryColor = Colors.red;
+    } else {
+      categoryIcon =
+          Icon(Icons.arrow_drop_down, color: Theme.of(context).iconTheme.color);
+      categoryColor = Theme.of(context).colorScheme.onSurface;
+    }
+
+    return ListTile(
+      title: const Text('Yarn Category'),
+      subtitle: Row(
+        children: [
+          categoryIcon,
+          const SizedBox(width: 8),
+          Text(
+            _postCategory != null ? _postCategory! : 'Choose a category...',
+            style: TextStyle(color: categoryColor),
+          ),
+        ],
+      ),
+      trailing: const Icon(Icons.arrow_drop_down),
+      onTap: () => _showPostCategoryDialog(),
+    );
+  }
+
 // Content Field
   Widget _buildContentField() {
     return TextField(
       controller: _textController,
       maxLines: null,
       decoration: InputDecoration(
-        hintText: 'What do you want to yarn?...',
+        hintText: 'What do you want to yarn about?...',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: EdgeInsets.all(12),
       ),
@@ -367,7 +399,11 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(title: const Text('Choose Yarn Type')),
+          ListTile(
+              title: const Text(
+            'Choose Yarn Type',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )),
           ...['timeline', 'page', 'community'].map((type) => ListTile(
                 title: Text('Yarn to $type'),
                 onTap: () {
@@ -389,7 +425,11 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(title: const Text('Choose Privacy Option')),
+          ListTile(
+              title: const Text(
+            'Choose Privacy Option',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          )),
           ListTile(
             title: const Text('Anyone'),
             onTap: () {
@@ -401,6 +441,44 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
             title: const Text('Anonymous'),
             onTap: () {
               setState(() => _isAnonymous = true);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPostCategoryDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text(
+              'Choose Yarn Category',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.info,
+                color: Colors.blue), // Calmer icon for Information
+            title: const Text('Information'),
+            onTap: () {
+              setState(() => _postCategory = 'Information');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.warning,
+                color: Colors.red), // Warning icon for Alert/Emergency
+            title: const Text('Alert/Emergency'),
+            onTap: () {
+              setState(() => _postCategory = 'Alert/Emergency');
               Navigator.pop(context);
             },
           ),
@@ -444,6 +522,19 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
           ],
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildCollapsibleFilters() {
+    return ExpansionTile(
+      title: const Text('Filters'),
+      children: [
+        _postTypeDropdown(),
+        const SizedBox(height: 10),
+        _anonymousSwitch(),
+        const SizedBox(height: 10),
+        _postCategoryDropdown(), // Add the new filter here
+      ],
     );
   }
 }

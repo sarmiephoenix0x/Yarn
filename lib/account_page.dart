@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yarn/analytics.dart';
 import 'package:yarn/settings.dart';
 import 'comments_page.dart';
 import 'create_community.dart';
@@ -661,8 +662,6 @@ class _AccountPageState extends State<AccountPage>
                               );
                             },
                             child: Container(
-                              width: (150 / MediaQuery.of(context).size.width) *
-                                  MediaQuery.of(context).size.width,
                               decoration: BoxDecoration(
                                 color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
@@ -692,8 +691,6 @@ class _AccountPageState extends State<AccountPage>
                           InkWell(
                             onTap: () {},
                             child: Container(
-                              width: (150 / MediaQuery.of(context).size.width) *
-                                  MediaQuery.of(context).size.width,
                               decoration: BoxDecoration(
                                 color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
@@ -716,6 +713,39 @@ class _AccountPageState extends State<AccountPage>
                                   color:
                                       Theme.of(context).colorScheme.onSurface,
                                 ),
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Analytics(
+                                    key: UniqueKey(),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.2),
+                                  width: 2,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              child: Image.asset(
+                                'images/StatImg.png',
+                                height: 25,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),

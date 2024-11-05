@@ -195,6 +195,8 @@ flutter:
     - images/ChatImg.png
     - images/ChatImg-Notification.png
     - images/User-talk.png
+    - images/StatImg.png
+    - images/Community.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
