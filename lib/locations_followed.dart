@@ -5,18 +5,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:yarn/user_profile.dart';
 
-class FollowingsPage extends StatefulWidget {
+class LocationsFollowedPage extends StatefulWidget {
   final int senderId;
 
-  const FollowingsPage({super.key, required this.senderId});
+  const LocationsFollowedPage({super.key, required this.senderId});
 
   @override
-  _FollowingsPageState createState() => _FollowingsPageState();
+  _LocationsFollowedPageState createState() => _LocationsFollowedPageState();
 }
 
-class _FollowingsPageState extends State<FollowingsPage> {
+class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
   final storage = const FlutterSecureStorage();
-  List<dynamic> followingsList = [];
+  List<dynamic> followedList = [];
   bool isLoading = true;
   Map<String, bool> isFollowingMap = {};
   String errorMessage = '';
@@ -24,15 +24,16 @@ class _FollowingsPageState extends State<FollowingsPage> {
   @override
   void initState() {
     super.initState();
-    _fetchFollowings();
+    _fetchFollowed();
   }
 
-  Future<void> _fetchFollowings() async {
+  Future<void> _fetchFollowed() async {
     setState(() {
       isLoading = true;
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/users/followings/${widget.senderId}';
+    final url =
+        'https://yarnapi-n2dw.onrender.com/api/locations/followed/${widget.senderId}';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -46,7 +47,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
         if (responseData['status'] == 'Success' &&
             responseData['data'] is List) {
           setState(() {
-            followingsList =
+            followedList =
                 responseData['data']; // Update to use responseData['data']
             isLoading = false;
           });
@@ -67,7 +68,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
       setState(() {
         isLoading = false;
       });
-      print('Error fetching followings: $error');
+      print('Error fetching followed: $error');
     }
   }
 
@@ -82,7 +83,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
               child: CircularProgressIndicator(color: Color(0xFF500450)))
           : errorMessage.isNotEmpty
               ? Center(child: Text(errorMessage))
-              : followingsList.isEmpty
+              : followedList.isEmpty
                   ? Center(
                       // Display this if the timeline posts list is empty
                       child: Column(
@@ -92,13 +93,13 @@ class _FollowingsPageState extends State<FollowingsPage> {
                               size: 100, color: Colors.grey),
                           const SizedBox(height: 20),
                           const Text(
-                            'No followings found.',
+                            'No followed found.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 18, color: Colors.grey),
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            onPressed: () => _fetchFollowings(),
+                            onPressed: () => _fetchFollowed(),
                             // Retry fetching timeline posts
                             child: const Text('Retry'),
                           ),
@@ -106,28 +107,29 @@ class _FollowingsPageState extends State<FollowingsPage> {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: followingsList.length,
+                      itemCount: followedList.length,
                       itemBuilder: (context, index) {
-                        final following = followingsList[index];
-                        return user(
+                        final following = followedList[index];
+                        return location(
                           following['profilepictureurl'] != null
                               ? following['profilepictureurl'] +
                                   '/download?project=66e4476900275deffed4'
                               : '',
-                          following['username'],
+                          following['locationname'],
                           following['isFollowing'],
-                          following['userId'],
+                          following['locationId'],
                         );
                       },
                     ),
     );
   }
 
-  Widget user(String img, String name, bool isFollowing, int userId) {
-    isFollowing = isFollowingMap[userId.toString()] ?? false;
-    Future<void> followUser() async {
+  Widget location(String img, String name, bool isFollowing, int locationId) {
+    isFollowing = isFollowingMap[locationId.toString()] ?? false;
+    Future<void> followLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi-n2dw.onrender.com/api/pages/$userId/follow';
+      final url =
+          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -148,7 +150,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
           }
 
           setState(() {
-            isFollowingMap[userId.toString()] = true;
+            isFollowingMap[locationId.toString()] = true;
           });
         } else {
           print('Error: ${response.statusCode}');
@@ -158,10 +160,10 @@ class _FollowingsPageState extends State<FollowingsPage> {
       }
     }
 
-    Future<void> unfollowUser() async {
+    Future<void> unfollowLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/pages/$userId/unfollow';
+          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -182,7 +184,7 @@ class _FollowingsPageState extends State<FollowingsPage> {
           }
 
           setState(() {
-            isFollowingMap[userId.toString()] = false;
+            isFollowingMap[locationId.toString()] = false;
           });
         } else {
           print('Error: ${response.statusCode}');
@@ -194,16 +196,16 @@ class _FollowingsPageState extends State<FollowingsPage> {
 
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UserProfile(
-              key: UniqueKey(),
-              userId: userId,
-              senderId: widget.senderId,
-            ),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => UserProfile(
+        //       key: UniqueKey(),
+        //       userId: locationId,
+        //       senderId: widget.senderId,
+        //     ),
+        //   ),
+        // );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -261,9 +263,9 @@ class _FollowingsPageState extends State<FollowingsPage> {
               InkWell(
                 onTap: () {
                   if (isFollowing) {
-                    unfollowUser();
+                    unfollowLocation();
                   } else {
-                    followUser();
+                    followLocation();
                   }
                 },
                 child: Container(

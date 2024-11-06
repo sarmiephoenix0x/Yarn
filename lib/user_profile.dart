@@ -50,6 +50,7 @@ class _UserProfileState extends State<UserProfile>
   int followers = 0;
   int following = 0;
   int posts = 0;
+  int locations = 0;
   Map<String, bool> _isFollowingMap = {};
   Map<int, bool> _isLikedMap = {};
 
@@ -87,6 +88,7 @@ class _UserProfileState extends State<UserProfile>
           followers = responseData['data']['followersCount'];
           following = responseData['data']['followingsCount'];
           posts = responseData['data']['postsCount'];
+          locations = responseData['data']['locationsCount'];
           userName = responseData['data']['username'];
           occupation = responseData['data']['occupation'];
           final profilePictureUrl = responseData['data']['personalInfo']
@@ -123,7 +125,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/my-timeline/${widget.userId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -167,7 +169,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/my-community/${widget.userId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -450,14 +452,14 @@ class _UserProfileState extends State<UserProfile>
                             flex: 5,
                             child: InkWell(
                               onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //       builder: (context) => FollowersPage(
-                                //             key: UniqueKey(),
-                                //             senderId: widget.userId,
-                                //           )),
-                                // );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => FollowersPage(
+                                            key: UniqueKey(),
+                                            senderId: widget.userId,
+                                          )),
+                                );
                               },
                               child: Column(
                                 mainAxisAlignment:
@@ -489,15 +491,15 @@ class _UserProfileState extends State<UserProfile>
                             flex: 5,
                             child: InkWell(
                               onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (context) => FollowingsPage(
-                                //       key: UniqueKey(),
-                                //       senderId: widget.userId,
-                                //     ),
-                                //   ),
-                                // );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FollowingsPage(
+                                      key: UniqueKey(),
+                                      senderId: widget.userId,
+                                    ),
+                                  ),
+                                );
                               },
                               child: Column(
                                 mainAxisAlignment:
@@ -541,6 +543,33 @@ class _UserProfileState extends State<UserProfile>
                                 ),
                                 const Text(
                                   "Yarns",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  locations
+                                      .toString(), // This would be your number of locations
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18.0,
+                                  ),
+                                ),
+                                const Text(
+                                  "Locations", // The label for locations
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',

@@ -7,6 +7,9 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:country_state_city/country_state_city.dart' as csc;
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 class CreatePost extends StatefulWidget {
   const CreatePost({super.key});
@@ -24,12 +27,255 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   final FocusNode _bodyFocusNode = FocusNode();
   String? _postType = 'timeline'; // Default post type
   bool _isAnonymous = false; // Default anonymity option
-  String? _postCategory = 'Information';
+  String? _postCategory = 'announcement';
   List<XFile>? _selectedImages = []; // Store selected images
   final storage = const FlutterSecureStorage();
   bool _isLoading = false; // Loader state for the publish button
   List<String> _imageBase64List = [];
   final TextEditingController _textController = TextEditingController();
+  String? _selectedCountryIsoCode;
+  String? _selectedCountry;
+  String? _selectedStateIsoCode;
+  String? _selectedState;
+  String? _selectedCity;
+  List<csc.City> _cities = [];
+  List<csc.State> _states = [];
+  List<csc.Country> _countries = [];
+  bool _isLoadingCountry = true; // Loading indicator for country
+  bool _isLoadingState = true; // Loading indicator for state
+  bool _isLoadingCity = true;
+
+  // For automatic state and country detection
+  Position? _position;
+  String? _detectedCountry;
+  String? _detectedState;
+  String? _detectedCity;
+
+  @override
+  void initState() {
+    super.initState();
+    _getLocation();
+    _loadCountries();
+  }
+
+  Future<void> _loadCountries() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingCountry = true; // Start loading
+      });
+    }
+
+    // Fetch all countries including ISO codes
+    List<csc.Country> countries = await csc.getAllCountries();
+
+    if (mounted) {
+      setState(() {
+        _countries = countries; // Assign countries with ISO codes
+        _isLoadingCountry = false; // Stop loading
+      });
+    }
+  }
+
+  Future<void> _getLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+    }
+
+    _position = await Geolocator.getCurrentPosition();
+    await _getAddressFromLatLng(_position!); // Fetch address
+  }
+
+  Future<void> _getAddressFromLatLng(Position position) async {
+    try {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+
+        // Detected country, state, and city
+        _detectedCountry = place.country;
+        _detectedState = place.administrativeArea;
+        _detectedCity = place.locality;
+
+        print(
+            'Detected country: $_detectedCountry, state: $_detectedState, city: $_detectedCity');
+
+        if (_detectedCountry != null) {
+          // Ensure countries list is populated
+          if (_countries.isNotEmpty) {
+            csc.Country? detectedCountry = _countries.firstWhere(
+                (country) => country.name == _detectedCountry,
+                orElse: () => csc.Country(
+                    name: '',
+                    isoCode: '',
+                    phoneCode: '',
+                    flag: '',
+                    currency: '',
+                    latitude: '',
+                    longitude: ''));
+
+            if (detectedCountry.name.isNotEmpty) {
+              _selectedCountryIsoCode = detectedCountry.isoCode;
+              _selectedCountry = detectedCountry.name;
+
+              if (_selectedCountryIsoCode != null) {
+                print('Fetching states for: $_selectedCountry');
+                await _fetchStates(_selectedCountryIsoCode!);
+                print('Done fetching states');
+              } else {
+                print('No valid ISO code for the detected country.');
+              }
+            } else {
+              print('Detected country not found in the list.');
+            }
+          } else {
+            print('Countries list is empty.');
+          }
+        }
+
+        if (_detectedState != null) {
+          // Ensure states list is populated
+          if (_states.isNotEmpty) {
+            csc.State? detectedState = _states.firstWhere(
+                (state) =>
+                    state.name.toLowerCase() == _detectedState!.toLowerCase(),
+                orElse: () => csc.State(
+                    name: '',
+                    isoCode: '',
+                    countryCode: '',
+                    latitude: '',
+                    longitude: ''));
+
+            if (detectedState.name.isNotEmpty) {
+              _selectedStateIsoCode = detectedState.isoCode;
+              _selectedState = detectedState.name;
+
+              if (_selectedStateIsoCode != null &&
+                  _selectedCountryIsoCode != null) {
+                print(
+                    'Fetching cities for state: $_selectedState and country: $_selectedCountry');
+                await _fetchCities(
+                    _selectedStateIsoCode!, _selectedCountryIsoCode!);
+              } else {
+                print('State or Country ISO code is null.');
+              }
+            } else {
+              print('Detected state not found in the list.');
+            }
+          } else {
+            print('States list is empty.');
+          }
+        } else {
+          print('No state detected.');
+        }
+      } else {
+        print('No placemarks found.');
+      }
+    } catch (e) {
+      print('Error in _getAddressFromLatLng: $e');
+    }
+  }
+
+  Future<void> _fetchStates(String countryIsoCode) async {
+    setState(() {
+      _isLoadingState = true; // Start loading states
+    });
+
+    // Fetch states for the selected country
+    List<csc.State> states = await csc.getStatesOfCountry(countryIsoCode);
+
+    // Debug: Print the fetched states
+    print('Fetched states: ${states.map((state) => state.name).toList()}');
+
+    if (_detectedState != null) {
+      csc.State? detectedState = states.firstWhere(
+          (state) =>
+              state.name.trim().toLowerCase() ==
+                  _detectedState!.trim().toLowerCase() ||
+              state.name.trim().toLowerCase() ==
+                  '${_detectedState!.trim()} State'.toLowerCase(),
+          orElse: () => csc.State(
+              name: '',
+              isoCode: '',
+              countryCode: '',
+              latitude: '',
+              longitude: ''));
+
+      if (detectedState.name.isNotEmpty) {
+        setState(() {
+          _states = states;
+          _selectedStateIsoCode = detectedState.isoCode;
+          _selectedState = detectedState.name;
+          _isLoadingState = false;
+        });
+        await _fetchCities(_selectedStateIsoCode!, _selectedCountryIsoCode!);
+      } else {
+        print('Detected state not found in the list.');
+      }
+    } else {
+      print('No states found for country $countryIsoCode');
+      setState(() {
+        _states = []; // Clear the list if no states are found
+        _isLoadingState = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCities(String stateIsoCode, String countryIsoCode) async {
+    if (stateIsoCode.isEmpty || countryIsoCode.isEmpty) {
+      print(
+          'Invalid state or country ISO code. State: $stateIsoCode, Country: $countryIsoCode');
+      return; // Ensure valid state and country codes
+    }
+
+    print(
+        'Fetching cities for countryIsoCode: $countryIsoCode and stateIsoCode: $stateIsoCode');
+
+    setState(() {
+      _isLoadingCity = true; // Start loading cities
+    });
+
+    try {
+      // Fetch the cities based on the selected state and country
+      List<csc.City> cities =
+          await csc.getStateCities(countryIsoCode, stateIsoCode);
+      print(cities);
+      setState(() {
+        _cities = cities;
+        _selectedCity = _detectedCity;
+
+        // Automatically set the city based on geolocation
+        if (_detectedCity != null) {
+          var detectedCity = _cities.firstWhere(
+              (city) => city.name.toLowerCase() == _detectedCity!.toLowerCase(),
+              orElse: () => csc.City(name: '', stateCode: '', countryCode: ''));
+
+          if (detectedCity.name.isNotEmpty) {
+            _selectedCity = detectedCity.name; // Set the detected city if found
+          } else {
+            print('Detected city not found.');
+          }
+        }
+
+        _isLoadingCity = false; // Stop loading
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCity = false; // Stop loading on error
+      });
+      print('Error fetching cities: $e');
+    }
+  }
 
   Future<void> _pickCoverPhoto() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -81,6 +327,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     });
 
     final String postType = _postType!;
+    final String notificationType = _postCategory!;
+    final String location = _selectedCity!;
     final String communityOrPageName = title; // Customize as needed
 
     // Prepare the request
@@ -90,6 +338,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       ..headers['Authorization'] = 'Bearer $accessToken'
       ..fields['content'] = content
       ..fields['postType'] = postType
+      ..fields['notificationType'] = notificationType
+      ..fields['location'] = location
       ..fields['communityOrPageName'] = communityOrPageName
       ..fields['isAnonymous'] = _isAnonymous.toString();
 
@@ -207,6 +457,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                     const SizedBox(height: 20),
                     // Post Type Dropdown
                     _buildCollapsibleFilters(),
+                    const SizedBox(height: 20),
+                    _buildLocationSection(),
                     const SizedBox(height: 20),
                     // Image Preview Section
                     if (_selectedImages!.isNotEmpty)
@@ -348,10 +600,13 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     Icon categoryIcon;
     Color categoryColor;
 
-    if (_postCategory == 'Information') {
+    if (_postCategory == 'announcement') {
       categoryIcon = Icon(Icons.info, color: Colors.blue);
       categoryColor = Colors.blue;
-    } else if (_postCategory == 'Alert/Emergency') {
+    } else if (_postCategory == 'warning') {
+      categoryIcon = Icon(Icons.warning, color: Colors.orange);
+      categoryColor = Colors.orange;
+    } else if (_postCategory == 'alert') {
       categoryIcon = Icon(Icons.warning, color: Colors.red);
       categoryColor = Colors.red;
     } else {
@@ -467,18 +722,27 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
           ListTile(
             leading: Icon(Icons.info,
                 color: Colors.blue), // Calmer icon for Information
-            title: const Text('Information'),
+            title: const Text('Announcement'),
             onTap: () {
-              setState(() => _postCategory = 'Information');
+              setState(() => _postCategory = 'announcement');
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.warning,
+                color: Colors.orange), // Warning icon for Alert/Emergency
+            title: const Text('Warning'),
+            onTap: () {
+              setState(() => _postCategory = 'warning');
               Navigator.pop(context);
             },
           ),
           ListTile(
             leading: Icon(Icons.warning,
                 color: Colors.red), // Warning icon for Alert/Emergency
-            title: const Text('Alert/Emergency'),
+            title: const Text('Alert'),
             onTap: () {
-              setState(() => _postCategory = 'Alert/Emergency');
+              setState(() => _postCategory = 'alert');
               Navigator.pop(context);
             },
           ),
@@ -535,6 +799,62 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
         const SizedBox(height: 10),
         _postCategoryDropdown(), // Add the new filter here
       ],
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+      child: PopupMenuButton<String>(
+        onSelected: (String value) {
+          setState(() {
+            _selectedCity = value; // Update selected city
+          });
+        },
+        itemBuilder: (BuildContext context) {
+          return _isLoadingCity
+              ? [
+                  const PopupMenuItem<String>(
+                    enabled: false, // Disable selection while loading
+                    child: Center(
+                        child:
+                            CircularProgressIndicator()), // Show loading spinner
+                  )
+                ]
+              : _cities.map((csc.City city) {
+                  return PopupMenuItem<String>(
+                    value: city.name,
+                    child: Text(
+                      city.name == _selectedCity
+                          ? '${city.name} (Detected)' // Show detected alias
+                          : city.name, // Normal city name
+                    ),
+                  );
+                }).toList();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(0),
+            border: Border(
+                bottom: BorderSide(color: Theme.of(context).dividerColor)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _isLoadingCity
+                    ? 'Loading location...'
+                    : (_selectedCity ?? 'Select a city'),
+                style: const TextStyle(
+                  fontSize: 16.0, // Font size
+                ),
+              ),
+              const Icon(Icons.arrow_drop_down),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

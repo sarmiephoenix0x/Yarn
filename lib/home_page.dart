@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/chat_page.dart';
 import 'package:yarn/user_profile.dart';
+import 'package:yarn/video_player.dart';
 import 'comments_page.dart';
 import 'details_page.dart';
 import 'messages_page.dart';
@@ -583,7 +584,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
-    List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
+    List<String> postMedia = [
+      ...List<String>.from(post['ImagesUrl'] ?? [])
+          .map((url) => "$url/download?project=66e4476900275deffed4"),
+      ...List<String>.from(post['VideosUrl'] ?? [])
+          .map((url) => "$url/download?project=66e4476900275deffed4"),
+    ];
+    List<String> labels = List<String>.from(post['labels'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
@@ -637,7 +644,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               builder: (context) => DetailsPage(
                 key: UniqueKey(),
                 postId: post['postId'],
-                postImg: postImg,
+                postImg: postMedia,
                 authorImg: authorImg,
                 description: description,
                 authorName: authorName,
@@ -691,7 +698,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           children: [
                             _buildAuthorDetails(
                                 authorName, verified, anonymous),
-                            if (postImg.isEmpty)
+                            if (postMedia.isEmpty)
                               _buildLocationAndTime(location, time),
                           ],
                         ),
@@ -702,9 +709,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              if (postImg.isNotEmpty) _buildPostImages(postImg),
+              if (postMedia.isNotEmpty) _buildPostImages(postMedia),
+              if (labels.isNotEmpty) _buildLabels(labels),
               // _buildInteractionRow(isLiked, postImg),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(children: [
@@ -766,7 +774,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        postImg.length,
+                        postMedia.length,
                         (index) => Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
                           child: Image.asset(
@@ -789,7 +797,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ]),
                 ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
@@ -842,7 +850,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
               // if (postImg.isEmpty) _buildInteractionRow(isLiked, postImg),
-              if (postImg.isEmpty) ...[
+              if (postMedia.isEmpty) ...[
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -903,7 +911,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        postImg.length,
+                        postMedia.length,
                         (index) => Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
                           child: Image.asset(
@@ -1074,7 +1082,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildPostImages(List<String> postImg) {
+  Widget _buildPostImages(List<String> mediaUrls) {
+    print(mediaUrls);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: CarouselSlider(
@@ -1085,12 +1094,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
         ),
-        items: postImg.map((item) {
-          return Image.network(
-            item,
-            fit: BoxFit.cover,
-            width: double.infinity,
-          );
+        items: mediaUrls.map((url) {
+          if (url.endsWith('.mp4')) {
+            // If the URL points to a video, display it using the VideoPlayerWidget
+            return AspectRatio(
+              aspectRatio: 16 / 9,
+              child: VideoPlayerWidget(url: url),
+            );
+          } else {
+            // For images, display with Image.network
+            return Image.network(
+              url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            );
+          }
         }).toList(),
       ),
     );
@@ -1194,6 +1212,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLabels(List<String> labels) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Wrap(
+        spacing: 8.0,
+        children: labels.map((label) {
+          return Chip(
+            label: Text(label, style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.blueAccent,
+          );
+        }).toList(),
       ),
     );
   }

@@ -35,7 +35,7 @@ class _FollowersPageState extends State<FollowersPage> {
       isLoading = true;
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/users/followers';
+    final url = 'https://yarnapi-n2dw.onrender.com/api/users/followers/${widget.senderId}';
     try {
       final response = await http.get(
         Uri.parse(url),

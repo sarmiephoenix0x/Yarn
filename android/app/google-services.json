@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "881824533107",
+    "project_id": "yarn-ea60d",
+    "storage_bucket": "yarn-ea60d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:881824533107:android:54c4dc7f161d0cf168f806",
+        "android_client_info": {
+          "package_name": "com.yarn.yarn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7cS8O41x2YRMxgiXvT6_AcG_YL0rNrmY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

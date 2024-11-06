@@ -43,6 +43,7 @@ class _AccountPageState extends State<AccountPage>
   int followers = 0;
   int following = 0;
   int posts = 0;
+  int locations = 0;
 
   // Variables for managing timeline posts
   List<dynamic> timelinePosts = [];
@@ -135,9 +136,11 @@ class _AccountPageState extends State<AccountPage>
         isError: true,
       );
     } finally {
-      setState(() {
-        isLoadingTimeline = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingTimeline = false;
+        });
+      }
     }
   }
 
@@ -235,6 +238,7 @@ class _AccountPageState extends State<AccountPage>
             followers = responseData['data']['followersCount'];
             following = responseData['data']['followingsCount'];
             posts = responseData['data']['postsCount'];
+            locations = responseData['data']['locationsCount'];
             userName = responseData['data']['username'];
             occupation = responseData['data']['occupation'];
             final profilePictureUrl = responseData['data']['personalInfo']
@@ -494,8 +498,8 @@ class _AccountPageState extends State<AccountPage>
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
-                                        color: Colors
-                                            .grey); // Fallback if image fails
+                                      color: Colors.grey,
+                                    ); // Fallback if image fails
                                   },
                                 ),
                               ),
@@ -509,10 +513,11 @@ class _AccountPageState extends State<AccountPage>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => FollowersPage(
-                                            key: UniqueKey(),
-                                            senderId: userId!,
-                                          )),
+                                    builder: (context) => FollowersPage(
+                                      key: UniqueKey(),
+                                      senderId: userId!,
+                                    ),
+                                  ),
                                 );
                               },
                               child: Column(
@@ -597,6 +602,33 @@ class _AccountPageState extends State<AccountPage>
                                 ),
                                 const Text(
                                   "Yarns",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 5,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  locations
+                                      .toString(), // This would be your number of locations
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18.0,
+                                  ),
+                                ),
+                                const Text(
+                                  "Locations", // The label for locations
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
