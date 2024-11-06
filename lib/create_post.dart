@@ -28,7 +28,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   String? _postType = 'timeline'; // Default post type
   bool _isAnonymous = false; // Default anonymity option
   String? _postCategory = 'announcement';
-  List<XFile>? _selectedImages = []; // Store selected images
+  List<XFile>? _selectedImages = [];
+  List<XFile>? _selectedVideos = [];
   final storage = const FlutterSecureStorage();
   bool _isLoading = false; // Loader state for the publish button
   List<String> _imageBase64List = [];
@@ -50,6 +51,9 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   String? _detectedCountry;
   String? _detectedState;
   String? _detectedCity;
+
+  List<String> _labels = [];
+  final TextEditingController _labelController = TextEditingController();
 
   @override
   void initState() {
@@ -286,30 +290,41 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     }
   }
 
-  void _insertImage() async {
-    final pickedImage = await _pickImage(); // Use your image picker here
-    if (pickedImage != null) {
-      setState(() {
-        _selectedImages!.add(pickedImage); // Store selected images in a list
-      });
-    }
-  }
-
-// Remove image from the list
   void _removeImage(XFile image) {
     setState(() {
       _selectedImages!.remove(image);
     });
   }
 
-// Image picker method (example placeholder)
-  Future<XFile?> _pickImage() async {
+  void _removeVideo(XFile video) {
+    setState(() {
+      _selectedVideos!.remove(video);
+    });
+  }
+
+  Future<void> _pickImage() async {
     final picker = ImagePicker();
-    return await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedImage =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      setState(() {
+        _selectedImages!.add(pickedImage);
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final picker = ImagePicker();
+    final XFile? pickedVideo =
+        await picker.pickVideo(source: ImageSource.gallery);
+    if (pickedVideo != null) {
+      setState(() {
+        _selectedVideos!.add(pickedVideo); // Store videos separately
+      });
+    }
   }
 
   Future<void> _publishPost() async {
-    // Extract plain text from the Quill editor
     String content = _textController.text.trim();
     final String title = _titleController.text.trim();
 
@@ -329,7 +344,7 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     final String postType = _postType!;
     final String notificationType = _postCategory!;
     final String location = _selectedCity!;
-    final String communityOrPageName = title; // Customize as needed
+    final String communityOrPageName = title;
 
     // Prepare the request
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -359,6 +374,14 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       ));
     }
 
+    // Add selected videos if any
+    for (var file in _selectedVideos!) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'videos',
+        file.path,
+      ));
+    }
+
     // Send the request
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
@@ -367,7 +390,6 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       _isLoading = false; // Stop loading after the response
     });
 
-    // Check if the response is empty
     if (response.body.isEmpty) {
       _showCustomSnackBar(
         context,
@@ -392,7 +414,6 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
         );
       }
     } catch (e) {
-      // If parsing fails, handle the error gracefully
       _showCustomSnackBar(
         context,
         'Unexpected error occurred: ${response.body}',
@@ -460,6 +481,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                     const SizedBox(height: 20),
                     _buildLocationSection(),
                     const SizedBox(height: 20),
+                    _buildLabelInput(), // Add label input here
+                    const SizedBox(height: 20),
                     // Image Preview Section
                     if (_selectedImages!.isNotEmpty)
                       _buildImagePreviewSection(),
@@ -478,7 +501,6 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     );
   }
 
-// Bottom Options Section
   Widget _buildBottomOptions() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -486,8 +508,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           IconButton(
-            icon: Icon(Icons.image),
-            onPressed: _insertImage,
+            icon: Icon(Icons.add), // Plus or Pin icon
+            onPressed: _showMediaOptions,
           ),
           const SizedBox(width: 20),
           ElevatedButton(
@@ -508,6 +530,34 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
           ),
         ],
       ),
+    );
+  }
+
+  void _showMediaOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.image, color: Colors.purple),
+              title: Text('Image'),
+              onTap: () async {
+                Navigator.pop(context); // Close the sheet
+                await _pickImage();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.videocam, color: Colors.red),
+              title: Text('Video'),
+              onTap: () async {
+                Navigator.pop(context); // Close the sheet
+                await _pickVideo();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -755,37 +805,75 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _selectedImages!.map((image) {
-        return Stack(
-          children: [
-            // Thumbnail of selected image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(image.path),
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
-            ),
-            // Remove button for each image
-            Positioned(
-              top: 4,
-              right: 4,
-              child: InkWell(
-                onTap: () => _removeImage(image),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+      children: [
+        // Display images
+        ..._selectedImages!.map((image) {
+          return Stack(
+            children: [
+              // Thumbnail of selected image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  File(image.path),
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
                 ),
               ),
-            ),
-          ],
-        );
-      }).toList(),
+              // Remove button for each image
+              Positioned(
+                top: 4,
+                right: 4,
+                child: InkWell(
+                  onTap: () => _removeImage(image),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+
+        // Display videos as thumbnails
+        ..._selectedVideos!.map((video) {
+          return Stack(
+            children: [
+              // Video thumbnail or icon (you can use a video thumbnail library or just show an icon)
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.videocam, size: 50, color: Colors.red),
+              ),
+              // Remove button for each video
+              Positioned(
+                top: 4,
+                right: 4,
+                child: InkWell(
+                  onTap: () => _removeVideo(video),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ],
     );
   }
 
@@ -855,6 +943,62 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLabelInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Labels',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Row(
+          children: [
+            // Text field for label input
+            Expanded(
+              child: TextField(
+                controller: _labelController,
+                decoration: InputDecoration(
+                  hintText: 'Enter label',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Add button
+            ElevatedButton(
+              onPressed: () {
+                if (_labelController.text.trim().isNotEmpty) {
+                  setState(() {
+                    _labels.add(_labelController.text.trim());
+                    _labelController.clear();
+                  });
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Display labels as chips
+        Wrap(
+          spacing: 6.0,
+          runSpacing: 6.0,
+          children: _labels.map((label) {
+            return Chip(
+              label: Text(label),
+              deleteIcon: Icon(Icons.close),
+              onDeleted: () {
+                setState(() {
+                  _labels.remove(label);
+                });
+              },
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }
