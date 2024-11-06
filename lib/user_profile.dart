@@ -11,6 +11,7 @@ import 'package:yarn/followings_page.dart';
 import 'chat_page.dart';
 import 'comments_page.dart';
 import 'details_page.dart';
+import 'locations_followed.dart';
 
 class UserProfile extends StatefulWidget {
   final int userId;
@@ -555,29 +556,43 @@ class _UserProfileState extends State<UserProfile>
                           ),
                           Expanded(
                             flex: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  locations
-                                      .toString(), // This would be your number of locations
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18.0,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FollowingsPage(
+                                      key: UniqueKey(),
+                                      senderId: widget.userId,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  "Locations", // The label for locations
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 16.0,
-                                    color: Colors.grey,
+                                );
+                              },
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    locations
+                                        .toString(), // This would be your number of locations
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18.0,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const Text(
+                                    "Locations", // The label for locations
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16.0,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

@@ -1,7 +1,8 @@
+// Root level build.gradle
 allprojects {
     repositories {
-        google()
-        mavenCentral()
+        google()  // Google's Maven repository
+        mavenCentral()  // Maven Central repository
     }
 }
 
@@ -9,6 +10,7 @@ rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
@@ -18,11 +20,16 @@ tasks.register("clean", Delete) {
 }
 
 buildscript {
-  repositories {
-    google()  // Ensure this line is added
-  }
-  dependencies {
-    classpath 'com.google.gms:google-services:4.3.15' // Add this line
-  }
-}
+    repositories {
+        google()  // Google's Maven repository for accessing Google services
+        mavenCentral()  // Ensure Maven Central is added for other dependencies
+    }
 
+    dependencies {
+        classpath 'com.google.gms:google-services:4.3.15' // Latest version of Google Services plugin
+        classpath 'com.google.code.gson:gson:2.8.8'  // Gson dependency
+        classpath 'com.google.guava:guava:30.1-jre'  // Guava dependency
+        classpath 'com.google.code.findbugs:jsr305:3.0.2'  // JSR305 dependency
+        classpath 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31'  // Kotlin stdlib dependency
+    }
+}

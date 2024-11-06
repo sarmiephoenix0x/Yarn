@@ -17,6 +17,7 @@ import 'followers_page.dart';
 import 'followings_page.dart';
 import 'edit_page.dart';
 import 'package:yarn/user_profile.dart';
+import 'locations_followed.dart';
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
@@ -614,7 +615,19 @@ class _AccountPageState extends State<AccountPage>
                           ),
                           Expanded(
                             flex: 5,
-                            child: Column(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LocationsFollowedPage(
+                                      key: UniqueKey(),
+                                      senderId: userId!,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child:Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -637,6 +650,7 @@ class _AccountPageState extends State<AccountPage>
                                   ),
                                 ),
                               ],
+                            ),
                             ),
                           ),
                         ],

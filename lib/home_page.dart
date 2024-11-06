@@ -585,11 +585,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postMedia = [
+      // Process image URLs, filtering out any null values
       ...List<String>.from(post['ImagesUrl'] ?? [])
-          .map((url) => "$url/download?project=66e4476900275deffed4"),
+          .where((url) => url.isNotEmpty) // Ensure URLs are not empty
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+
+      // Process video URLs, filtering out any null values
       ...List<String>.from(post['VideosUrl'] ?? [])
-          .map((url) => "$url/download?project=66e4476900275deffed4"),
+          .where((url) => url.isNotEmpty) // Ensure URLs are not empty
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
     ];
+
     List<String> labels = List<String>.from(post['labels'] ?? []);
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
