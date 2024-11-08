@@ -147,6 +147,7 @@ class _UserProfileState extends State<UserProfile>
   Future<void> _fetchMyTimelinePosts(
       {bool loadMore = false, int pageNum = 1}) async {
     if (loadMore && isLoadingMoreTimeline) return;
+
     if (mounted) {
       setState(() {
         if (loadMore) {
@@ -187,15 +188,16 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
-            timelinePosts.addAll(fetchedPosts); // Append new data
+            final newPosts = fetchedPosts.where((post) {
+              return !timelinePosts.any(
+                  (existingPost) => existingPost['postId'] == post['postId']);
+            }).toList();
+            timelinePosts.addAll(newPosts);
           } else {
-            timelinePosts = fetchedPosts; // Set initial load
+            timelinePosts = fetchedPosts;
           }
-          currentPageTimeline = pageNum; // Update the current page
-          hasMoreTimeline =
-              fetchedPosts.isNotEmpty; // Check if more posts are available
-          isLoadingTimeline = false;
-          isLoadingMoreTimeline = false;
+          currentPageTimeline = pageNum;
+          hasMoreTimeline = fetchedPosts.isNotEmpty;
         });
       } else {
         _showCustomSnackBar(
@@ -223,6 +225,7 @@ class _UserProfileState extends State<UserProfile>
   Future<void> _fetchMyCommunityPosts(
       {bool loadMore = false, int pageNum = 1}) async {
     if (loadMore && isLoadingMoreCommunity) return;
+
     if (mounted) {
       setState(() {
         if (loadMore) {
@@ -263,15 +266,16 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
-            communityPosts.addAll(fetchedPosts); // Append new data
+            final newPosts = fetchedPosts.where((post) {
+              return !communityPosts.any(
+                  (existingPost) => existingPost['postId'] == post['postId']);
+            }).toList();
+            communityPosts.addAll(newPosts);
           } else {
-            communityPosts = fetchedPosts; // Set initial load
+            communityPosts = fetchedPosts;
           }
-          currentPageCommunity = pageNum; // Update current page
-          hasMoreCommunity =
-              fetchedPosts.isNotEmpty; // Check if more posts are available
-          isLoadingCommunity = false;
-          isLoadingMoreCommunity = false;
+          currentPageCommunity = pageNum;
+          hasMoreCommunity = fetchedPosts.isNotEmpty;
         });
       } else {
         _showCustomSnackBar(
@@ -287,10 +291,12 @@ class _UserProfileState extends State<UserProfile>
         isError: true,
       );
     } finally {
-      setState(() {
-        isLoadingCommunity = false;
-        isLoadingMoreCommunity = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingCommunity = false;
+          isLoadingMoreCommunity = false;
+        });
+      }
     }
   }
 
@@ -928,35 +934,16 @@ class _UserProfileState extends State<UserProfile>
                                         itemBuilder: (context, index) {
                                           if (index == timelinePosts.length) {
                                             return hasMoreTimeline
-                                                ? ElevatedButton(
-                                                    onPressed: () =>
-                                                        _fetchMyTimelinePosts(
-                                                            pageNum:
-                                                                currentPageTimeline +
-                                                                    1),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 24,
-                                                          vertical: 12),
-                                                      backgroundColor:
-                                                          Color(0xFF500450),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(0),
-                                                      ),
+                                                ? const Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 16),
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              color: Color(
+                                                                  0xFF500450)),
                                                     ),
-                                                    child: isLoadingTimeline
-                                                        ? CircularProgressIndicator(
-                                                            color: Colors.white)
-                                                        : const Text(
-                                                            'Load More',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white)),
                                                   )
                                                 : const Center(
                                                     child: Padding(
@@ -1029,35 +1016,16 @@ class _UserProfileState extends State<UserProfile>
                                         itemBuilder: (context, index) {
                                           if (index == communityPosts.length) {
                                             return hasMoreCommunity
-                                                ? ElevatedButton(
-                                                    onPressed: () =>
-                                                        _fetchMyCommunityPosts(
-                                                            pageNum:
-                                                                currentPageCommunity +
-                                                                    1),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 24,
-                                                          vertical: 12),
-                                                      backgroundColor:
-                                                          Color(0xFF500450),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(0),
-                                                      ),
+                                                ? const Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 16),
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              color: Color(
+                                                                  0xFF500450)),
                                                     ),
-                                                    child: isLoadingCommunity
-                                                        ? CircularProgressIndicator(
-                                                            color: Colors.white)
-                                                        : const Text(
-                                                            'Load More',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white)),
                                                   )
                                                 : const Center(
                                                     child: Padding(
@@ -1202,6 +1170,7 @@ class _UserProfileState extends State<UserProfile>
                 isLiked: isLiked,
                 userId: creatorUserId,
                 senderId: widget.senderId,
+                labels: labels,
               ),
             ),
           );
@@ -1607,6 +1576,7 @@ class _UserProfileState extends State<UserProfile>
                 isLiked: isLiked,
                 userId: creatorUserId,
                 senderId: widget.senderId,
+                labels: labels,
               ),
             ),
           );
@@ -2168,9 +2138,31 @@ class _UserProfileState extends State<UserProfile>
         spacing: 8.0, // Space between chips
         runSpacing: 6.0, // Space between rows of chips
         children: labels.map((label) {
-          return Chip(
-            label: Text(label, style: TextStyle(color: Colors.white)),
-            backgroundColor: Colors.blueAccent,
+          return Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: Colors.grey, // Use your preferred color
+              borderRadius:
+                  BorderRadius.circular(30), // Rounded pill-like shape
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ], // Shadow for depth
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'Inter',
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
           );
         }).toList(),
       ),

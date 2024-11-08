@@ -298,14 +298,10 @@ class _HomePageState extends State<HomePage>
 
     if (mounted) {
       setState(() {
-        if (loadMore) {
-          isLoadingMore = true;
-        } else {
-          isLoading = true;
-          if (pageNum == 1) {
-            posts.clear(); // Only clear for the initial load
-          }
-        }
+        isLoading = !loadMore;
+        isLoadingMore = loadMore;
+        if (!loadMore && pageNum == 1)
+          posts.clear(); // Clear only on initial load
       });
     }
 
@@ -316,25 +312,16 @@ class _HomePageState extends State<HomePage>
       if (accessToken == null) {
         print('No access token found');
         _showCustomSnackBar(
-          context,
-          'Authentication failed. Please log in again.',
-          isError: true,
-        );
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-            isLoadingMore = false;
-          });
-        }
+            context, 'Authentication failed. Please log in again.',
+            isError: true);
+        if (mounted) setState(() => isLoading = isLoadingMore = false);
         return;
       }
 
       final url = Uri.parse(
-        'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum',
-      );
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $accessToken',
-      });
+          'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum');
+      final response = await http
+          .get(url, headers: {'Authorization': 'Bearer $accessToken'});
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
@@ -345,24 +332,27 @@ class _HomePageState extends State<HomePage>
 
         setState(() {
           if (loadMore) {
-            posts.addAll(fetchedPosts); // Append new data
+            // Filter out duplicates based on a unique identifier, e.g., 'id'
+            final newPosts = fetchedPosts.where((post) {
+              return !posts.any(
+                  (existingPost) => existingPost['postId'] == post['postId']);
+            }).toList();
+
+            posts.addAll(newPosts); // Append only non-duplicates
           } else {
-            posts = fetchedPosts; // Set initial load
+            posts = fetchedPosts; // Set for initial load
           }
-          currentPage = pageNum; // Update the current page
-          hasMore =
-              fetchedPosts.isNotEmpty; // Check if more posts are available
+          currentPage = pageNum;
+          hasMore = fetchedPosts.isNotEmpty;
         });
       } else {
         _handleErrorResponse(response);
       }
     } catch (e) {
       print('Exception: $e');
-      _showCustomSnackBar(
-        context,
-        'Failed to load yarns.',
-        isError: true,
-      );
+      if (mounted) {
+        _showCustomSnackBar(context, 'Failed to load yarns.', isError: true);
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -789,6 +779,7 @@ class _HomePageState extends State<HomePage>
                 isLiked: isLiked,
                 userId: creatorUserId,
                 senderId: userId!,
+                labels: labels,
               ),
             ),
           );
@@ -1380,9 +1371,31 @@ class _HomePageState extends State<HomePage>
         spacing: 8.0, // Space between chips
         runSpacing: 6.0, // Space between rows of chips
         children: labels.map((label) {
-          return Chip(
-            label: Text(label, style: TextStyle(color: Colors.white)),
-            backgroundColor: Colors.blueAccent,
+          return Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: Colors.grey, // Use your preferred color
+              borderRadius:
+                  BorderRadius.circular(30), // Rounded pill-like shape
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ], // Shadow for depth
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'Inter',
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
           );
         }).toList(),
       ),

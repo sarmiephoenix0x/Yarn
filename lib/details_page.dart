@@ -27,6 +27,7 @@ class DetailsPage extends StatefulWidget {
   final String comments;
   final bool isLiked;
   final int senderId;
+  final List<String> labels;
 
   const DetailsPage(
       {super.key,
@@ -44,7 +45,8 @@ class DetailsPage extends StatefulWidget {
       required this.comments,
       required this.isLiked,
       required this.userId,
-      required this.senderId});
+      required this.senderId,
+      required this.labels});
 
   @override
   DetailsPageState createState() => DetailsPageState();
@@ -535,20 +537,20 @@ class DetailsPageState extends State<DetailsPage> {
                                         ),
                                       ),
                                     ],
-                                    SizedBox(
-                                      height:
-                                          MediaQuery.of(context).size.height *
-                                              0.01,
-                                    ),
-                                    Text(
-                                      widget.time,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 16,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
+                                    // SizedBox(
+                                    //   height:
+                                    //       MediaQuery.of(context).size.height *
+                                    //           0.01,
+                                    // ),
+                                    // Text(
+                                    //   widget.time,
+                                    //   overflow: TextOverflow.ellipsis,
+                                    //   style: TextStyle(
+                                    //     color: Colors.grey,
+                                    //     fontSize: 16,
+                                    //     fontFamily: 'Poppins',
+                                    //   ),
+                                    // ),
                                   ],
                                 ),
                               ),
@@ -639,6 +641,27 @@ class DetailsPageState extends State<DetailsPage> {
                       //   height: MediaQuery.of(context).size.height * 0.03,
                       // ),
                       Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          widget.time,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.03,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: _buildLabels(widget.labels),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.03,
+                      ),
+                      Padding(
                         padding:
                             EdgeInsets.only(bottom: 76.0, left: 20, right: 20),
                         child: Text(
@@ -650,104 +673,104 @@ class DetailsPageState extends State<DetailsPage> {
                   ),
                 ),
                 Positioned(
-                  bottom: 0,
-                  child: Container(
-                    height: (70 / MediaQuery.of(context).size.height) *
-                        MediaQuery.of(context).size.height,
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(width: 0, color: Colors.black),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 3,
-                          blurRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                    isLiked
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: isLiked
-                                        ? Colors.red
-                                        : originalIconColor),
-                                onPressed: () {
-                                  _toggleLike();
-                                },
-                              ),
-                              Text(
-                                widget.likes,
-                                style: const TextStyle(
-                                  fontFamily: 'Inconsolata',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.06),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.comment,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => CommentsPage(
-                                              key: UniqueKey(),
-                                              postId: widget.postId,
-                                              userId: widget.userId,
-                                              senderId: widget.senderId,
-                                            )),
-                                  );
-                                },
-                              ),
-                              Text(
-                                widget.comments,
-                                style: TextStyle(
-                                  fontFamily: 'Inconsolata',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: Icon(
-                                isBookmarked
-                                    ? Icons.bookmark
-                                    : Icons.bookmark_border,
-                                color: isBookmarked
-                                    ? const Color(0xFF500450)
-                                    : originalIconColor),
+                  bottom: 20, // Distance from the bottom of the screen
+                  right: 20, // Distance from the right side of the screen
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Like button with count
+                      Column(
+                        children: [
+                          FloatingActionButton(
                             onPressed: () {
-                              setState(() {
-                                isBookmarked = !isBookmarked;
-                              });
+                              if (!isLiked) {
+                                _toggleLike();
+                              }
                             },
+                            backgroundColor:
+                                isLiked ? Colors.red : Colors.grey.shade300,
+                            mini: true,
+                            child: Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
-                        ]),
+                          const SizedBox(
+                              height: 4), // Space between FAB and number
+                          Text(
+                            widget.likes, // Replace with dynamic like count
+                            style: const TextStyle(
+                              fontFamily: 'Inconsolata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(
+                          height:
+                              16), // Space between Like and Comment sections
+
+                      // Comment button with count
+                      Column(
+                        children: [
+                          FloatingActionButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CommentsPage(
+                                    key: UniqueKey(),
+                                    postId: widget.postId,
+                                    userId: widget.userId,
+                                    senderId: widget.senderId,
+                                  ),
+                                ),
+                              );
+                            },
+                            backgroundColor: Colors.grey.shade300,
+                            mini: true,
+                            child: const Icon(
+                              Icons.comment,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(
+                              height: 4), // Space between FAB and number
+                          Text(
+                            widget
+                                .comments, // Replace with dynamic comment count
+                            style: const TextStyle(
+                              fontFamily: 'Inconsolata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                          height:
+                              16), // Space between Comment and Bookmark sections
+
+                      // Bookmark button (no count needed)
+                      FloatingActionButton(
+                        onPressed: () {
+                          setState(() {
+                            isBookmarked = !isBookmarked;
+                          });
+                        },
+                        backgroundColor:
+                            isBookmarked ? Colors.blue : Colors.grey.shade300,
+                        mini: true,
+                        child: Icon(
+                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -755,6 +778,44 @@ class DetailsPageState extends State<DetailsPage> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildLabels(List<String> labels) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Wrap(
+        spacing: 8.0, // Space between chips
+        runSpacing: 6.0, // Space between rows of chips
+        children: labels.map((label) {
+          return Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: Colors.grey, // Use your preferred color
+              borderRadius:
+                  BorderRadius.circular(30), // Rounded pill-like shape
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ], // Shadow for depth
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontFamily: 'Inter',
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
