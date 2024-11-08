@@ -297,20 +297,29 @@ class _CommentsPageState extends State<CommentsPage> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade300,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(55),
+                borderRadius: BorderRadius.circular(50),
                 child: Container(
-                  width: (50 / MediaQuery.of(context).size.width) *
-                      MediaQuery.of(context).size.width,
-                  height: (50 / MediaQuery.of(context).size.height) *
-                      MediaQuery.of(context).size.height,
-                  color: Colors.grey,
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey.shade300,
                   child: img.isNotEmpty
                       ? Image.network(
                           img,
@@ -322,11 +331,9 @@ class _CommentsPageState extends State<CommentsPage> {
                         ),
                 ),
               ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+              const SizedBox(width: 16),
               Expanded(
-                flex: 10,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -334,33 +341,39 @@ class _CommentsPageState extends State<CommentsPage> {
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
+                        fontSize: 16.0,
+                        color: Colors.black87,
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                    const SizedBox(height: 4),
                     Text(
                       description,
                       overflow: TextOverflow.ellipsis,
-                      softWrap: true,
                       maxLines: 3,
                       style: const TextStyle(
                         fontFamily: 'Poppins',
-                        fontSize: 18.0,
+                        fontSize: 14.0,
+                        color: Colors.black54,
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                    const SizedBox(height: 6),
                     Text(
                       dateCommented,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Poppins',
-                        fontSize: 10.0,
+                        fontSize: 12.0,
+                        color: Colors.grey.shade500,
                       ),
                     ),
                   ],
                 ),
               ),
               const Spacer(),
+              Icon(
+                Icons.more_vert,
+                color: Colors.grey.shade500,
+                size: 20,
+              ),
             ],
           ),
         ),

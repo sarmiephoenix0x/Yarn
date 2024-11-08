@@ -387,16 +387,16 @@ class DetailsPageState extends State<DetailsPage> {
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1,
-                        ),
-                        Row(
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.1,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(
                           children: [
                             InkWell(
                               onTap: () {
@@ -423,10 +423,13 @@ class DetailsPageState extends State<DetailsPage> {
                             ),
                           ],
                         ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05,
-                        ),
-                        InkWell(
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.05,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: InkWell(
                           onTap: () {
                             if (widget.anonymous == false) {
                               Navigator.push(
@@ -608,42 +611,42 @@ class DetailsPageState extends State<DetailsPage> {
                             ],
                           ),
                         ),
-                        if (widget.headerImg.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                top: 30.0, bottom: 10.0, left: 0.0, right: 0.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(0),
-                              child: Image.network(
-                                widget.headerImg,
-                                width: double.infinity,
-                              ),
+                      ),
+                      if (widget.headerImg.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 30.0, bottom: 10.0, left: 0.0, right: 0.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(0),
+                            child: Image.network(
+                              widget.headerImg,
+                              width: double.infinity,
                             ),
                           ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.03,
                         ),
-                        // Text(
-                        //   "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
-                        //   style: TextStyle(
-                        //     fontSize: 20,
-                        //     fontFamily: 'Poppins',
-                        //     fontWeight: FontWeight.bold,
-                        //   ),
-                        // ),
-                        // SizedBox(
-                        //   height: MediaQuery.of(context).size.height * 0.03,
-                        // ),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 76.0),
-                          child: Text(
-                            widget.description,
-                            style:
-                                TextStyle(fontSize: 16, fontFamily: 'Poppins'),
-                          ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.03,
+                      ),
+                      // Text(
+                      //   "Ukraine's President Zelensky to BBC: Blood money being paid for Russian oil",
+                      //   style: TextStyle(
+                      //     fontSize: 20,
+                      //     fontFamily: 'Poppins',
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //   height: MediaQuery.of(context).size.height * 0.03,
+                      // ),
+                      Padding(
+                        padding:
+                            EdgeInsets.only(bottom: 76.0, left: 20, right: 20),
+                        child: Text(
+                          widget.description,
+                          style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Positioned(

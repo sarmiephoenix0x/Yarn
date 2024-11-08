@@ -295,16 +295,18 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _fetchPosts({bool loadMore = false, int pageNum = 1}) async {
     if (loadMore && isLoadingMore) return;
+
     if (mounted) {
-      if (loadMore) {
-        setState(() {
+      setState(() {
+        if (loadMore) {
           isLoadingMore = true;
-        });
-      } else {
-        setState(() {
+        } else {
           isLoading = true;
-        });
-      }
+          if (pageNum == 1) {
+            posts.clear(); // Only clear for the initial load
+          }
+        }
+      });
     }
 
     _getLocation(context);
@@ -327,93 +329,65 @@ class _HomePageState extends State<HomePage>
         return;
       }
 
-      // Reset posts and pagination when starting a new load
-      if (pageNum == 1) {
-        setState(() {
-          posts.clear(); // Clear existing posts for fresh data
-          hasMore = true; // Reset 'hasMore' for pagination
-          currentPage = 1; // Reset to page 1
-        });
-      }
-
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum');
+        'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum',
+      );
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
       });
 
-      // Print response for debugging
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
-
-        // Assuming posts are inside a 'data' field
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
-        if (fetchedPosts.isEmpty) {
-          print('No yarns available');
-          _showCustomSnackBar(
-            context,
-            'No yarns to display at the moment.',
-            isError: false,
-          );
-          if (mounted) {
-            setState(() {
-              hasMore = false; // No more posts available
-              isLoading = false; // Hide loading indicator
-              isLoadingMore = false;
-            });
+        setState(() {
+          if (loadMore) {
+            posts.addAll(fetchedPosts); // Append new data
+          } else {
+            posts = fetchedPosts; // Set initial load
           }
-          return;
-        }
-
-        if (mounted) {
-          setState(() {
-            if (loadMore) {
-              posts.addAll(fetchedPosts); // Append new data
-            } else {
-              posts = fetchedPosts; // Set initial load
-            } // Add fetched posts to the list
-            currentPage = pageNum; // Update the current page
-            hasMore =
-                fetchedPosts.length > 0; // Check if more posts are available
-            isLoading = false; // Hide loading indicator
-            isLoadingMore = false;
-          });
-        }
-      } else if (response.statusCode == 400) {
-        print('Error 400: ${response.body}');
-        _showCustomSnackBar(
-          context,
-          'Failed to load yarns. Bad request.',
-          isError: true,
-        );
+          currentPage = pageNum; // Update the current page
+          hasMore =
+              fetchedPosts.isNotEmpty; // Check if more posts are available
+        });
       } else {
-        print('Unexpected error: ${response.body}');
-        _showCustomSnackBar(
-          context,
-          'An unexpected error occurred.',
-          isError: true,
-        );
+        _handleErrorResponse(response);
       }
     } catch (e) {
       print('Exception: $e');
-      if (mounted) {
-        _showCustomSnackBar(
-          context,
-          'Failed to load yarns.',
-          isError: true,
-        );
-      }
+      _showCustomSnackBar(
+        context,
+        'Failed to load yarns.',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() {
-          isLoading = false; // Ensure loading indicator is hidden
+          isLoading = false;
           isLoadingMore = false;
         });
       }
+    }
+  }
+
+  void _handleErrorResponse(http.Response response) {
+    if (response.statusCode == 400) {
+      print('Error 400: ${response.body}');
+      _showCustomSnackBar(
+        context,
+        'Failed to load yarns. Bad request.',
+        isError: true,
+      );
+    } else {
+      print('Unexpected error: ${response.body}');
+      _showCustomSnackBar(
+        context,
+        'An unexpected error occurred.',
+        isError: true,
+      );
     }
   }
 

@@ -64,6 +64,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
         final data = jsonDecode(response.body);
         setState(() {
           locationsList = List<Map<String, dynamic>>.from(data['data']);
+          filteredLocationsList =
+              List.from(locationsList); // Initialize filtered list
           isFollowingMap = {
             for (var loc in locationsList)
               loc['id'].toString(): loc['isFollowing'] ?? false
@@ -167,14 +169,18 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   void _searchLocations(String query) {
     setState(() {
       if (query.isEmpty) {
-        filteredLocationsList = List.from(locationsList);
+        filteredLocationsList = List<Map<String, dynamic>>.from(
+            locationsList); // Show all if query is empty
       } else {
-        filteredLocationsList = (locationsList as List<Map<String, dynamic>>)
-            .where((location) => location['name']
-                .toString()
-                .toLowerCase()
-                .contains(query.toLowerCase()))
-            .toList();
+        filteredLocationsList = locationsList
+            .where((location) =>
+                location['name']
+                    ?.toString()
+                    .toLowerCase()
+                    .contains(query.toLowerCase()) ??
+                false)
+            .toList()
+            .cast<Map<String, dynamic>>(); // Cast to List<Map<String, dynamic>>
       }
     });
   }

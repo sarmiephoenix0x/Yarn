@@ -55,11 +55,36 @@ class _UserProfileState extends State<UserProfile>
   int locations = 0;
   Map<String, bool> _isFollowingMap = {};
   Map<int, bool> _isLikedMap = {};
+  bool isLoadingMoreTimeline = false;
+  bool isLoadingMoreCommunity = false;
+  final ScrollController _timelineScrollController = ScrollController();
+  final ScrollController _communityScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _timelineScrollController.addListener(() {
+      if (_timelineScrollController.position.pixels >=
+              _timelineScrollController.position.maxScrollExtent - 200 &&
+          !isLoadingTimeline &&
+          hasMoreTimeline) {
+        _fetchMyTimelinePosts(
+            loadMore: true); // Load the next page when near the end
+      }
+    });
+
+    _communityScrollController.addListener(() {
+      if (_communityScrollController.position.pixels >=
+              _communityScrollController.position.maxScrollExtent - 200 &&
+          !isLoadingCommunity &&
+          hasMoreCommunity) {
+        _fetchMyCommunityPosts(
+            loadMore: true); // Load the next page when near the end
+      }
+    });
     fetchUserProfile();
+    _fetchMyTimelinePosts();
+    _fetchMyCommunityPosts();
     // latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
   }
@@ -119,15 +144,30 @@ class _UserProfileState extends State<UserProfile>
     }
   }
 
-  Future<void> _fetchMyTimelinePosts({int pageNum = 1}) async {
-    setState(() {
-      isLoadingTimeline = true;
-    });
+  Future<void> _fetchMyTimelinePosts(
+      {bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && isLoadingMoreTimeline) return;
+    if (mounted) {
+      setState(() {
+        if (loadMore) {
+          isLoadingMoreTimeline = true;
+        } else {
+          isLoadingTimeline = true;
+        }
+      });
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
+
+      if (pageNum == 1 && !loadMore) {
+        setState(() {
+          timelinePosts.clear(); // Clear only if it's the initial load
+          hasMoreTimeline = true;
+        });
+      }
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -137,11 +177,25 @@ class _UserProfileState extends State<UserProfile>
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
+        if (fetchedPosts.isEmpty && pageNum == 1) {
+          _showCustomSnackBar(
+            context,
+            'No timeline posts available at the moment.',
+            isError: false,
+          );
+        }
+
         setState(() {
-          timelinePosts.addAll(fetchedPosts);
-          currentPageTimeline = pageNum;
-          hasMoreTimeline = fetchedPosts.length > 0;
+          if (loadMore) {
+            timelinePosts.addAll(fetchedPosts); // Append new data
+          } else {
+            timelinePosts = fetchedPosts; // Set initial load
+          }
+          currentPageTimeline = pageNum; // Update the current page
+          hasMoreTimeline =
+              fetchedPosts.isNotEmpty; // Check if more posts are available
           isLoadingTimeline = false;
+          isLoadingMoreTimeline = false;
         });
       } else {
         _showCustomSnackBar(
@@ -157,21 +211,39 @@ class _UserProfileState extends State<UserProfile>
         isError: true,
       );
     } finally {
-      setState(() {
-        isLoadingTimeline = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingTimeline = false;
+          isLoadingMoreTimeline = false;
+        });
+      }
     }
   }
 
-  Future<void> _fetchMyCommunityPosts({int pageNum = 1}) async {
-    setState(() {
-      isLoadingCommunity = true;
-    });
+  Future<void> _fetchMyCommunityPosts(
+      {bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && isLoadingMoreCommunity) return;
+    if (mounted) {
+      setState(() {
+        if (loadMore) {
+          isLoadingMoreCommunity = true;
+        } else {
+          isLoadingCommunity = true;
+        }
+      });
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
+
+      if (pageNum == 1 && !loadMore) {
+        setState(() {
+          communityPosts.clear(); // Clear only if it's the initial load
+          hasMoreCommunity = true;
+        });
+      }
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -181,11 +253,25 @@ class _UserProfileState extends State<UserProfile>
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
+        if (fetchedPosts.isEmpty && pageNum == 1) {
+          _showCustomSnackBar(
+            context,
+            'No community posts available at the moment.',
+            isError: false,
+          );
+        }
+
         setState(() {
-          communityPosts.addAll(fetchedPosts);
-          currentPageCommunity = pageNum;
-          hasMoreCommunity = fetchedPosts.length > 0;
+          if (loadMore) {
+            communityPosts.addAll(fetchedPosts); // Append new data
+          } else {
+            communityPosts = fetchedPosts; // Set initial load
+          }
+          currentPageCommunity = pageNum; // Update current page
+          hasMoreCommunity =
+              fetchedPosts.isNotEmpty; // Check if more posts are available
           isLoadingCommunity = false;
+          isLoadingMoreCommunity = false;
         });
       } else {
         _showCustomSnackBar(
@@ -203,6 +289,7 @@ class _UserProfileState extends State<UserProfile>
     } finally {
       setState(() {
         isLoadingCommunity = false;
+        isLoadingMoreCommunity = false;
       });
     }
   }
@@ -799,15 +886,16 @@ class _UserProfileState extends State<UserProfile>
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.article_outlined,
-                                              size: 100, color: Colors.grey),
+                                          Icon(Icons.article_outlined,
+                                              size: 100,
+                                              color: Colors.grey.shade600),
                                           const SizedBox(height: 20),
-                                          const Text(
+                                          Text(
                                             'No timeline yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
-                                                color: Colors.grey),
+                                                color: Colors.grey.shade600),
                                           ),
                                           const SizedBox(height: 20),
                                           ElevatedButton(
@@ -830,52 +918,61 @@ class _UserProfileState extends State<UserProfile>
                                         ],
                                       ),
                                     )
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      // Remove NeverScrollableScrollPhysics to enable scrolling
-                                      itemCount: timelinePosts.length + 1,
-                                      itemBuilder: (context, index) {
-                                        if (index == timelinePosts.length) {
-                                          return hasMoreTimeline
-                                              ? ElevatedButton(
-                                                  onPressed: () =>
-                                                      _fetchMyTimelinePosts(
-                                                          pageNum:
-                                                              currentPageTimeline +
-                                                                  1),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 24,
-                                                        vertical: 12),
-                                                    backgroundColor:
-                                                        Color(0xFF500450),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              0),
+                                  : RefreshIndicator(
+                                      onRefresh: _fetchMyTimelinePosts,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        controller:
+                                            _timelineScrollController, // Add controller for scroll detection
+                                        itemCount: timelinePosts.length + 1,
+                                        itemBuilder: (context, index) {
+                                          if (index == timelinePosts.length) {
+                                            return hasMoreTimeline
+                                                ? ElevatedButton(
+                                                    onPressed: () =>
+                                                        _fetchMyTimelinePosts(
+                                                            pageNum:
+                                                                currentPageTimeline +
+                                                                    1),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 24,
+                                                          vertical: 12),
+                                                      backgroundColor:
+                                                          Color(0xFF500450),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(0),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: const Text('Load More',
-                                                      style: TextStyle(
-                                                          color: Colors.white)),
-                                                )
-                                              : const Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 16),
-                                                    child: Text(
-                                                        'No more timeline yarns'),
-                                                  ),
-                                                );
-                                        }
+                                                    child: isLoadingTimeline
+                                                        ? CircularProgressIndicator(
+                                                            color: Colors.white)
+                                                        : const Text(
+                                                            'Load More',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white)),
+                                                  )
+                                                : const Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 16),
+                                                      child: Text(
+                                                          'No more timeline yarns'),
+                                                    ),
+                                                  );
+                                          }
 
-                                        final post = timelinePosts[index];
-                                        return timeline(post);
-                                      },
+                                          final post = timelinePosts[index];
+                                          return timeline(post);
+                                        },
+                                      ),
                                     ),
 
                           // Community Tab
@@ -890,15 +987,16 @@ class _UserProfileState extends State<UserProfile>
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.group_outlined,
-                                              size: 100, color: Colors.grey),
+                                          Icon(Icons.group_outlined,
+                                              size: 100,
+                                              color: Colors.grey.shade600),
                                           const SizedBox(height: 20),
-                                          const Text(
+                                          Text(
                                             'No community yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
-                                                color: Colors.grey),
+                                                color: Colors.grey.shade600),
                                           ),
                                           const SizedBox(height: 20),
                                           ElevatedButton(
@@ -921,52 +1019,61 @@ class _UserProfileState extends State<UserProfile>
                                         ],
                                       ),
                                     )
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      // Remove NeverScrollableScrollPhysics to enable scrolling
-                                      itemCount: communityPosts.length + 1,
-                                      itemBuilder: (context, index) {
-                                        if (index == communityPosts.length) {
-                                          return hasMoreCommunity
-                                              ? ElevatedButton(
-                                                  onPressed: () =>
-                                                      _fetchMyCommunityPosts(
-                                                          pageNum:
-                                                              currentPageCommunity +
-                                                                  1),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 24,
-                                                        vertical: 12),
-                                                    backgroundColor:
-                                                        Color(0xFF500450),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              0),
+                                  : RefreshIndicator(
+                                      onRefresh: _fetchMyCommunityPosts,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        controller:
+                                            _communityScrollController, // Add controller for scroll detection
+                                        itemCount: communityPosts.length + 1,
+                                        itemBuilder: (context, index) {
+                                          if (index == communityPosts.length) {
+                                            return hasMoreCommunity
+                                                ? ElevatedButton(
+                                                    onPressed: () =>
+                                                        _fetchMyCommunityPosts(
+                                                            pageNum:
+                                                                currentPageCommunity +
+                                                                    1),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 24,
+                                                          vertical: 12),
+                                                      backgroundColor:
+                                                          Color(0xFF500450),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(0),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: const Text('Load More',
-                                                      style: TextStyle(
-                                                          color: Colors.white)),
-                                                )
-                                              : const Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 16),
-                                                    child: Text(
-                                                        'No more community yarns'),
-                                                  ),
-                                                );
-                                        }
+                                                    child: isLoadingCommunity
+                                                        ? CircularProgressIndicator(
+                                                            color: Colors.white)
+                                                        : const Text(
+                                                            'Load More',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white)),
+                                                  )
+                                                : const Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 16),
+                                                      child: Text(
+                                                          'No more community yarns'),
+                                                    ),
+                                                  );
+                                          }
 
-                                        final post = communityPosts[index];
-                                        return communityWidget(post);
-                                      },
+                                          final post = communityPosts[index];
+                                          return communityWidget(post);
+                                        },
+                                      ),
                                     ),
                         ],
                       ),

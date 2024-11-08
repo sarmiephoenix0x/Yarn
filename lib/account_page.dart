@@ -148,15 +148,13 @@ class _AccountPageState extends State<AccountPage>
       {bool loadMore = false, int pageNum = 1}) async {
     if (loadMore && isLoadingMoreTimeline) return;
     if (mounted) {
-      if (loadMore) {
-        setState(() {
+      setState(() {
+        if (loadMore) {
           isLoadingMoreTimeline = true;
-        });
-      } else {
-        setState(() {
+        } else {
           isLoadingTimeline = true;
-        });
-      }
+        }
+      });
     }
 
     try {
@@ -164,12 +162,10 @@ class _AccountPageState extends State<AccountPage>
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/my-timeline/$pageNum');
 
-      if (pageNum == 1) {
-        // Reset posts and pagination when starting a new load
+      if (pageNum == 1 && !loadMore) {
         setState(() {
-          timelinePosts.clear(); // Clear existing timeline posts for fresh data
-          hasMoreTimeline = true; // Reset hasMore for pagination
-          currentPageTimeline = 1; // Reset to page 1
+          timelinePosts.clear(); // Clear only if it's the initial load
+          hasMoreTimeline = true;
         });
       }
 
@@ -181,17 +177,24 @@ class _AccountPageState extends State<AccountPage>
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
+        if (fetchedPosts.isEmpty && pageNum == 1) {
+          _showCustomSnackBar(
+            context,
+            'No timeline posts available at the moment.',
+            isError: false,
+          );
+        }
+
         setState(() {
           if (loadMore) {
             timelinePosts.addAll(fetchedPosts); // Append new data
           } else {
             timelinePosts = fetchedPosts; // Set initial load
           }
-          // Add fetched posts to the list
-          currentPageTimeline = pageNum; // Update current page
+          currentPageTimeline = pageNum; // Update the current page
           hasMoreTimeline =
-              fetchedPosts.isNotEmpty; // Update if more posts exist
-          isLoadingTimeline = false; // Hide loading indicator
+              fetchedPosts.isNotEmpty; // Check if more posts are available
+          isLoadingTimeline = false;
           isLoadingMoreTimeline = false;
         });
       } else {
@@ -202,17 +205,15 @@ class _AccountPageState extends State<AccountPage>
         );
       }
     } catch (e) {
-      if (mounted) {
-        _showCustomSnackBar(
-          context,
-          'Failed to load timeline yarns.',
-          isError: true,
-        );
-      }
+      _showCustomSnackBar(
+        context,
+        'Failed to load timeline yarns.',
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() {
-          isLoadingTimeline = false; // Ensure loading indicator is hidden
+          isLoadingTimeline = false;
           isLoadingMoreTimeline = false;
         });
       }
@@ -223,15 +224,13 @@ class _AccountPageState extends State<AccountPage>
       {bool loadMore = false, int pageNum = 1}) async {
     if (loadMore && isLoadingMoreCommunity) return;
     if (mounted) {
-      if (loadMore) {
-        setState(() {
+      setState(() {
+        if (loadMore) {
           isLoadingMoreCommunity = true;
-        });
-      } else {
-        setState(() {
+        } else {
           isLoadingCommunity = true;
-        });
-      }
+        }
+      });
     }
 
     try {
@@ -239,13 +238,10 @@ class _AccountPageState extends State<AccountPage>
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
 
-      if (pageNum == 1) {
-        // Reset posts and pagination when starting a new load
+      if (pageNum == 1 && !loadMore) {
         setState(() {
-          communityPosts
-              .clear(); // Clear existing community posts for fresh data
-          hasMoreCommunity = true; // Reset hasMore for pagination
-          currentPageCommunity = 1; // Reset to page 1
+          communityPosts.clear(); // Clear only if it's the initial load
+          hasMoreCommunity = true;
         });
       }
 
@@ -257,16 +253,24 @@ class _AccountPageState extends State<AccountPage>
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
+        if (fetchedPosts.isEmpty && pageNum == 1) {
+          _showCustomSnackBar(
+            context,
+            'No community posts available at the moment.',
+            isError: false,
+          );
+        }
+
         setState(() {
           if (loadMore) {
             communityPosts.addAll(fetchedPosts); // Append new data
           } else {
             communityPosts = fetchedPosts; // Set initial load
-          } // Add fetched posts to the list
+          }
           currentPageCommunity = pageNum; // Update current page
           hasMoreCommunity =
-              fetchedPosts.isNotEmpty; // Update if more posts exist
-          isLoadingCommunity = false; // Hide loading indicator
+              fetchedPosts.isNotEmpty; // Check if more posts are available
+          isLoadingCommunity = false;
           isLoadingMoreCommunity = false;
         });
       } else {
@@ -284,7 +288,7 @@ class _AccountPageState extends State<AccountPage>
       );
     } finally {
       setState(() {
-        isLoadingCommunity = false; // Ensure loading indicator is hidden
+        isLoadingCommunity = false;
         isLoadingMoreCommunity = false;
       });
     }
