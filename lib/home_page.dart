@@ -332,13 +332,20 @@ class _HomePageState extends State<HomePage>
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates based on a unique identifier, e.g., 'id'
+            // Filter out duplicates based on a unique identifier, e.g., 'postId'
             final newPosts = fetchedPosts.where((post) {
               return !posts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
-            posts.addAll(newPosts); // Append only non-duplicates
+            if (newPosts.isEmpty) {
+              // If no new posts are found, stop loading more and show a message
+              hasMore = false;
+              _showCustomSnackBar(context, 'No more posts to load.',
+                  isError: false);
+            } else {
+              posts.addAll(newPosts); // Append only non-duplicates
+            }
           } else {
             posts = fetchedPosts; // Set for initial load
           }

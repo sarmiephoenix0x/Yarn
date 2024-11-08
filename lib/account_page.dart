@@ -188,11 +188,20 @@ class _AccountPageState extends State<AccountPage>
 
         setState(() {
           if (loadMore) {
+            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !timelinePosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
-            timelinePosts.addAll(newPosts);
+
+            if (newPosts.isEmpty) {
+              // If no new posts are found, stop loading more and show a message
+              hasMoreTimeline = false;
+              _showCustomSnackBar(context, 'No more timeline posts to load.',
+                  isError: false);
+            } else {
+              timelinePosts.addAll(newPosts);
+            }
           } else {
             timelinePosts = fetchedPosts;
           }
@@ -266,11 +275,20 @@ class _AccountPageState extends State<AccountPage>
 
         setState(() {
           if (loadMore) {
+            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !communityPosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
-            communityPosts.addAll(newPosts);
+
+            if (newPosts.isEmpty) {
+              // If no new posts are found, stop loading more and show a message
+              hasMoreCommunity = false;
+              _showCustomSnackBar(context, 'No more community posts to load.',
+                  isError: false);
+            } else {
+              communityPosts.addAll(newPosts);
+            }
           } else {
             communityPosts = fetchedPosts;
           }

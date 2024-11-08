@@ -161,7 +161,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -188,11 +188,20 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
+            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !timelinePosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
-            timelinePosts.addAll(newPosts);
+
+            if (newPosts.isEmpty) {
+              // If no new posts are found, stop loading more and show a message
+              hasMoreTimeline = false;
+              _showCustomSnackBar(context, 'No more timeline posts to load.',
+                  isError: false);
+            } else {
+              timelinePosts.addAll(newPosts);
+            }
           } else {
             timelinePosts = fetchedPosts;
           }
@@ -239,7 +248,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -266,11 +275,20 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
+            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !communityPosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
-            communityPosts.addAll(newPosts);
+
+            if (newPosts.isEmpty) {
+              // If no new posts are found, stop loading more and show a message
+              hasMoreCommunity = false;
+              _showCustomSnackBar(context, 'No more community posts to load.',
+                  isError: false);
+            } else {
+              communityPosts.addAll(newPosts);
+            }
           } else {
             communityPosts = fetchedPosts;
           }

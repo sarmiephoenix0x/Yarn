@@ -783,7 +783,7 @@ class DetailsPageState extends State<DetailsPage> {
 
   Widget _buildLabels(List<String> labels) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 0.0),
       child: Wrap(
         spacing: 8.0, // Space between chips
         runSpacing: 6.0, // Space between rows of chips
