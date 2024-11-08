@@ -30,7 +30,9 @@ class FillProfile extends StatefulWidget {
     required this.isDarkMode,
     required this.selectedState,
     required this.countryIsoCode,
-    required this.selectedCity, required this.username, required this.password,
+    required this.selectedCity,
+    required this.username,
+    required this.password,
   });
 
   @override
@@ -129,7 +131,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
       final decodedImage =
-      await decodeImageFromList(imageFile.readAsBytesSync());
+          await decodeImageFromList(imageFile.readAsBytesSync());
 
       if (decodedImage.width > maxWidth || decodedImage.height > maxHeight) {
         var cropper = ImageCropper();
@@ -149,9 +151,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
             ]);
 
         if (croppedImage != null) {
-          setState(() {
-            _profileImage = croppedImage.path;
-          });
+          if (mounted) {
+            setState(() {
+              _profileImage = croppedImage.path;
+            });
+          }
         }
       } else {
         // Image is within the specified resolution, no need to crop
@@ -184,7 +188,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     final String surname = surnameController.text.trim();
     final String firstName = firstNameController.text.trim();
     final String dob = dobController.text.trim();
-    final String occupation = 'Student';  // Default value
+    final String occupation = 'Student'; // Default value
     final String? jobTitle = jobTitleController.text.trim();
     final String? company = companyController.text.trim();
     final String? yearJoined = yearJoinedController.text.trim();
@@ -260,10 +264,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
     }
 
     // Handling profile picture upload if it's a local file
-    if (_profileImage != null && _profileImage is File && !_profileImage.startsWith('http')) {
+    if (_profileImage != null && !_profileImage.startsWith('http')) {
       File imageFile = File(_profileImage);
       if (await imageFile.exists()) {
-        var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+        var stream =
+            http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
         var length = await imageFile.length();
         request.files.add(http.MultipartFile(
           'profile_photo',
@@ -275,7 +280,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         print('Image file not found. Skipping image upload.');
       }
     } else {
-      print('Skipping image upload as the profile image is from an HTTP source.');
+      print(
+          'Skipping image upload as the profile image is from an HTTP source.');
     }
 
     try {
@@ -287,24 +293,26 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         // Success: Saving the user data
         final Map<String, dynamic> data = responseData['data'];
         await storage.write(key: 'yarnAccessToken', value: data['token']);
-        await prefs.setString('user', jsonEncode({
-          'userId': data['userId'],
-          'username': data['username'],
-          'firstName': firstName,
-          'surname': surname,
-          'email': email,
-          'phone': phoneNumber,
-          'gender': selectedGender,
-          'dateOfBirth': dob,
-          'state': widget.selectedState,
-          'country': widget.countryIsoCode,
-          'occupation': occupation,
-          'jobTitle': jobTitle,
-          'company': company,
-          'yearJoined': yearJoined,
-          'profilePicture': _profileImage,
-          'city': widget.selectedCity,
-        }));
+        await prefs.setString(
+            'user',
+            jsonEncode({
+              'userId': data['userId'],
+              'username': data['username'],
+              'firstName': firstName,
+              'surname': surname,
+              'email': email,
+              'phone': phoneNumber,
+              'gender': selectedGender,
+              'dateOfBirth': dob,
+              'state': widget.selectedState,
+              'country': widget.countryIsoCode,
+              'occupation': occupation,
+              'jobTitle': jobTitle,
+              'company': company,
+              'yearJoined': yearJoined,
+              'profilePicture': _profileImage,
+              'city': widget.selectedCity,
+            }));
 
         _showCustomSnackBar(context, 'Account created!', isError: false);
         Navigator.pushReplacement(
@@ -321,7 +329,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         final String message = responseData['message'];
         _showCustomSnackBar(context, message, isError: true);
       } else {
-        _showCustomSnackBar(context, 'An unexpected error occurred.', isError: true);
+        _showCustomSnackBar(context, 'An unexpected error occurred.',
+            isError: true);
       }
     } catch (e) {
       _showCustomSnackBar(context, 'An error occurred: $e', isError: true);
@@ -331,7 +340,6 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -345,26 +353,17 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                   child: Center(
                     child: SizedBox(
                       height: orientation == Orientation.portrait
-                          ? MediaQuery
-                          .of(context)
-                          .size
-                          .height * 1.35
-                          : MediaQuery
-                          .of(context)
-                          .size
-                          .height * 2.15,
+                          ? MediaQuery.of(context).size.height * 1.35
+                          : MediaQuery.of(context).size.height * 2.15,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.05),
+                                  MediaQuery.of(context).size.height * 0.05),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Row(
                               children: [
                                 InkWell(
@@ -375,10 +374,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     'images/BackButton.png',
                                     height: 25,
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const Spacer(),
@@ -389,17 +385,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 22.0,
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 SizedBox(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
+                                    width: MediaQuery.of(context).size.width *
                                         0.1),
                                 const Spacer(),
                               ],
@@ -407,10 +397,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.05),
+                                  MediaQuery.of(context).size.height * 0.05),
                           Center(
                             child: Stack(
                               children: [
@@ -419,23 +406,15 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (111 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
                                       height: (111 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
                                       color: Colors.grey,
                                       child: Image.asset(
                                         'images/ProfileImg.png',
@@ -448,23 +427,15 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     borderRadius: BorderRadius.circular(55),
                                     child: Container(
                                       width: (111 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .width,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .width) *
+                                          MediaQuery.of(context).size.width,
                                       height: (111 /
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height) *
-                                          MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height,
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height,
                                       color: Colors.grey,
                                       child: Image.file(
                                         File(_profileImage),
@@ -490,29 +461,23 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.05),
+                                  MediaQuery.of(context).size.height * 0.05),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'First Name',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: firstNameController,
                               focusNode: _firstNameFocusNode,
@@ -528,45 +493,33 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                              Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.02),
+                                  MediaQuery.of(context).size.height * 0.02),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Surname',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: surnameController,
                               focusNode: _surnameFocusNode,
@@ -582,45 +535,33 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                              Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.02),
+                                  MediaQuery.of(context).size.height * 0.02),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Email',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: TextFormField(
                               controller: emailController,
                               focusNode: _emailFocusNode,
@@ -636,7 +577,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   fontSize: 12.0,
                                 ),
                                 floatingLabelBehavior:
-                                FloatingLabelBehavior.never,
+                                    FloatingLabelBehavior.never,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
@@ -644,26 +585,17 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide(
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                               cursorColor:
-                              Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface,
+                                  Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.02),
+                                  MediaQuery.of(context).size.height * 0.02),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
@@ -672,10 +604,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -710,8 +639,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     },
                                     onCountryChanged: (country) {
                                       print(
-                                          'Country changed to: ${country
-                                              .name}');
+                                          'Country changed to: ${country.name}');
                                     },
                                   ),
                                 ),
@@ -720,13 +648,10 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.02),
+                                  MediaQuery.of(context).size.height * 0.02),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -736,10 +661,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     fontFamily: 'Poppins',
                                     fontSize: 16.0,
                                     color:
-                                    Theme
-                                        .of(context)
-                                        .colorScheme
-                                        .onSurface,
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
 
@@ -754,8 +676,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide(
-                                        color: Theme
-                                            .of(context)
+                                        color: Theme.of(context)
                                             .colorScheme
                                             .onSurface,
                                       ),
@@ -778,8 +699,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 16.0,
-                                      color: Theme
-                                          .of(context)
+                                      color: Theme.of(context)
                                           .colorScheme
                                           .onSurface,
                                     ),
@@ -790,29 +710,23 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           ),
                           SizedBox(
                               height:
-                              MediaQuery
-                                  .of(context)
-                                  .size
-                                  .height * 0.02),
+                                  MediaQuery.of(context).size.height * 0.02),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               'Date of Birth',
                               textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 16.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Padding(
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: GestureDetector(
                               onTap: () async {
                                 final DateTime? picked = await showDatePicker(
@@ -843,8 +757,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide(
-                                        color: Theme
-                                            .of(context)
+                                        color: Theme.of(context)
                                             .colorScheme
                                             .onSurface,
                                       ),
@@ -852,10 +765,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                                     counterText: '',
                                   ),
                                   cursorColor:
-                                  Theme
-                                      .of(context)
-                                      .colorScheme
-                                      .onSurface,
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -877,20 +787,11 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                       color: Colors.white,
                     ),
                     child: SizedBox(
-                      width: MediaQuery
-                          .of(context)
-                          .size
-                          .width,
+                      width: MediaQuery.of(context).size.width,
                       child: Container(
                         width: double.infinity,
-                        height: (60 / MediaQuery
-                            .of(context)
-                            .size
-                            .height) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .height,
+                        height: (60 / MediaQuery.of(context).size.height) *
+                            MediaQuery.of(context).size.height,
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
@@ -918,8 +819,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                           },
                           style: ButtonStyle(
                             backgroundColor:
-                            WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
@@ -927,8 +828,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                               },
                             ),
                             foregroundColor:
-                            WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return const Color(0xFF500450);
                                 }
@@ -937,26 +838,26 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
                             ),
                             elevation: WidgetStateProperty.all<double>(4.0),
                             shape:
-                            WidgetStateProperty.all<RoundedRectangleBorder>(
+                                WidgetStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
                                 borderRadius:
-                                BorderRadius.all(Radius.circular(35)),
+                                    BorderRadius.all(Radius.circular(35)),
                               ),
                             ),
                           ),
                           child: isLoading
                               ? const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          )
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Text(
-                            'Next',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                                  'Next',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

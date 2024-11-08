@@ -356,7 +356,8 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
       ..fields['notificationType'] = notificationType
       ..fields['location'] = location
       ..fields['communityOrPageName'] = communityOrPageName
-      ..fields['isAnonymous'] = _isAnonymous.toString();
+      ..fields['isAnonymous'] = _isAnonymous.toString()
+      ..fields['labels'] = jsonEncode(_labels);
 
     // Add header image if available
     if (_coverPhoto != null) {
@@ -977,7 +978,16 @@ class CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
                   });
                 }
               },
-              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF500450),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Add',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),

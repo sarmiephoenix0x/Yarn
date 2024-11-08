@@ -116,9 +116,16 @@ class _LikePageState extends State<LikePage> with TickerProviderStateMixin {
                   // const SizedBox(height: 20),
                   // ElevatedButton(
                   //   onPressed: () => _fetchComments(),
-                  //   // Retry fetching comments
-                  //   child: const Text('Retry'),
-                  // ),
+                  // style: ElevatedButton.styleFrom(
+                  //                   backgroundColor: Color(0xFF500450),
+                  //                   shape: RoundedRectangleBorder(
+                  //                     borderRadius: BorderRadius.circular(10),
+                  //                   ),
+                  //                 ),
+                  //                 child: const Text(
+                  //                   'Retry',
+                  //                   style: TextStyle(color: Colors.white),
+                  //                 ),
                 ],
               ),
             ],

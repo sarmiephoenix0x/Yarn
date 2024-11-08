@@ -53,44 +53,33 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   Future<void> _fetchLocations() async {
     setState(() {
       isLoading = true;
+      errorMessage = '';
     });
-    final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/locations';
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-        },
-      );
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
 
-        if (responseData['status'] == 'Success' &&
-            responseData['data'] is List) {
-          setState(() {
-            locationsList =
-                responseData['data']; // Update to use responseData['data']
-            isLoading = false;
-          });
-        } else {
-          // Handle unexpected response structure
-          setState(() {
-            errorMessage = 'Unexpected response format';
-            isLoading = false;
-          });
-        }
-      } else {
+    try {
+      final response = await http
+          .get(Uri.parse('https://yarnapi-n2dw.onrender.com/api/locations'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         setState(() {
+          locationsList = List<Map<String, dynamic>>.from(data['data']);
+          isFollowingMap = {
+            for (var loc in locationsList)
+              loc['id'].toString(): loc['isFollowing'] ?? false
+          };
           isLoading = false;
         });
-        print('Error: ${response.statusCode}');
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load locations';
+          isLoading = false;
+        });
       }
     } catch (error) {
       setState(() {
+        errorMessage = 'An error occurred';
         isLoading = false;
       });
-      print('Error fetching followed: $error');
     }
   }
 
@@ -264,7 +253,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                             size: 100, color: Colors.grey),
                                         const SizedBox(height: 20),
                                         const Text(
-                                          'No followed found.',
+                                          'No locations found.',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                               fontSize: 18, color: Colors.grey),
@@ -272,8 +261,18 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                         const SizedBox(height: 20),
                                         ElevatedButton(
                                           onPressed: () => _fetchLocations(),
-                                          // Retry fetching timeline posts
-                                          child: const Text('Retry'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xFF500450),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Retry',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -281,15 +280,13 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                 : ListView.builder(
                                     itemCount: locationsList.length,
                                     itemBuilder: (context, index) {
-                                      final following = locationsList[index];
+                                      final locationData = locationsList[index];
                                       return location(
-                                        following['profilepictureurl'] != null
-                                            ? following['profilepictureurl'] +
-                                                '/download?project=66e4476900275deffed4'
-                                            : '',
-                                        following['locationname'],
-                                        following['isFollowing'],
-                                        following['locationId'],
+                                        locationData['name'],
+                                        isFollowingMap[locationData['id']
+                                                .toString()] ??
+                                            false,
+                                        locationData['id'],
                                       );
                                     },
                                   ),
@@ -340,7 +337,18 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                         ElevatedButton(
                                           onPressed: () =>
                                               _fetchPages(), // Retry button
-                                          child: const Text('Retry'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xFF500450),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Retry',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -869,7 +877,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget location(String img, String name, bool isFollowing, int locationId) {
+  Widget location(String name, bool isFollowing, int locationId) {
     isFollowing = isFollowingMap[locationId.toString()] ?? false;
     Future<void> followLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -959,26 +967,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           child: Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(55),
-                child: Container(
-                  width: (50 / MediaQuery.of(context).size.width) *
-                      MediaQuery.of(context).size.width,
-                  height: (50 / MediaQuery.of(context).size.height) *
-                      MediaQuery.of(context).size.height,
-                  color: Colors.grey,
-                  child: img.isNotEmpty
-                      ? Image.network(
-                          img,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset(
-                          'images/ProfileImg.png',
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
               Expanded(
                 flex: 10,
                 child: Column(

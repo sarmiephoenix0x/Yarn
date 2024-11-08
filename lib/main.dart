@@ -8,6 +8,8 @@ import 'package:yarn/main_app.dart';
 import 'chat_provider.dart'; // Make sure this is correctly imported
 import 'notification_service.dart'; // Add the notification service import
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -81,6 +83,7 @@ class _MyAppState extends State<MyApp> {
     return ChangeNotifierProvider(
       create: (context) => ChatProvider(),
       child: MaterialApp(
+        navigatorObservers: [routeObserver],
         title: 'Yarn',
         theme: lightTheme,
         darkTheme: darkTheme,

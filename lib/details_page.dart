@@ -16,6 +16,7 @@ class DetailsPage extends StatefulWidget {
   final int postId;
   final List<String> postImg;
   final String authorImg;
+  final String headerImg;
   final String description;
   final String authorName;
   final bool verified;
@@ -32,6 +33,7 @@ class DetailsPage extends StatefulWidget {
       required this.postId,
       required this.postImg,
       required this.authorImg,
+      required this.headerImg,
       required this.description,
       required this.authorName,
       required this.verified,
@@ -606,33 +608,15 @@ class DetailsPageState extends State<DetailsPage> {
                             ],
                           ),
                         ),
-                        if (widget.postImg.isNotEmpty)
+                        if (widget.headerImg.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(
                                 top: 30.0, bottom: 10.0, left: 0.0, right: 0.0),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: CarouselSlider(
-                                options: CarouselOptions(
-                                  autoPlay: false,
-                                  enlargeCenterPage: false,
-                                  aspectRatio: 14 / 9,
-                                  viewportFraction: 1.0,
-                                  enableInfiniteScroll: true,
-                                  onPageChanged: (index, reason) {
-                                    setState(() {
-                                      _current = index;
-                                    });
-                                  },
-                                ),
-                                carouselController: _controller,
-                                items: widget.postImg.map((item) {
-                                  return Image.asset(
-                                    item,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                  );
-                                }).toList(),
+                              borderRadius: BorderRadius.circular(0),
+                              child: Image.network(
+                                widget.headerImg,
+                                width: double.infinity,
                               ),
                             ),
                           ),
@@ -726,6 +710,8 @@ class DetailsPageState extends State<DetailsPage> {
                                         builder: (context) => CommentsPage(
                                               key: UniqueKey(),
                                               postId: widget.postId,
+                                              userId: widget.userId,
+                                              senderId: widget.senderId,
                                             )),
                                   );
                                 },

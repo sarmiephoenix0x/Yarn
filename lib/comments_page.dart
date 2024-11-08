@@ -3,11 +3,19 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:yarn/author_profile.dart';
+import 'package:yarn/user_profile.dart';
 
 class CommentsPage extends StatefulWidget {
   final int postId;
+  final int userId;
+  final int senderId;
 
-  const CommentsPage({super.key, required this.postId});
+  const CommentsPage(
+      {super.key,
+      required this.postId,
+      required this.userId,
+      required this.senderId});
 
   @override
   _CommentsPageState createState() => _CommentsPageState();
@@ -198,8 +206,16 @@ class _CommentsPageState extends State<CommentsPage> {
                                 const SizedBox(height: 20),
                                 ElevatedButton(
                                   onPressed: () => _fetchComments(),
-                                  // Retry fetching comments
-                                  child: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF500450),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Retry',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 ),
                               ],
                             ),
@@ -209,6 +225,10 @@ class _CommentsPageState extends State<CommentsPage> {
                             itemBuilder: (context, index) {
                               final comments = commentsList[index];
                               return comment(
+                                comments['commentorProfilePictureUrl'] != null
+                                    ? comments['commentorProfilePictureUrl'] +
+                                        '/download?project=66e4476900275deffed4'
+                                    : '',
                                 comments['commentor'] ?? 'Unknown User',
                                 comments['text'],
                                 comments['dateCommented'],
@@ -261,21 +281,20 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget comment(String name, String description, String dateCommented) {
+  Widget comment(
+      String img, String name, String description, String dateCommented) {
     return InkWell(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => AuthorProfilePage(
-        //       key: UniqueKey(),
-        //       commentId: commentId,
-        //       profileImage: img,
-        //       pageName: name,
-        //       pageDescription: description,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserProfile(
+              key: UniqueKey(),
+              userId: widget.userId,
+              senderId: widget.senderId,
+            ),
+          ),
+        );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -284,41 +303,26 @@ class _CommentsPageState extends State<CommentsPage> {
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           child: Row(
             children: [
-              // ClipRRect(
-              //   borderRadius: BorderRadius.circular(55),
-              //   child: Container(
-              //     width: (50 / MediaQuery
-              //         .of(context)
-              //         .size
-              //         .width) *
-              //         MediaQuery
-              //             .of(context)
-              //             .size
-              //             .width,
-              //     height: (50 / MediaQuery
-              //         .of(context)
-              //         .size
-              //         .height) *
-              //         MediaQuery
-              //             .of(context)
-              //             .size
-              //             .height,
-              //     color: Colors.grey,
-              //     child: img.isNotEmpty
-              //         ? Image.network(
-              //       img,
-              //       fit: BoxFit.cover,
-              //     )
-              //         : Image.asset(
-              //       'images/ProfileImg.png',
-              //       fit: BoxFit.cover,
-              //     ),
-              //   ),
-              // ),
-              // SizedBox(width: MediaQuery
-              //     .of(context)
-              //     .size
-              //     .width * 0.02),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(55),
+                child: Container(
+                  width: (50 / MediaQuery.of(context).size.width) *
+                      MediaQuery.of(context).size.width,
+                  height: (50 / MediaQuery.of(context).size.height) *
+                      MediaQuery.of(context).size.height,
+                  color: Colors.grey,
+                  child: img.isNotEmpty
+                      ? Image.network(
+                          img,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          'images/ProfileImg.png',
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
               Expanded(
                 flex: 10,
                 child: Column(

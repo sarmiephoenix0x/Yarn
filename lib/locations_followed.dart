@@ -16,7 +16,7 @@ class LocationsFollowedPage extends StatefulWidget {
 
 class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
   final storage = const FlutterSecureStorage();
-  List<dynamic> followedList = [];
+  List<dynamic> locationsList = [];
   bool isLoading = true;
   Map<String, bool> isFollowingMap = {};
   String errorMessage = '';
@@ -47,7 +47,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
         if (responseData['status'] == 'Success' &&
             responseData['data'] is List) {
           setState(() {
-            followedList =
+            locationsList =
                 responseData['data']; // Update to use responseData['data']
             isLoading = false;
           });
@@ -83,7 +83,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
               child: CircularProgressIndicator(color: Color(0xFF500450)))
           : errorMessage.isNotEmpty
               ? Center(child: Text(errorMessage))
-              : followedList.isEmpty
+              : locationsList.isEmpty
                   ? Center(
                       // Display this if the timeline posts list is empty
                       child: Column(
@@ -93,38 +93,43 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
                               size: 100, color: Colors.grey),
                           const SizedBox(height: 20),
                           const Text(
-                            'No followed found.',
+                            'No locations found.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 18, color: Colors.grey),
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: () => _fetchFollowed(),
-                            // Retry fetching timeline posts
-                            child: const Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF500450),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
                     )
                   : ListView.builder(
-                      itemCount: followedList.length,
+                      itemCount: locationsList.length,
                       itemBuilder: (context, index) {
-                        final following = followedList[index];
+                        final locationData = locationsList[index];
                         return location(
-                          following['profilepictureurl'] != null
-                              ? following['profilepictureurl'] +
-                                  '/download?project=66e4476900275deffed4'
-                              : '',
-                          following['locationname'],
-                          following['isFollowing'],
-                          following['locationId'],
+                          locationData['name'],
+                          isFollowingMap[locationData['id'].toString()] ??
+                              false,
+                          locationData['id'],
                         );
                       },
                     ),
     );
   }
 
-  Widget location(String img, String name, bool isFollowing, int locationId) {
+  Widget location(String name, bool isFollowing, int locationId) {
     isFollowing = isFollowingMap[locationId.toString()] ?? false;
     Future<void> followLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -214,26 +219,6 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
           padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 20.0),
           child: Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(55),
-                child: Container(
-                  width: (50 / MediaQuery.of(context).size.width) *
-                      MediaQuery.of(context).size.width,
-                  height: (50 / MediaQuery.of(context).size.height) *
-                      MediaQuery.of(context).size.height,
-                  color: Colors.grey,
-                  child: img.isNotEmpty
-                      ? Image.network(
-                          img,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.asset(
-                          'images/ProfileImg.png',
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.02),
               Expanded(
                 flex: 10,
                 child: Column(

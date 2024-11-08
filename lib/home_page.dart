@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/chat_page.dart';
+import 'package:yarn/main.dart';
 import 'package:yarn/user_profile.dart';
 import 'package:yarn/video_player.dart';
 import 'comments_page.dart';
@@ -15,6 +16,9 @@ import 'notification_page.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:signalr_core/signalr_core.dart';
+import 'create_community.dart';
+import 'create_page.dart';
+import 'create_post.dart';
 
 class HomePage extends StatefulWidget {
   final int selectedIndex;
@@ -31,7 +35,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with TickerProviderStateMixin, RouteAware {
   final TextEditingController searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   String _profileImage = '';
@@ -57,22 +62,51 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String? _detectedCity;
   Position? _position;
   HubConnection? _hubConnection;
+  bool _hasFetchedData = false;
+  final ScrollController _timelineScrollController = ScrollController();
+  bool isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
+    _timelineScrollController.addListener(() {
+      if (_timelineScrollController.position.pixels >=
+              _timelineScrollController.position.maxScrollExtent - 200 &&
+          !isLoading &&
+          hasMore) {
+        _fetchPosts(loadMore: true); // Load the next page when near the end
+      }
+    });
     _startSignalRConnection();
-    fetchUserProfilePic();
+    if (!_hasFetchedData) {
+      fetchUserProfilePic();
+      _fetchPosts();
+      _hasFetchedData = true;
+    }
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
-    _fetchPosts();
   }
 
   @override
   void dispose() {
-    super.dispose();
+    routeObserver.unsubscribe(this);
     latestTabController?.dispose();
     profileTab?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final ModalRoute? modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      if (!_hasFetchedData) {
+        _fetchPosts();
+        fetchUserProfilePic();
+        _hasFetchedData = true;
+      }
+      routeObserver.subscribe(this, modalRoute);
+    }
   }
 
   void _startSignalRConnection() async {
@@ -217,11 +251,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return null;
   }
 
-  Future<void> _fetchPosts({int pageNum = 1}) async {
+  Future<void> _fetchPosts({bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && isLoadingMore) return;
     if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
+      if (loadMore) {
+        setState(() {
+          isLoadingMore = true;
+        });
+      } else {
+        setState(() {
+          isLoading = true;
+        });
+      }
     }
 
     await _getLocation();
@@ -238,9 +279,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         if (mounted) {
           setState(() {
             isLoading = false;
+            isLoadingMore = false;
           });
         }
         return;
+      }
+
+      // Reset posts and pagination when starting a new load
+      if (pageNum == 1) {
+        setState(() {
+          posts.clear(); // Clear existing posts for fresh data
+          hasMore = true; // Reset 'hasMore' for pagination
+          currentPage = 1; // Reset to page 1
+        });
       }
 
       final url = Uri.parse(
@@ -268,18 +319,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           );
           if (mounted) {
             setState(() {
-              hasMore = false;
-              isLoading = false;
+              hasMore = false; // No more posts available
+              isLoading = false; // Hide loading indicator
+              isLoadingMore = false;
             });
           }
           return;
         }
+
         if (mounted) {
           setState(() {
-            posts.addAll(fetchedPosts);
-            currentPage = pageNum;
-            hasMore = fetchedPosts.length > 0;
-            isLoading = false;
+            if (loadMore) {
+              posts.addAll(fetchedPosts); // Append new data
+            } else {
+              posts = fetchedPosts; // Set initial load
+            } // Add fetched posts to the list
+            currentPage = pageNum; // Update the current page
+            hasMore =
+                fetchedPosts.length > 0; // Check if more posts are available
+            isLoading = false; // Hide loading indicator
+            isLoadingMore = false;
           });
         }
       } else if (response.statusCode == 400) {
@@ -299,15 +358,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     } catch (e) {
       print('Exception: $e');
-      _showCustomSnackBar(
-        context,
-        'Failed to load yarns.',
-        isError: true,
-      );
+      if (mounted) {
+        _showCustomSnackBar(
+          context,
+          'Failed to load yarns.',
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          isLoading = false; // Ensure loading indicator is hidden
+          isLoadingMore = false;
         });
       }
     }
@@ -408,174 +470,197 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  void _showCreateOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.post_add),
+              title: Text('Create Yarn'),
+              onTap: () {
+                _hasFetchedData = false;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreatePost(key: UniqueKey()),
+                  ),
+                );
+                // Navigator.pop(context); // Close the bottom sheet
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.pageview),
+              title: Text('Create Page'),
+              onTap: () {
+                _hasFetchedData = false;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreatePage(key: UniqueKey()),
+                  ),
+                );
+                // Navigator.pop(context); // Close the bottom sheet
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.group_add),
+              title: Text('Create Community'),
+              onTap: () {
+                _hasFetchedData = false;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreateCommunity(key: UniqueKey()),
+                  ),
+                );
+                // Navigator.pop(context); // Close the bottom sheet
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateOptions(context),
+        backgroundColor: const Color(0xFF500450),
+        shape: const CircleBorder(),
+        child: Image.asset(
+          'images/User-talk.png',
+          height: 30,
+          fit: BoxFit.cover,
+        ),
+      ),
+      body: Column(
+        children: [
+          AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Color(0xFF500450).withOpacity(0.8),
+            elevation: 2,
+            titleSpacing: 20,
+            title: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
                     'images/AppLogo.png',
-                    height: 50,
+                    height: 45,
                   ),
                   const Spacer(),
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NotificationPage(
-                            key: UniqueKey(),
-                            selectedIndex: widget.selectedIndex,
-                          ),
+                  _buildIconButton('images/NotificationIcon.png', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NotificationPage(
+                          key: UniqueKey(),
+                          selectedIndex: widget.selectedIndex,
                         ),
-                      );
-                    },
-                    child: Image.asset(
-                      'images/NotificationIcon.png',
-                      height: 50,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      // int someReceiverId = 1;
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => ChatPage(
-                      //         receiverId: someReceiverId,
-                      //         senderId: userId!,
-                      //         receiverName: "Philip",
-                      //         profilePic: _profileImage), // Pass the receiverId
-                      //   ),
-                      // );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MeassagesPage(
-                            key: UniqueKey(),
-                            senderId: userId!,
-                          ),
+                      ),
+                    );
+                  }),
+                  _buildIconButton('images/ChatImg.png', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MeassagesPage(
+                          key: UniqueKey(),
+                          senderId: userId!,
                         ),
-                      );
-                    },
-                    child: Image.asset(
-                      'images/ChatImg.png',
-                      height: 50,
-                    ),
-                  ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-            isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF500450)))
-                : posts.isEmpty
-                    ? Center(
-                        // Display this if the posts list is empty
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.article_outlined,
-                                size: 100, color: Colors.grey),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'No yarns available at the moment.',
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () =>
-                                  _fetchPosts(), // Allow user to retry
-                              child: const Text(
-                                'Retry',
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _fetchPosts,
+              child: isLoading
+                  ? const Center(
+                      child:
+                          CircularProgressIndicator(color: Color(0xFF500450)),
+                    )
+                  : posts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.article_outlined,
+                                  size: 100, color: Colors.grey.shade600),
+                              const SizedBox(height: 20),
+                              Text(
+                                'No yarns available at the moment.',
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.grey.shade600),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: posts.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == posts.length) {
-                            // Check if more posts are available
-                            return hasMore
-                                ? ElevatedButton(
-                                    onPressed: () =>
-                                        _fetchPosts(pageNum: currentPage + 1),
-                                    child: const Text('Load More'),
-                                  )
-                                : const Center(
-                                    child: Padding(
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () => _fetchPosts(),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF500450),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Retry',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _timelineScrollController,
+                          itemCount: posts.length + 1,
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            if (index == posts.length) {
+                              return hasMore
+                                  ? const Padding(
                                       padding:
                                           EdgeInsets.symmetric(vertical: 16),
-                                      child: Text('No more yarns'),
-                                    ),
-                                  );
-                          }
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                            color: Color(0xFF500450)),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 16),
+                                        child: Text('No more yarns'),
+                                      ),
+                                    );
+                            }
 
-                          final post = posts[index];
-                          return _buildPostItem(post);
-                        },
-                      ),
-
-            // post(
-            //     _profileImage,
-            //     _profileImage,
-            //     "Lagos State | Agege LGA",
-            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-            //     [
-            //       "images/TrendingImg.png",
-            //       "images/TrendingImg.png",
-            //       "images/TrendingImg.png",
-            //     ],
-            //     "Author",
-            //     "@username",
-            //     "4h ago",
-            //     true,
-            //     false),
-            // post(
-            //     _profileImage,
-            //     _profileImage,
-            //     "Lagos State | Agege LGA",
-            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-            //     [],
-            //     "Author2",
-            //     "@username",
-            //     "4h ago",
-            //     false,
-            //     false),
-            // post(
-            //     _profileImage,
-            //     _profileImage,
-            //     "Lagos State | Agege LGA",
-            //     "Ukrainian President Volodymyr Zelensky has accused European countries that continue to buy Russian oil of earning their money in other people's blood.\nIn an interview with the BBC, President Zelensky singled out Germany and Hungary, accusing them of blocking efforts to embargo energy sales, from which Russia stands to make up to £250bn (\$326bn) this year.\nThere has been a growing frustration among Ukraine's leadership with Berlin, which has backed some sanctions against Russia but so far resisted calls to back tougher action on oil sales.",
-            //     [],
-            //     "Author2",
-            //     "@username",
-            //     "4h ago",
-            //     false,
-            //     true),
-          ],
-        ),
-      ],
+                            final post = posts[index];
+                            return _buildPostItem(post);
+                          },
+                        ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildPostItem(dynamic post) {
     // Extract necessary data from the post
-    String authorImg = post['headerImageUrl'] != null
+    String headerImg = post['headerImageUrl'] != null
         ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
+        : '';
+    String authorImg = post['creatorProfilePictureUrl'] != null
+        ? "${post['creatorProfilePictureUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
@@ -585,27 +670,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
     List<String> postMedia = [
-      // Process image URLs, filtering out any null values
-      ...List<String>.from(post['ImagesUrl'] ?? [])
-          .where((url) => url.isNotEmpty) // Ensure URLs are not empty
+      // Process image URLs, filtering out any null or empty values
+      ...List<String>.from(post['imagesUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
           .map((url) => "$url/download?project=66e4476900275deffed4")
           .toList(),
 
-      // Process video URLs, filtering out any null values
-      ...List<String>.from(post['VideosUrl'] ?? [])
-          .where((url) => url.isNotEmpty) // Ensure URLs are not empty
+      // Process video URLs, filtering out any null or empty values
+      ...List<String>.from(post['videosUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
           .map((url) => "$url/download?project=66e4476900275deffed4")
           .toList(),
     ];
 
-    List<String> labels = List<String>.from(post['labels'] ?? []);
+    print(postMedia);
+
+    List<String> labels = [];
+
+    if (post['labels'] is List && post['labels'].isNotEmpty) {
+      // Decode the first item in the list, which should be a string with the actual label list encoded
+      String labelsString = post['labels'][0];
+
+      // Decode the string (i.e., "[\"Test\",\"Trump\"]") into a List
+      labels = List<String>.from(jsonDecode(labelsString));
+    }
+
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
     int creatorUserId = post['creatorId'];
-    int _current = 0;
+    ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
 
@@ -654,6 +754,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 postId: post['postId'],
                 postImg: postMedia,
                 authorImg: authorImg,
+                headerImg: headerImg,
                 description: description,
                 authorName: authorName,
                 verified: verified,
@@ -717,7 +818,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              if (postMedia.isNotEmpty) _buildPostImages(postMedia),
+              if (postMedia.isNotEmpty) _buildPostImages(postMedia, _current),
               if (labels.isNotEmpty) _buildLabels(labels),
               // _buildInteractionRow(isLiked, postImg),
               if (postMedia.isNotEmpty)
@@ -763,6 +864,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   builder: (context) => CommentsPage(
                                         key: UniqueKey(),
                                         postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
                                       )),
                             );
                           },
@@ -779,23 +882,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postMedia.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -900,6 +1011,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   builder: (context) => CommentsPage(
                                         key: UniqueKey(),
                                         postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
                                       )),
                             );
                           },
@@ -916,23 +1029,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postMedia.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -943,7 +1064,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ],
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              _buildCommentInput(authorImg, post['postId']),
+              _buildCommentInput(_profileImage, post['postId']),
               Divider(color: Theme.of(context).colorScheme.onSurface),
             ],
           ),
@@ -1090,8 +1211,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildPostImages(List<String> mediaUrls) {
-    print(mediaUrls);
+  Widget _buildPostImages(
+      List<String> mediaUrls, ValueNotifier<int> currentIndex) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: CarouselSlider(
@@ -1101,16 +1222,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           aspectRatio: 14 / 9,
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
+          onPageChanged: (index, reason) {
+            setState(() {
+              currentIndex.value = index; // Update the current index
+            });
+          },
         ),
         items: mediaUrls.map((url) {
           if (url.endsWith('.mp4')) {
-            // If the URL points to a video, display it using the VideoPlayerWidget
+            // If the URL is a video
             return AspectRatio(
               aspectRatio: 16 / 9,
               child: VideoPlayerWidget(url: url),
             );
           } else {
-            // For images, display with Image.network
+            // If the URL is an image
             return Image.network(
               url,
               fit: BoxFit.cover,
@@ -1228,13 +1354,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Wrap(
-        spacing: 8.0,
+        spacing: 8.0, // Space between chips
+        runSpacing: 6.0, // Space between rows of chips
         children: labels.map((label) {
           return Chip(
             label: Text(label, style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.blueAccent,
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildIconButton(String assetPath, VoidCallback onPressed) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10.0),
+      child: InkWell(
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.1), // Soft background
+          ),
+          child: Image.asset(
+            assetPath,
+            height: 35, // Icon size
+          ),
+        ),
       ),
     );
   }

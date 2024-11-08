@@ -32,7 +32,8 @@ class _FollowingsPageState extends State<FollowingsPage> {
       isLoading = true;
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/users/followings/${widget.senderId}';
+    final url =
+        'https://yarnapi-n2dw.onrender.com/api/users/followings/${widget.senderId}';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -99,8 +100,16 @@ class _FollowingsPageState extends State<FollowingsPage> {
                           const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: () => _fetchFollowings(),
-                            // Retry fetching timeline posts
-                            child: const Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF500450),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),

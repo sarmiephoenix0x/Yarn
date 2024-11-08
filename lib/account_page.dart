@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/analytics.dart';
 import 'package:yarn/settings.dart';
+import 'package:yarn/video_player.dart';
 import 'comments_page.dart';
 import 'create_community.dart';
 import 'create_page.dart';
@@ -18,6 +19,8 @@ import 'followings_page.dart';
 import 'edit_page.dart';
 import 'package:yarn/user_profile.dart';
 import 'locations_followed.dart';
+
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 class AccountPage extends StatefulWidget {
   final int selectedIndex;
@@ -35,7 +38,7 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, RouteAware {
   String _profileImage = '';
   TabController? latestTabController;
   TabController? profileTab;
@@ -68,13 +71,40 @@ class _AccountPageState extends State<AccountPage>
   bool isLoading = true;
   Map<int, bool> _isLikedMap = {};
   int? userId;
+  bool _hasFetchedData = false;
+  bool isLoadingMoreTimeline = false;
+  bool isLoadingMoreCommunity = false;
+  final ScrollController _timelineScrollController = ScrollController();
+  final ScrollController _communityScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    fetchUserProfile();
-    _fetchMyTimelinePosts();
-    _fetchMyCommunityPosts();
+    _timelineScrollController.addListener(() {
+      if (_timelineScrollController.position.pixels >=
+              _timelineScrollController.position.maxScrollExtent - 200 &&
+          !isLoadingTimeline &&
+          hasMoreTimeline) {
+        _fetchMyTimelinePosts(
+            loadMore: true); // Load the next page when near the end
+      }
+    });
+
+    _communityScrollController.addListener(() {
+      if (_communityScrollController.position.pixels >=
+              _communityScrollController.position.maxScrollExtent - 200 &&
+          !isLoadingCommunity &&
+          hasMoreCommunity) {
+        _fetchMyCommunityPosts(
+            loadMore: true); // Load the next page when near the end
+      }
+    });
+    if (!_hasFetchedData) {
+      fetchUserProfile();
+      _fetchMyTimelinePosts();
+      _fetchMyCommunityPosts();
+      _hasFetchedData = true;
+    }
     // _fetchUserData();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -85,6 +115,21 @@ class _AccountPageState extends State<AccountPage>
     super.dispose();
     latestTabController?.dispose();
     profileTab?.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final ModalRoute? modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      if (!_hasFetchedData) {
+        fetchUserProfile();
+        _fetchMyTimelinePosts();
+        _fetchMyCommunityPosts();
+        _hasFetchedData = true;
+      }
+      routeObserver.subscribe(this, modalRoute);
+    }
   }
 
   Future<void> _fetchUserData() async {
@@ -99,15 +144,34 @@ class _AccountPageState extends State<AccountPage>
     }
   }
 
-  Future<void> _fetchMyTimelinePosts({int pageNum = 1}) async {
-    setState(() {
-      isLoadingTimeline = true;
-    });
+  Future<void> _fetchMyTimelinePosts(
+      {bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && isLoadingMoreTimeline) return;
+    if (mounted) {
+      if (loadMore) {
+        setState(() {
+          isLoadingMoreTimeline = true;
+        });
+      } else {
+        setState(() {
+          isLoadingTimeline = true;
+        });
+      }
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/my-timeline/$pageNum');
+
+      if (pageNum == 1) {
+        // Reset posts and pagination when starting a new load
+        setState(() {
+          timelinePosts.clear(); // Clear existing timeline posts for fresh data
+          hasMoreTimeline = true; // Reset hasMore for pagination
+          currentPageTimeline = 1; // Reset to page 1
+        });
+      }
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -118,10 +182,17 @@ class _AccountPageState extends State<AccountPage>
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
         setState(() {
-          timelinePosts.addAll(fetchedPosts);
-          currentPageTimeline = pageNum;
-          hasMoreTimeline = fetchedPosts.length > 0;
-          isLoadingTimeline = false;
+          if (loadMore) {
+            timelinePosts.addAll(fetchedPosts); // Append new data
+          } else {
+            timelinePosts = fetchedPosts; // Set initial load
+          }
+          // Add fetched posts to the list
+          currentPageTimeline = pageNum; // Update current page
+          hasMoreTimeline =
+              fetchedPosts.isNotEmpty; // Update if more posts exist
+          isLoadingTimeline = false; // Hide loading indicator
+          isLoadingMoreTimeline = false;
         });
       } else {
         _showCustomSnackBar(
@@ -131,29 +202,52 @@ class _AccountPageState extends State<AccountPage>
         );
       }
     } catch (e) {
-      _showCustomSnackBar(
-        context,
-        'Failed to load timeline yarns.',
-        isError: true,
-      );
+      if (mounted) {
+        _showCustomSnackBar(
+          context,
+          'Failed to load timeline yarns.',
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
-          isLoadingTimeline = false;
+          isLoadingTimeline = false; // Ensure loading indicator is hidden
+          isLoadingMoreTimeline = false;
         });
       }
     }
   }
 
-  Future<void> _fetchMyCommunityPosts({int pageNum = 1}) async {
-    setState(() {
-      isLoadingCommunity = true;
-    });
+  Future<void> _fetchMyCommunityPosts(
+      {bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && isLoadingMoreCommunity) return;
+    if (mounted) {
+      if (loadMore) {
+        setState(() {
+          isLoadingMoreCommunity = true;
+        });
+      } else {
+        setState(() {
+          isLoadingCommunity = true;
+        });
+      }
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
+
+      if (pageNum == 1) {
+        // Reset posts and pagination when starting a new load
+        setState(() {
+          communityPosts
+              .clear(); // Clear existing community posts for fresh data
+          hasMoreCommunity = true; // Reset hasMore for pagination
+          currentPageCommunity = 1; // Reset to page 1
+        });
+      }
 
       final response = await http.get(url, headers: {
         'Authorization': 'Bearer $accessToken',
@@ -164,10 +258,16 @@ class _AccountPageState extends State<AccountPage>
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
         setState(() {
-          communityPosts.addAll(fetchedPosts);
-          currentPageCommunity = pageNum;
-          hasMoreCommunity = fetchedPosts.length > 0;
-          isLoadingCommunity = false;
+          if (loadMore) {
+            communityPosts.addAll(fetchedPosts); // Append new data
+          } else {
+            communityPosts = fetchedPosts; // Set initial load
+          } // Add fetched posts to the list
+          currentPageCommunity = pageNum; // Update current page
+          hasMoreCommunity =
+              fetchedPosts.isNotEmpty; // Update if more posts exist
+          isLoadingCommunity = false; // Hide loading indicator
+          isLoadingMoreCommunity = false;
         });
       } else {
         _showCustomSnackBar(
@@ -184,7 +284,8 @@ class _AccountPageState extends State<AccountPage>
       );
     } finally {
       setState(() {
-        isLoadingCommunity = false;
+        isLoadingCommunity = false; // Ensure loading indicator is hidden
+        isLoadingMoreCommunity = false;
       });
     }
   }
@@ -239,7 +340,7 @@ class _AccountPageState extends State<AccountPage>
             followers = responseData['data']['followersCount'];
             following = responseData['data']['followingsCount'];
             posts = responseData['data']['postsCount'];
-            locations = responseData['data']['locationsCount'];
+            locations = responseData['data']['followedLocationCount'];
             userName = responseData['data']['username'];
             occupation = responseData['data']['occupation'];
             final profilePictureUrl = responseData['data']['personalInfo']
@@ -303,6 +404,7 @@ class _AccountPageState extends State<AccountPage>
               leading: Icon(Icons.post_add),
               title: Text('Create Yarn'),
               onTap: () {
+                _hasFetchedData = false;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -316,6 +418,7 @@ class _AccountPageState extends State<AccountPage>
               leading: Icon(Icons.pageview),
               title: Text('Create Page'),
               onTap: () {
+                _hasFetchedData = false;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -329,6 +432,7 @@ class _AccountPageState extends State<AccountPage>
               leading: Icon(Icons.group_add),
               title: Text('Create Community'),
               onTap: () {
+                _hasFetchedData = false;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -526,20 +630,27 @@ class _AccountPageState extends State<AccountPage>
                                     MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  Icon(Icons.person, size: 20),
+                                  SizedBox(
+                                      height: (4 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height),
                                   Text(
                                     followers.toString(),
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18.0,
+                                      fontSize: 16.0,
                                     ),
                                   ),
                                   const Text(
-                                    "Followers",
+                                    "Foll.",
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
-                                      fontSize: 16.0,
+                                      fontSize: 10.0,
                                       color: Colors.grey,
                                     ),
                                   ),
@@ -566,20 +677,27 @@ class _AccountPageState extends State<AccountPage>
                                     MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  Icon(Icons.person_outline, size: 20),
+                                  SizedBox(
+                                      height: (4 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height),
                                   Text(
                                     following.toString(),
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18.0,
+                                      fontSize: 16.0,
                                     ),
                                   ),
                                   const Text(
-                                    "Following",
+                                    "Foll'ing",
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
-                                      fontSize: 16.0,
+                                      fontSize: 10.0,
                                       color: Colors.grey,
                                     ),
                                   ),
@@ -593,12 +711,19 @@ class _AccountPageState extends State<AccountPage>
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
+                                Icon(Icons.article, size: 20),
+                                SizedBox(
+                                    height: (4 /
+                                            MediaQuery.of(context)
+                                                .size
+                                                .height) *
+                                        MediaQuery.of(context).size.height),
                                 Text(
                                   posts.toString(),
                                   style: const TextStyle(
                                     fontFamily: 'Poppins',
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18.0,
+                                    fontSize: 16.0,
                                   ),
                                 ),
                                 const Text(
@@ -606,7 +731,7 @@ class _AccountPageState extends State<AccountPage>
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
-                                    fontSize: 16.0,
+                                    fontSize: 10.0,
                                     color: Colors.grey,
                                   ),
                                 ),
@@ -627,30 +752,38 @@ class _AccountPageState extends State<AccountPage>
                                   ),
                                 );
                               },
-                              child:Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  locations
-                                      .toString(), // This would be your number of locations
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18.0,
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.location_on, size: 20),
+                                  SizedBox(
+                                      height: (4 /
+                                              MediaQuery.of(context)
+                                                  .size
+                                                  .height) *
+                                          MediaQuery.of(context).size.height),
+                                  Text(
+                                    locations
+                                        .toString(), // This would be your number of locations
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16.0,
+                                    ),
                                   ),
-                                ),
-                                const Text(
-                                  "Locations", // The label for locations
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 16.0,
-                                    color: Colors.grey,
+                                  const Text(
+                                    "Locations", // The label for locations
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 10.0,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -839,56 +972,93 @@ class _AccountPageState extends State<AccountPage>
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.article_outlined,
-                                              size: 100, color: Colors.grey),
+                                          Icon(Icons.article_outlined,
+                                              size: 100,
+                                              color: Colors.grey.shade600),
                                           const SizedBox(height: 20),
-                                          const Text(
+                                          Text(
                                             'No timeline yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
-                                                color: Colors.grey),
+                                                color: Colors.grey.shade600),
                                           ),
                                           const SizedBox(height: 20),
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _fetchMyTimelinePosts(),
-                                            // Retry fetching timeline posts
-                                            child: const Text('Retry'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Color(0xFF500450),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              'Retry',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     )
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      // Remove NeverScrollableScrollPhysics to enable scrolling
-                                      itemCount: timelinePosts.length + 1,
-                                      itemBuilder: (context, index) {
-                                        if (index == timelinePosts.length) {
-                                          return hasMoreTimeline
-                                              ? ElevatedButton(
-                                                  onPressed: () =>
-                                                      _fetchMyTimelinePosts(
-                                                          pageNum:
-                                                              currentPageTimeline +
-                                                                  1),
-                                                  child:
-                                                      const Text('Load More'),
-                                                )
-                                              : const Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 16),
-                                                    child: Text(
-                                                        'No more timeline yarns'),
-                                                  ),
-                                                );
-                                        }
+                                  : RefreshIndicator(
+                                      onRefresh: _fetchMyTimelinePosts,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        controller:
+                                            _timelineScrollController, // Add controller for scroll detection
+                                        itemCount: timelinePosts.length + 1,
+                                        itemBuilder: (context, index) {
+                                          if (index == timelinePosts.length) {
+                                            return hasMoreTimeline
+                                                ? ElevatedButton(
+                                                    onPressed: () =>
+                                                        _fetchMyTimelinePosts(
+                                                            pageNum:
+                                                                currentPageTimeline +
+                                                                    1),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 24,
+                                                          vertical: 12),
+                                                      backgroundColor:
+                                                          Color(0xFF500450),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(0),
+                                                      ),
+                                                    ),
+                                                    child: isLoadingTimeline
+                                                        ? CircularProgressIndicator(
+                                                            color: Colors.white)
+                                                        : const Text(
+                                                            'Load More',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white)),
+                                                  )
+                                                : const Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 16),
+                                                      child: Text(
+                                                          'No more timeline yarns'),
+                                                    ),
+                                                  );
+                                          }
 
-                                        final post = timelinePosts[index];
-                                        return timeline(post);
-                                      },
+                                          final post = timelinePosts[index];
+                                          return timeline(post);
+                                        },
+                                      ),
                                     ),
 
                           // Community Tab
@@ -903,56 +1073,93 @@ class _AccountPageState extends State<AccountPage>
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.group_outlined,
-                                              size: 100, color: Colors.grey),
+                                          Icon(Icons.group_outlined,
+                                              size: 100,
+                                              color: Colors.grey.shade600),
                                           const SizedBox(height: 20),
-                                          const Text(
+                                          Text(
                                             'No community yarns available at the moment.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 18,
-                                                color: Colors.grey),
+                                                color: Colors.grey.shade600),
                                           ),
                                           const SizedBox(height: 20),
                                           ElevatedButton(
                                             onPressed: () =>
                                                 _fetchMyCommunityPosts(),
-                                            // Retry fetching community posts
-                                            child: const Text('Retry'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Color(0xFF500450),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              'Retry',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     )
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      // Remove NeverScrollableScrollPhysics to enable scrolling
-                                      itemCount: communityPosts.length + 1,
-                                      itemBuilder: (context, index) {
-                                        if (index == communityPosts.length) {
-                                          return hasMoreCommunity
-                                              ? ElevatedButton(
-                                                  onPressed: () =>
-                                                      _fetchMyCommunityPosts(
-                                                          pageNum:
-                                                              currentPageCommunity +
-                                                                  1),
-                                                  child:
-                                                      const Text('Load More'),
-                                                )
-                                              : const Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 16),
-                                                    child: Text(
-                                                        'No more community yarns'),
-                                                  ),
-                                                );
-                                        }
+                                  : RefreshIndicator(
+                                      onRefresh: _fetchMyCommunityPosts,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        controller:
+                                            _communityScrollController, // Add controller for scroll detection
+                                        itemCount: communityPosts.length + 1,
+                                        itemBuilder: (context, index) {
+                                          if (index == communityPosts.length) {
+                                            return hasMoreCommunity
+                                                ? ElevatedButton(
+                                                    onPressed: () =>
+                                                        _fetchMyCommunityPosts(
+                                                            pageNum:
+                                                                currentPageCommunity +
+                                                                    1),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 24,
+                                                          vertical: 12),
+                                                      backgroundColor:
+                                                          Color(0xFF500450),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(0),
+                                                      ),
+                                                    ),
+                                                    child: isLoadingCommunity
+                                                        ? CircularProgressIndicator(
+                                                            color: Colors.white)
+                                                        : const Text(
+                                                            'Load More',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white)),
+                                                  )
+                                                : const Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 16),
+                                                      child: Text(
+                                                          'No more community yarns'),
+                                                    ),
+                                                  );
+                                          }
 
-                                        final post = communityPosts[index];
-                                        return communityWidget(post);
-                                      },
+                                          final post = communityPosts[index];
+                                          return communityWidget(post);
+                                        },
+                                      ),
                                     ),
                         ],
                       ),
@@ -1279,8 +1486,11 @@ class _AccountPageState extends State<AccountPage>
   // }
 
   Widget communityWidget(dynamic post) {
-    String authorImg = post['headerImageUrl'] != null
+    String headerImg = post['headerImageUrl'] != null
         ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
+        : '';
+    String authorImg = post['creatorProfilePictureUrl'] != null
+        ? "${post['creatorProfilePictureUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
@@ -1289,14 +1499,42 @@ class _AccountPageState extends State<AccountPage>
     String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
-    List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
+    List<String> postMedia = [
+      // Process image URLs, filtering out any null or empty values
+      ...List<String>.from(post['imagesUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+
+      // Process video URLs, filtering out any null or empty values
+      ...List<String>.from(post['videosUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+    ];
+
+    print(postMedia);
+
+    List<String> labels = [];
+
+    if (post['labels'] is List && post['labels'].isNotEmpty) {
+      // Decode the first item in the list, which should be a string with the actual label list encoded
+      String labelsString = post['labels'][0];
+
+      // Decode the string (i.e., "[\"Test\",\"Trump\"]") into a List
+      labels = List<String>.from(jsonDecode(labelsString));
+    }
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
     int creatorUserId = post['creatorId'];
-    int _current = 0;
+    ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
 
@@ -1351,8 +1589,9 @@ class _AccountPageState extends State<AccountPage>
               builder: (context) => DetailsPage(
                 key: UniqueKey(),
                 postId: post['postId'],
-                postImg: postImg,
+                postImg: postMedia,
                 authorImg: authorImg,
+                headerImg: headerImg,
                 description: description,
                 authorName: authorName,
                 verified: verified,
@@ -1405,7 +1644,7 @@ class _AccountPageState extends State<AccountPage>
                           children: [
                             _buildAuthorDetails(
                                 authorName, verified, anonymous),
-                            if (postImg.isEmpty)
+                            if (postMedia.isEmpty)
                               _buildLocationAndTime(location, time),
                           ],
                         ),
@@ -1416,9 +1655,10 @@ class _AccountPageState extends State<AccountPage>
                   ),
                 ),
               ),
-              if (postImg.isNotEmpty) _buildPostImages(postImg),
+              if (postMedia.isNotEmpty) _buildPostImages(postMedia, _current),
+              if (labels.isNotEmpty) _buildLabels(labels),
               // _buildInteractionRow(isLiked, postImg),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(children: [
@@ -1457,8 +1697,11 @@ class _AccountPageState extends State<AccountPage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
+                                      )),
                             );
                           },
                         ),
@@ -1474,23 +1717,31 @@ class _AccountPageState extends State<AccountPage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -1500,7 +1751,7 @@ class _AccountPageState extends State<AccountPage>
                   ]),
                 ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
@@ -1553,7 +1804,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ),
               // if (postImg.isEmpty) _buildInteractionRow(isLiked, postImg),
-              if (postImg.isEmpty) ...[
+              if (postMedia.isEmpty) ...[
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -1593,8 +1844,11 @@ class _AccountPageState extends State<AccountPage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
+                                      )),
                             );
                           },
                         ),
@@ -1610,23 +1864,31 @@ class _AccountPageState extends State<AccountPage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -1637,7 +1899,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ],
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              _buildCommentInput(authorImg, post['postId']),
+              _buildCommentInput(_profileImage, post['postId']),
               Divider(color: Theme.of(context).colorScheme.onSurface),
             ],
           ),
@@ -1647,8 +1909,11 @@ class _AccountPageState extends State<AccountPage>
   }
 
   Widget timeline(dynamic post) {
-    String authorImg = post['headerImageUrl'] != null
+    String headerImg = post['headerImageUrl'] != null
         ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
+        : '';
+    String authorImg = post['creatorProfilePictureUrl'] != null
+        ? "${post['creatorProfilePictureUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
@@ -1657,14 +1922,42 @@ class _AccountPageState extends State<AccountPage>
     String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
-    List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
+    List<String> postMedia = [
+      // Process image URLs, filtering out any null or empty values
+      ...List<String>.from(post['imagesUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+
+      // Process video URLs, filtering out any null or empty values
+      ...List<String>.from(post['videosUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+    ];
+
+    print(postMedia);
+
+    List<String> labels = [];
+
+    if (post['labels'] is List && post['labels'].isNotEmpty) {
+      // Decode the first item in the list, which should be a string with the actual label list encoded
+      String labelsString = post['labels'][0];
+
+      // Decode the string (i.e., "[\"Test\",\"Trump\"]") into a List
+      labels = List<String>.from(jsonDecode(labelsString));
+    }
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
     int creatorUserId = post['creatorId'];
-    int _current = 0;
+    ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
 
@@ -1719,8 +2012,9 @@ class _AccountPageState extends State<AccountPage>
               builder: (context) => DetailsPage(
                 key: UniqueKey(),
                 postId: post['postId'],
-                postImg: postImg,
+                postImg: postMedia,
                 authorImg: authorImg,
+                headerImg: headerImg,
                 description: description,
                 authorName: authorName,
                 verified: verified,
@@ -1773,7 +2067,7 @@ class _AccountPageState extends State<AccountPage>
                           children: [
                             _buildAuthorDetails(
                                 authorName, verified, anonymous),
-                            if (postImg.isEmpty)
+                            if (postMedia.isEmpty)
                               _buildLocationAndTime(location, time),
                           ],
                         ),
@@ -1784,9 +2078,10 @@ class _AccountPageState extends State<AccountPage>
                   ),
                 ),
               ),
-              if (postImg.isNotEmpty) _buildPostImages(postImg),
+              if (postMedia.isNotEmpty) _buildPostImages(postMedia, _current),
+              if (labels.isNotEmpty) _buildLabels(labels),
               // _buildInteractionRow(isLiked, postImg),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(children: [
@@ -1825,8 +2120,11 @@ class _AccountPageState extends State<AccountPage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
+                                      )),
                             );
                           },
                         ),
@@ -1842,23 +2140,31 @@ class _AccountPageState extends State<AccountPage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -1868,7 +2174,7 @@ class _AccountPageState extends State<AccountPage>
                   ]),
                 ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
@@ -1921,7 +2227,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ),
               // if (postImg.isEmpty) _buildInteractionRow(isLiked, postImg),
-              if (postImg.isEmpty) ...[
+              if (postMedia.isEmpty) ...[
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -1961,8 +2267,11 @@ class _AccountPageState extends State<AccountPage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: userId!,
+                                      )),
                             );
                           },
                         ),
@@ -1978,23 +2287,31 @@ class _AccountPageState extends State<AccountPage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -2005,7 +2322,7 @@ class _AccountPageState extends State<AccountPage>
                 ),
               ],
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-              _buildCommentInput(authorImg, post['postId']),
+              _buildCommentInput(_profileImage, post['postId']),
               Divider(color: Theme.of(context).colorScheme.onSurface),
             ],
           ),
@@ -2143,7 +2460,8 @@ class _AccountPageState extends State<AccountPage>
     );
   }
 
-  Widget _buildPostImages(List<String> postImg) {
+  Widget _buildPostImages(
+      List<String> mediaUrls, ValueNotifier<int> currentIndex) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: CarouselSlider(
@@ -2153,13 +2471,27 @@ class _AccountPageState extends State<AccountPage>
           aspectRatio: 14 / 9,
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
+          onPageChanged: (index, reason) {
+            setState(() {
+              currentIndex.value = index; // Update the current index
+            });
+          },
         ),
-        items: postImg.map((item) {
-          return Image.network(
-            item,
-            fit: BoxFit.cover,
-            width: double.infinity,
-          );
+        items: mediaUrls.map((url) {
+          if (url.endsWith('.mp4')) {
+            // If the URL is a video
+            return AspectRatio(
+              aspectRatio: 16 / 9,
+              child: VideoPlayerWidget(url: url),
+            );
+          } else {
+            // If the URL is an image
+            return Image.network(
+              url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            );
+          }
         }).toList(),
       ),
     );
@@ -2261,6 +2593,22 @@ class _AccountPageState extends State<AccountPage>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLabels(List<String> labels) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Wrap(
+        spacing: 8.0, // Space between chips
+        runSpacing: 6.0, // Space between rows of chips
+        children: labels.map((label) {
+          return Chip(
+            label: Text(label, style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.blueAccent,
+          );
+        }).toList(),
       ),
     );
   }

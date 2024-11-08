@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:yarn/comments_page.dart';
 import 'package:yarn/user_profile.dart';
+import 'package:yarn/video_player.dart';
 
 import 'details_page.dart';
 
@@ -608,8 +609,15 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                 ElevatedButton(
                                   onPressed: () =>
                                       _fetchPosts(), // Allow user to retry
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF500450),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                   child: const Text(
                                     'Retry',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
                               ],
@@ -626,7 +634,18 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                     ? ElevatedButton(
                                         onPressed: () => _fetchPosts(
                                             pageNum: currentPage + 1),
-                                        child: const Text('Load More'),
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 12),
+                                          backgroundColor: Color(0xFF500450),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(0),
+                                          ),
+                                        ),
+                                        child: const Text('Load More',
+                                            style:
+                                                TextStyle(color: Colors.white)),
                                       )
                                     : const Center(
                                         child: Padding(
@@ -819,8 +838,11 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   }
 
   Widget _buildPostItem(dynamic post) {
-    String authorImg = post['headerImageUrl'] != null
+    String headerImg = post['headerImageUrl'] != null
         ? "${post['headerImageUrl']}/download?project=66e4476900275deffed4"
+        : '';
+    String authorImg = post['creatorProfilePictureUrl'] != null
+        ? "${post['creatorProfilePictureUrl']}/download?project=66e4476900275deffed4"
         : '';
     String authorName = post['creator'] ?? 'Anonymous';
     bool anonymous = post['isAnonymous'] ?? false;
@@ -829,14 +851,42 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     String location = post['creatorCity'] ??
         'Some location'; // Replace with actual location if available
     String description = post['content'] ?? 'No description';
-    List<String> postImg = List<String>.from(post['ImagesUrl'] ?? []);
+    List<String> postMedia = [
+      // Process image URLs, filtering out any null or empty values
+      ...List<String>.from(post['imagesUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+
+      // Process video URLs, filtering out any null or empty values
+      ...List<String>.from(post['videosUrl'] ?? [])
+          .where((url) =>
+              url?.trim().isNotEmpty ??
+              false) // Trim and check for non-empty URLs
+          .map((url) => "$url/download?project=66e4476900275deffed4")
+          .toList(),
+    ];
+
+    print(postMedia);
+
+    List<String> labels = [];
+
+    if (post['labels'] is List && post['labels'].isNotEmpty) {
+      // Decode the first item in the list, which should be a string with the actual label list encoded
+      String labelsString = post['labels'][0];
+
+      // Decode the string (i.e., "[\"Test\",\"Trump\"]") into a List
+      labels = List<String>.from(jsonDecode(labelsString));
+    }
     String time = post['datePosted'] ?? 'Unknown time';
     bool isLiked = _isLikedMap[post['postId']] ?? false;
     bool isFollowing = false; // Same assumption for following
     int likes = post['likesCount'];
     int comments = post['commentsCount'];
     int creatorUserId = post['creatorId'];
-    int _current = 0;
+    ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
 
@@ -891,8 +941,9 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
               builder: (context) => DetailsPage(
                 key: UniqueKey(),
                 postId: post['postId'],
-                postImg: postImg,
+                postImg: postMedia,
                 authorImg: authorImg,
+                headerImg: headerImg,
                 description: description,
                 authorName: authorName,
                 verified: verified,
@@ -945,7 +996,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                           children: [
                             _buildAuthorDetails(
                                 authorName, verified, anonymous),
-                            if (postImg.isEmpty)
+                            if (postMedia.isEmpty)
                               _buildLocationAndTime(location, time),
                           ],
                         ),
@@ -956,9 +1007,10 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                   ),
                 ),
               ),
-              if (postImg.isNotEmpty) _buildPostImages(postImg),
+              if (postMedia.isNotEmpty) _buildPostImages(postMedia, _current),
+              if (labels.isNotEmpty) _buildLabels(labels),
               // _buildInteractionRow(isLiked, postImg),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(children: [
@@ -997,8 +1049,11 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: widget.senderId,
+                                      )),
                             );
                           },
                         ),
@@ -1014,23 +1069,31 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -1040,7 +1103,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                   ]),
                 ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              if (postImg.isNotEmpty)
+              if (postMedia.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
@@ -1093,7 +1156,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                 ),
               ),
               // if (postImg.isEmpty) _buildInteractionRow(isLiked, postImg),
-              if (postImg.isEmpty) ...[
+              if (postMedia.isEmpty) ...[
                 SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -1133,8 +1196,11 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CommentsPage(
-                                      key: UniqueKey(),
-                                      postId: post['postId'])),
+                                        key: UniqueKey(),
+                                        postId: post['postId'],
+                                        userId: creatorUserId,
+                                        senderId: widget.senderId,
+                                      )),
                             );
                           },
                         ),
@@ -1150,23 +1216,31 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        postImg.length,
-                        (index) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Image.asset(
-                            _current == index
-                                ? "images/ActiveElipses.png"
-                                : "images/InactiveElipses.png",
-                            width: (10 / MediaQuery.of(context).size.width) *
-                                MediaQuery.of(context).size.width,
-                            height: (10 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
+                    ValueListenableBuilder<int>(
+                      valueListenable: _current,
+                      builder: (context, index, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            postMedia.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5.0),
+                              child: Image.asset(
+                                _current.value == index
+                                    ? "images/ActiveElipses.png"
+                                    : "images/InactiveElipses.png",
+                                width:
+                                    (10 / MediaQuery.of(context).size.width) *
+                                        MediaQuery.of(context).size.width,
+                                height:
+                                    (10 / MediaQuery.of(context).size.height) *
+                                        MediaQuery.of(context).size.height,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     const Spacer(),
                     IconButton(
@@ -1315,7 +1389,8 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     );
   }
 
-  Widget _buildPostImages(List<String> postImg) {
+  Widget _buildPostImages(
+      List<String> mediaUrls, ValueNotifier<int> currentIndex) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: CarouselSlider(
@@ -1325,13 +1400,27 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
           aspectRatio: 14 / 9,
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
+          onPageChanged: (index, reason) {
+            setState(() {
+              currentIndex.value = index; // Update the current index
+            });
+          },
         ),
-        items: postImg.map((item) {
-          return Image.network(
-            item,
-            fit: BoxFit.cover,
-            width: double.infinity,
-          );
+        items: mediaUrls.map((url) {
+          if (url.endsWith('.mp4')) {
+            // If the URL is a video
+            return AspectRatio(
+              aspectRatio: 16 / 9,
+              child: VideoPlayerWidget(url: url),
+            );
+          } else {
+            // If the URL is an image
+            return Image.network(
+              url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+            );
+          }
         }).toList(),
       ),
     );
@@ -1426,6 +1515,22 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLabels(List<String> labels) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Wrap(
+        spacing: 8.0, // Space between chips
+        runSpacing: 6.0, // Space between rows of chips
+        children: labels.map((label) {
+          return Chip(
+            label: Text(label, style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.blueAccent,
+          );
+        }).toList(),
       ),
     );
   }
