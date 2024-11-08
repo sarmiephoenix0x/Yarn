@@ -848,8 +848,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location = post['creatorCity'] ??
-        'Some location'; // Replace with actual location if available
+    String location = post['location'] ?? post['creatorCity'];
     String description = post['content'] ?? 'No description';
     List<String> postMedia = [
       // Process image URLs, filtering out any null or empty values

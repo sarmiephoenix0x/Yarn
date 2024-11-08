@@ -33,6 +33,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   final storage = const FlutterSecureStorage();
   int? userId;
   List<dynamic> locationsList = [];
+  List<Map<String, dynamic>> filteredLocationsList = [];
   bool isLoading = true;
   String errorMessage = '';
 
@@ -163,6 +164,21 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     return null;
   }
 
+  void _searchLocations(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredLocationsList = List.from(locationsList);
+      } else {
+        filteredLocationsList = (locationsList as List<Map<String, dynamic>>)
+            .where((location) => location['name']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,9 +219,15 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                       ),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.close_outlined),
-                        onPressed: () {},
+                        onPressed: () {
+                          searchController.clear();
+                          _searchLocations('');
+                        },
                       )),
                   cursorColor: Theme.of(context).colorScheme.onSurface,
+                  onChanged: (value) {
+                    _searchLocations(value);
+                  },
                 ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -242,7 +264,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                 color: Color(0xFF500450)))
                         : errorMessage.isNotEmpty
                             ? Center(child: Text(errorMessage))
-                            : locationsList.isEmpty
+                            : filteredLocationsList.isEmpty
                                 ? Center(
                                     // Display this if the timeline posts list is empty
                                     child: Column(
@@ -278,7 +300,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                     ),
                                   )
                                 : ListView.builder(
-                                    itemCount: locationsList.length,
+                                    itemCount: filteredLocationsList.length,
                                     itemBuilder: (context, index) {
                                       final locationData = locationsList[index];
                                       return location(

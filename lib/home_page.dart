@@ -147,22 +147,64 @@ class _HomePageState extends State<HomePage>
     print("SignalR connection started");
   }
 
-  Future<void> _getLocation() async {
+  Future<void> _getLocation(BuildContext context) async {
+    // Check if location services are enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) {
+      // Show a dialog to inform the user about the need for location services
+      _showLocationDialog(context, "Location Required",
+          "This app requires location access to provide accurate information and a better experience. Please enable location services in your settings.");
+      return;
+    }
 
+    // Check and request location permissions
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
+      // Request permission if it's denied
       permission = await Geolocator.requestPermission();
       if (permission != LocationPermission.whileInUse &&
           permission != LocationPermission.always) {
+        // Show a dialog if permission is not granted
+        _showLocationDialog(context, "Location Permission Needed",
+            "This app requires location permissions to function correctly. Please allow access in your settings.");
         return;
       }
     }
 
-    _position = await Geolocator.getCurrentPosition();
-    await _getAddressFromLatLng(_position!); // Fetch address
+    // Retrieve the current position
+    Position _position = await Geolocator.getCurrentPosition();
+
+    // Fetch address from coordinates if _position is not null
+    if (_position != null) {
+      await _getAddressFromLatLng(_position);
+    }
+  }
+
+// Function to show a professional dialog
+  void _showLocationDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Geolocator.openAppSettings(); // Open app settings
+              },
+              child: Text("Settings", style: TextStyle(color: Colors.blue)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _getAddressFromLatLng(Position position) async {
@@ -265,7 +307,7 @@ class _HomePageState extends State<HomePage>
       }
     }
 
-    await _getLocation();
+    _getLocation(context);
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
@@ -526,6 +568,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateOptions(context),
@@ -549,10 +592,17 @@ class _HomePageState extends State<HomePage>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'images/AppLogo.png',
-                    height: 45,
-                  ),
+                  if (isDarkMode)
+                    Image.asset(
+                      'images/AppLogo.png',
+                      height: 45,
+                      color: Colors.white,
+                    )
+                  else
+                    Image.asset(
+                      'images/AppLogo.png',
+                      height: 45,
+                    ),
                   const Spacer(),
                   _buildIconButton('images/NotificationIcon.png', () {
                     Navigator.push(
@@ -666,8 +716,7 @@ class _HomePageState extends State<HomePage>
     bool anonymous = post['isAnonymous'] ?? false;
     bool verified =
         false; // Assuming verification info not provided in post data
-    String location = post['creatorCity'] ??
-        'Some location'; // Replace with actual location if available
+    String location = post['location'] ?? post['creatorCity'];
     String description = post['content'] ?? 'No description';
     List<String> postMedia = [
       // Process image URLs, filtering out any null or empty values
