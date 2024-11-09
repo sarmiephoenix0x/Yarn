@@ -47,10 +47,20 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
   bool hasMore = true;
   final storage = const FlutterSecureStorage();
   Map<int, bool> _isLikedMap = {};
+  final ScrollController _timelineScrollController = ScrollController();
+  bool isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
+    _timelineScrollController.addListener(() {
+      if (_timelineScrollController.position.pixels >=
+              _timelineScrollController.position.maxScrollExtent - 200 &&
+          !isLoading &&
+          hasMore) {
+        _fetchPosts(loadMore: true); // Load the next page when near the end
+      }
+    });
     _fetchPosts();
     latestTabController = TabController(length: 7, vsync: this);
     profileTab = TabController(length: 2, vsync: this);
@@ -69,90 +79,92 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     });
   }
 
-  Future<void> _fetchPosts({int pageNum = 1}) async {
-    setState(() {
-      isLoading = true;
-    });
+  Future<void> _fetchPosts({bool loadMore = false, int pageNum = 1}) async {
+    if (loadMore && (isLoadingMore || !hasMore)) return;
+
+    if (mounted) {
+      setState(() {
+        isLoading = !loadMore;
+        isLoadingMore = loadMore;
+        if (!loadMore && pageNum == 1)
+          posts.clear(); // Clear only on initial load
+      });
+    }
 
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       if (accessToken == null) {
-        print('No access token found');
         _showCustomSnackBar(
-          context,
-          'Authentication failed. Please log in again.',
-          isError: true,
-        );
-        setState(() {
-          isLoading = false;
-        });
+            context, 'Authentication failed. Please log in again.',
+            isError: true);
+        if (mounted) setState(() => isLoading = isLoadingMore = false);
         return;
       }
 
       final url = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/page/${widget.pageId}/$pageNum');
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $accessToken',
-      });
-
-      // Print response for debugging
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      final response = await http
+          .get(url, headers: {'Authorization': 'Bearer $accessToken'});
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
-
-        // Assuming posts are inside a 'data' field
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
-        if (fetchedPosts.isEmpty) {
-          print('No posts available');
-          _showCustomSnackBar(
-            context,
-            'No posts to display at the moment.',
-            isError: false,
-          );
-          setState(() {
-            hasMore = false;
-            isLoading = false;
-          });
-          return;
-        }
-
         setState(() {
-          posts.addAll(fetchedPosts);
+          if (loadMore) {
+            final newPosts = fetchedPosts.where((post) {
+              return !posts.any(
+                  (existingPost) => existingPost['postId'] == post['postId']);
+            }).toList();
+
+            if (newPosts.isEmpty) {
+              // If there are no new posts, we’ve reached the end.
+              hasMore = false;
+              _showCustomSnackBar(context, 'No more yarns to load.',
+                  isError: false);
+            } else {
+              posts.addAll(newPosts);
+              hasMore = true;
+            }
+          } else {
+            posts = fetchedPosts;
+            hasMore = fetchedPosts.isNotEmpty;
+          }
+
           currentPage = pageNum;
-          hasMore = fetchedPosts.length > 0;
-          isLoading = false;
         });
-      } else if (response.statusCode == 400) {
-        print('Error 400: ${response.body}');
-        _showCustomSnackBar(
-          context,
-          'Failed to load posts. Bad request.',
-          isError: true,
-        );
       } else {
-        print('Unexpected error: ${response.body}');
-        _showCustomSnackBar(
-          context,
-          'An unexpected error occurred.',
-          isError: true,
-        );
+        _handleErrorResponse(response);
       }
     } catch (e) {
-      print('Exception: $e');
-      _showCustomSnackBar(
-        context,
-        'Failed to load posts.',
-        isError: true,
-      );
+      if (mounted) {
+        _showCustomSnackBar(context, 'Failed to load yarns.', isError: true);
+      }
     } finally {
       if (mounted) {
         setState(() {
           isLoading = false;
+          isLoadingMore = false;
         });
       }
+    }
+  }
+
+  void _handleErrorResponse(http.Response response) {
+    if (response.statusCode == 400) {
+      print('Error 400: ${response.body}');
+      _showCustomSnackBar(
+        context,
+        'Failed to load yarns. Bad request.',
+        isError: true,
+      );
+    } else {
+      print('Unexpected error: ${response.body}');
+      _showCustomSnackBar(
+        context,
+        'An unexpected error occurred.',
+        isError: true,
+      );
     }
   }
 
@@ -587,79 +599,73 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
               SizedBox(
                 height: (400 / MediaQuery.of(context).size.height) *
                     MediaQuery.of(context).size.height,
-                child: isLoading
-                    ? const Center(
-                        child:
-                            CircularProgressIndicator(color: Color(0xFF500450)))
-                    : posts.isEmpty
-                        ? Center(
-                            // Display this if the posts list is empty
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.article_outlined,
-                                    size: 100, color: Colors.grey),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'No yarns available at the moment.',
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.grey),
-                                ),
-                                const SizedBox(height: 20),
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      _fetchPosts(), // Allow user to retry
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF500450),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                child: RefreshIndicator(
+                  onRefresh: _fetchPosts,
+                  child: isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                              color: Color(0xFF500450)),
+                        )
+                      : posts.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.article_outlined,
+                                      size: 100, color: Colors.grey.shade600),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'No yarns available at the moment.',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey.shade600),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  ElevatedButton(
+                                    onPressed: () => _fetchPosts(),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF500450),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Retry',
+                                      style: TextStyle(color: Colors.white),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Retry',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: posts.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == posts.length) {
-                                // Check if more posts are available
-                                return hasMore
-                                    ? ElevatedButton(
-                                        onPressed: () => _fetchPosts(
-                                            pageNum: currentPage + 1),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 24, vertical: 12),
-                                          backgroundColor: Color(0xFF500450),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(0),
-                                          ),
-                                        ),
-                                        child: const Text('Load More',
-                                            style:
-                                                TextStyle(color: Colors.white)),
-                                      )
-                                    : const Center(
-                                        child: Padding(
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: _timelineScrollController,
+                              itemCount: posts.length + 1,
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                if (index == posts.length) {
+                                  return hasMore
+                                      ? const Padding(
                                           padding: EdgeInsets.symmetric(
                                               vertical: 16),
-                                          child: Text('No more yarns'),
-                                        ),
-                                      );
-                              }
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                                color: Color(0xFF500450)),
+                                          ),
+                                        )
+                                      : const Center(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                vertical: 16),
+                                            child: Text('No more yarns'),
+                                          ),
+                                        );
+                                }
 
-                              final post = posts[index];
-                              return _buildPostItem(post);
-                            },
-                          ),
+                                final post = posts[index];
+                                return _buildPostItem(post);
+                              },
+                            ),
+                ),
               ),
             ],
           ),
@@ -1401,9 +1407,8 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
           onPageChanged: (index, reason) {
-            setState(() {
-              currentIndex.value = index; // Update the current index
-            });
+            // Update the current index directly without setState
+            currentIndex.value = index;
           },
         ),
         items: mediaUrls.map((url) {

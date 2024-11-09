@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage>
             if (newPosts.isEmpty) {
               // If there are no new posts, we’ve reached the end.
               hasMore = false;
-              _showCustomSnackBar(context, 'No more posts to load.',
+              _showCustomSnackBar(context, 'No more yarns to load.',
                   isError: false);
             } else {
               posts.addAll(newPosts);
@@ -1238,9 +1238,8 @@ class _HomePageState extends State<HomePage>
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
           onPageChanged: (index, reason) {
-            setState(() {
-              currentIndex.value = index; // Update the current index
-            });
+            // Update the current index directly without setState
+            currentIndex.value = index;
           },
         ),
         items: mediaUrls.map((url) {

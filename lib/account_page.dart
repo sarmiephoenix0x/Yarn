@@ -181,7 +181,7 @@ class _AccountPageState extends State<AccountPage>
         if (fetchedPosts.isEmpty && pageNum == 1) {
           _showCustomSnackBar(
             context,
-            'No timeline posts available at the moment.',
+            'No timeline yarns available at the moment.',
             isError: false,
           );
         }
@@ -195,7 +195,7 @@ class _AccountPageState extends State<AccountPage>
 
             if (newPosts.isEmpty) {
               hasMoreTimeline = false;
-              _showCustomSnackBar(context, 'No more timeline posts to load.',
+              _showCustomSnackBar(context, 'No more timeline yarns to load.',
                   isError: false);
             } else {
               timelinePosts.addAll(newPosts);
@@ -261,7 +261,7 @@ class _AccountPageState extends State<AccountPage>
         if (fetchedPosts.isEmpty && pageNum == 1) {
           _showCustomSnackBar(
             context,
-            'No community posts available at the moment.',
+            'No community yarns available at the moment.',
             isError: false,
           );
         }
@@ -275,7 +275,7 @@ class _AccountPageState extends State<AccountPage>
 
             if (newPosts.isEmpty) {
               hasMoreCommunity = false;
-              _showCustomSnackBar(context, 'No more community posts to load.',
+              _showCustomSnackBar(context, 'No more community yarns to load.',
                   isError: false);
             } else {
               communityPosts.addAll(newPosts);
@@ -2448,9 +2448,8 @@ class _AccountPageState extends State<AccountPage>
           viewportFraction: 1.0,
           enableInfiniteScroll: true,
           onPageChanged: (index, reason) {
-            setState(() {
-              currentIndex.value = index; // Update the current index
-            });
+            // Update the current index directly without setState
+            currentIndex.value = index;
           },
         ),
         items: mediaUrls.map((url) {

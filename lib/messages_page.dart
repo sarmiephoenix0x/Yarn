@@ -41,6 +41,8 @@ class _MeassagesPageState extends State<MeassagesPage> {
   Future<void> _fetchChats() async {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     final accessToken = await storage.read(key: 'yarnAccessToken');
+    final currentUserId =
+        widget.senderId.toString(); // Get the current user's ID
     final url = 'https://yarnapi-n2dw.onrender.com/api/chats';
 
     try {
@@ -50,7 +52,7 @@ class _MeassagesPageState extends State<MeassagesPage> {
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
-
+      print(response.body);
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
 
@@ -60,17 +62,34 @@ class _MeassagesPageState extends State<MeassagesPage> {
 
           // Process the data into the expected Chat model
           final List<Chat> chats = chatsJson.map((chatJson) {
+            final lastMessage = chatJson['lastMessage'];
+
+            // Determine the chat preview text based on content availability
+            final chatPreviewText = (lastMessage['audioUrl'] != null &&
+                    lastMessage['audioUrl'].isNotEmpty)
+                ? "Sent an Audio"
+                : (lastMessage['imageUrls'] != null &&
+                        lastMessage['imageUrls'].isNotEmpty)
+                    ? "Sent an Image"
+                    : lastMessage['text']?.isNotEmpty == true
+                        ? lastMessage['text']
+                        : "No message content";
+
+            // Determine if the current user is the sender or receiver
+            final isCurrentUserSender =
+                lastMessage['senderId'].toString() == currentUserId;
+            final username = isCurrentUserSender
+                ? lastMessage['receiverUsername'] ?? 'Unknown'
+                : lastMessage['senderUsername'] ?? 'Unknown';
+
             return Chat(
-              id: chatJson['chatId']
-                  .toString(), // Assuming the chatId is numeric
-              username: chatJson['lastMessage']['senderUsername'] ??
-                  'Unknown', // Use senderUsername as an example
-              imageUrl:
-                  '', // Skip the imageUrl as the backend doesn't provide it
-              timeStamp: chatJson['lastMessage']['dateSent'] ??
-                  '', // Format the timestamp as needed
-              chatPreviewText: chatJson['lastMessage']['text'] ??
-                  'No text', // Preview text from last message
+              id: isCurrentUserSender
+                  ? lastMessage['receiverId'].toString()
+                  : lastMessage['senderId'].toString(),
+              username: username,
+              imageUrl: '',
+              timeStamp: lastMessage['dateSent'] ?? '',
+              chatPreviewText: chatPreviewText,
             );
           }).toList();
 
@@ -78,8 +97,10 @@ class _MeassagesPageState extends State<MeassagesPage> {
           chats.sort((a, b) => DateTime.parse(b.timeStamp)
               .compareTo(DateTime.parse(a.timeStamp)));
 
-          // Set the chats in the provider
-          chatProvider.setChats(chats);
+          // Add or update each chat individually
+          for (var chat in chats) {
+            chatProvider.addOrUpdateChat(chat);
+          }
 
           if (chats.isEmpty) {
             _showEmptyState(); // Show a message when there are no chats
@@ -94,16 +115,18 @@ class _MeassagesPageState extends State<MeassagesPage> {
     } catch (e) {
       // Log the error for debugging
       print("Error loading chats: $e");
-
-      _showCustomSnackBar(
-        context,
-        'Could not load chats. Showing saved chats instead.',
-        isError: true,
-      );
-
+      if (mounted) {
+        _showCustomSnackBar(
+          context,
+          'Could not load chats. Showing saved chats instead.',
+          isError: true,
+        );
+      }
       // Load saved chats from local storage
       chatProvider.loadChatsLocally();
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
