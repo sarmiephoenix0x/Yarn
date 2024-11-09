@@ -146,7 +146,7 @@ class _AccountPageState extends State<AccountPage>
 
   Future<void> _fetchMyTimelinePosts(
       {bool loadMore = false, int pageNum = 1}) async {
-    if (loadMore && isLoadingMoreTimeline) return;
+    if (loadMore && (isLoadingMoreTimeline || !hasMoreTimeline)) return;
 
     if (mounted) {
       setState(() {
@@ -165,7 +165,7 @@ class _AccountPageState extends State<AccountPage>
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
-          timelinePosts.clear(); // Clear only if it's the initial load
+          timelinePosts.clear();
           hasMoreTimeline = true;
         });
       }
@@ -188,39 +188,32 @@ class _AccountPageState extends State<AccountPage>
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !timelinePosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
             if (newPosts.isEmpty) {
-              // If no new posts are found, stop loading more and show a message
               hasMoreTimeline = false;
               _showCustomSnackBar(context, 'No more timeline posts to load.',
                   isError: false);
             } else {
               timelinePosts.addAll(newPosts);
+              hasMoreTimeline = true;
             }
           } else {
             timelinePosts = fetchedPosts;
+            hasMoreTimeline = fetchedPosts.isNotEmpty;
           }
           currentPageTimeline = pageNum;
-          hasMoreTimeline = fetchedPosts.isNotEmpty;
         });
       } else {
-        _showCustomSnackBar(
-          context,
-          'Failed to load timeline yarns.',
-          isError: true,
-        );
+        _showCustomSnackBar(context, 'Failed to load timeline yarns.',
+            isError: true);
       }
     } catch (e) {
-      _showCustomSnackBar(
-        context,
-        'Failed to load timeline yarns.',
-        isError: true,
-      );
+      _showCustomSnackBar(context, 'Failed to load timeline yarns.',
+          isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -233,7 +226,7 @@ class _AccountPageState extends State<AccountPage>
 
   Future<void> _fetchMyCommunityPosts(
       {bool loadMore = false, int pageNum = 1}) async {
-    if (loadMore && isLoadingMoreCommunity) return;
+    if (loadMore && (isLoadingMoreCommunity || !hasMoreCommunity)) return;
 
     if (mounted) {
       setState(() {
@@ -252,7 +245,7 @@ class _AccountPageState extends State<AccountPage>
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
-          communityPosts.clear(); // Clear only if it's the initial load
+          communityPosts.clear();
           hasMoreCommunity = true;
         });
       }
@@ -275,39 +268,32 @@ class _AccountPageState extends State<AccountPage>
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !communityPosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
             if (newPosts.isEmpty) {
-              // If no new posts are found, stop loading more and show a message
               hasMoreCommunity = false;
               _showCustomSnackBar(context, 'No more community posts to load.',
                   isError: false);
             } else {
               communityPosts.addAll(newPosts);
+              hasMoreCommunity = true;
             }
           } else {
             communityPosts = fetchedPosts;
+            hasMoreCommunity = fetchedPosts.isNotEmpty;
           }
           currentPageCommunity = pageNum;
-          hasMoreCommunity = fetchedPosts.isNotEmpty;
         });
       } else {
-        _showCustomSnackBar(
-          context,
-          'Failed to load community yarns.',
-          isError: true,
-        );
+        _showCustomSnackBar(context, 'Failed to load community yarns.',
+            isError: true);
       }
     } catch (e) {
-      _showCustomSnackBar(
-        context,
-        'Failed to load community yarns.',
-        isError: true,
-      );
+      _showCustomSnackBar(context, 'Failed to load community yarns.',
+          isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -1042,35 +1028,16 @@ class _AccountPageState extends State<AccountPage>
                                         itemBuilder: (context, index) {
                                           if (index == timelinePosts.length) {
                                             return hasMoreTimeline
-                                                ? ElevatedButton(
-                                                    onPressed: () =>
-                                                        _fetchMyTimelinePosts(
-                                                            pageNum:
-                                                                currentPageTimeline +
-                                                                    1),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 24,
-                                                          vertical: 12),
-                                                      backgroundColor:
-                                                          Color(0xFF500450),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(0),
-                                                      ),
+                                                ? const Padding(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 16),
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              color: Color(
+                                                                  0xFF500450)),
                                                     ),
-                                                    child: isLoadingTimeline
-                                                        ? CircularProgressIndicator(
-                                                            color: Colors.white)
-                                                        : const Text(
-                                                            'Load More',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white)),
                                                   )
                                                 : const Center(
                                                     child: Padding(

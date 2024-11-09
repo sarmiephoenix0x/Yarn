@@ -146,7 +146,7 @@ class _UserProfileState extends State<UserProfile>
 
   Future<void> _fetchMyTimelinePosts(
       {bool loadMore = false, int pageNum = 1}) async {
-    if (loadMore && isLoadingMoreTimeline) return;
+    if (loadMore && (isLoadingMoreTimeline || !hasMoreTimeline)) return;
 
     if (mounted) {
       setState(() {
@@ -161,11 +161,11 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
-          timelinePosts.clear(); // Clear only if it's the initial load
+          timelinePosts.clear();
           hasMoreTimeline = true;
         });
       }
@@ -188,39 +188,32 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !timelinePosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
             if (newPosts.isEmpty) {
-              // If no new posts are found, stop loading more and show a message
               hasMoreTimeline = false;
               _showCustomSnackBar(context, 'No more timeline posts to load.',
                   isError: false);
             } else {
               timelinePosts.addAll(newPosts);
+              hasMoreTimeline = true;
             }
           } else {
             timelinePosts = fetchedPosts;
+            hasMoreTimeline = fetchedPosts.isNotEmpty;
           }
           currentPageTimeline = pageNum;
-          hasMoreTimeline = fetchedPosts.isNotEmpty;
         });
       } else {
-        _showCustomSnackBar(
-          context,
-          'Failed to load timeline yarns.',
-          isError: true,
-        );
+        _showCustomSnackBar(context, 'Failed to load timeline yarns.',
+            isError: true);
       }
     } catch (e) {
-      _showCustomSnackBar(
-        context,
-        'Failed to load timeline yarns.',
-        isError: true,
-      );
+      _showCustomSnackBar(context, 'Failed to load timeline yarns.',
+          isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -233,7 +226,7 @@ class _UserProfileState extends State<UserProfile>
 
   Future<void> _fetchMyCommunityPosts(
       {bool loadMore = false, int pageNum = 1}) async {
-    if (loadMore && isLoadingMoreCommunity) return;
+    if (loadMore && (isLoadingMoreCommunity || !hasMoreCommunity)) return;
 
     if (mounted) {
       setState(() {
@@ -248,11 +241,11 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
+          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
-          communityPosts.clear(); // Clear only if it's the initial load
+          communityPosts.clear();
           hasMoreCommunity = true;
         });
       }
@@ -275,39 +268,32 @@ class _UserProfileState extends State<UserProfile>
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates
             final newPosts = fetchedPosts.where((post) {
               return !communityPosts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
             if (newPosts.isEmpty) {
-              // If no new posts are found, stop loading more and show a message
               hasMoreCommunity = false;
               _showCustomSnackBar(context, 'No more community posts to load.',
                   isError: false);
             } else {
               communityPosts.addAll(newPosts);
+              hasMoreCommunity = true;
             }
           } else {
             communityPosts = fetchedPosts;
+            hasMoreCommunity = fetchedPosts.isNotEmpty;
           }
           currentPageCommunity = pageNum;
-          hasMoreCommunity = fetchedPosts.isNotEmpty;
         });
       } else {
-        _showCustomSnackBar(
-          context,
-          'Failed to load community yarns.',
-          isError: true,
-        );
+        _showCustomSnackBar(context, 'Failed to load community yarns.',
+            isError: true);
       }
     } catch (e) {
-      _showCustomSnackBar(
-        context,
-        'Failed to load community yarns.',
-        isError: true,
-      );
+      _showCustomSnackBar(context, 'Failed to load community yarns.',
+          isError: true);
     } finally {
       if (mounted) {
         setState(() {

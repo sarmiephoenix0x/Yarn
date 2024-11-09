@@ -30,10 +30,13 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
   Future<void> _fetchFollowed() async {
     setState(() {
       isLoading = true;
+      errorMessage = '';
     });
+
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
         'https://yarnapi-n2dw.onrender.com/api/locations/followed/${widget.senderId}';
+
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -41,6 +44,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
           'Authorization': 'Bearer $accessToken',
         },
       );
+
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
 
@@ -48,7 +52,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
             responseData['data'] is List) {
           setState(() {
             locationsList =
-                responseData['data']; // Update to use responseData['data']
+                List<Map<String, dynamic>>.from(responseData['data']);
             isLoading = false;
           });
         } else {
@@ -60,12 +64,14 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
         }
       } else {
         setState(() {
+          errorMessage = 'Failed to load followed locations';
           isLoading = false;
         });
         print('Error: ${response.statusCode}');
       }
     } catch (error) {
       setState(() {
+        errorMessage = 'An error occurred. Please try again later.';
         isLoading = false;
       });
       print('Error fetching followed: $error');
@@ -80,12 +86,41 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
       ),
       body: isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF500450)))
+              child: CircularProgressIndicator(color: Color(0xFF500450)),
+            )
           : errorMessage.isNotEmpty
-              ? Center(child: Text(errorMessage))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error,
+                          size: 80, color: Colors.redAccent),
+                      const SizedBox(height: 20),
+                      Text(
+                        errorMessage,
+                        textAlign: TextAlign.center,
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () => _fetchFollowed(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF500450),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Retry',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               : locationsList.isEmpty
                   ? Center(
-                      // Display this if the timeline posts list is empty
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -101,7 +136,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
                           ElevatedButton(
                             onPressed: () => _fetchFollowed(),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF500450),
+                              backgroundColor: const Color(0xFF500450),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),

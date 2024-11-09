@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:yarn/chat_provider.dart';
 
 import 'chat_page.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 
 class MeassagesPage extends StatefulWidget {
   final int senderId;
@@ -19,16 +23,160 @@ class MeassagesPage extends StatefulWidget {
 
 class _MeassagesPageState extends State<MeassagesPage> {
   final storage = const FlutterSecureStorage();
-  bool isLoading = false;
+  bool isLoading = true;
   String errorMessage = '';
   ScrollController chatsScrollController = ScrollController();
+  StreamSubscription<ConnectivityResult>? connectivitySubscription;
+  bool isConnected = true;
 
   @override
   void initState() {
     super.initState();
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     chatProvider.loadChatsLocally();
-    // _fetchFollowers();
+    _setupConnectivityListener();
+    _fetchChats();
+  }
+
+  Future<void> _fetchChats() async {
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final accessToken = await storage.read(key: 'yarnAccessToken');
+    final url = 'https://yarnapi-n2dw.onrender.com/api/chats';
+
+    try {
+      if (!isConnected) throw Exception("No internet connection");
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        // Check if the response status is 'Success'
+        if (responseData['status'] == 'Success') {
+          final List<dynamic> chatsJson = responseData['data'];
+
+          // Process the data into the expected Chat model
+          final List<Chat> chats = chatsJson.map((chatJson) {
+            return Chat(
+              id: chatJson['chatId']
+                  .toString(), // Assuming the chatId is numeric
+              username: chatJson['lastMessage']['senderUsername'] ??
+                  'Unknown', // Use senderUsername as an example
+              imageUrl:
+                  '', // Skip the imageUrl as the backend doesn't provide it
+              timeStamp: chatJson['lastMessage']['dateSent'] ??
+                  '', // Format the timestamp as needed
+              chatPreviewText: chatJson['lastMessage']['text'] ??
+                  'No text', // Preview text from last message
+            );
+          }).toList();
+
+          // Sort chats by the last message's dateSent
+          chats.sort((a, b) => DateTime.parse(b.timeStamp)
+              .compareTo(DateTime.parse(a.timeStamp)));
+
+          // Set the chats in the provider
+          chatProvider.setChats(chats);
+
+          if (chats.isEmpty) {
+            _showEmptyState(); // Show a message when there are no chats
+          }
+          setState(() => isLoading = false);
+        } else {
+          throw Exception('Failed to load chats: ${responseData['status']}');
+        }
+      } else {
+        throw Exception('Failed to load chats from the server');
+      }
+    } catch (e) {
+      // Log the error for debugging
+      print("Error loading chats: $e");
+
+      _showCustomSnackBar(
+        context,
+        'Could not load chats. Showing saved chats instead.',
+        isError: true,
+      );
+
+      // Load saved chats from local storage
+      chatProvider.loadChatsLocally();
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _setupConnectivityListener() {
+    connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      setState(() {
+        isConnected = result != ConnectivityResult.none;
+      });
+      if (!isConnected) {
+        _showNoConnectionDialog();
+      } else {
+        Navigator.pop(context); // Close the no-internet dialog when back online
+        _fetchChats(); // Retry fetching chats when the connection is restored
+      }
+    });
+  }
+
+  void _showNoConnectionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text("No Internet Connection"),
+        content: Text("You're currently offline. Viewing saved chats."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text("Close"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmptyState() {
+    setState(() {
+      isLoading =
+          false; // Set to false since there’s no loading required in empty state
+    });
+  }
+
+  void _showCustomSnackBar(BuildContext context, String message,
+      {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? Colors.red : Colors.green,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(10),
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
@@ -52,17 +200,28 @@ class _MeassagesPageState extends State<MeassagesPage> {
   Widget _buildChatContent(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
 
+    // Show a loading spinner if data is still loading
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    // Show error message if there's one and no chats are loaded
+    if (errorMessage.isNotEmpty && chatProvider.chats.isEmpty) {
+      return Center(child: Text(errorMessage));
+    }
+
+    // Show empty content if chats are still empty
     if (chatProvider.chats.isEmpty) {
       return _buildEmptyContent(context);
-    } else {
-      return _buildChatList(context);
     }
+
+    // Show chat list when chats are loaded
+    return _buildChatList(context);
   }
 
   Widget _buildEmptyContent(BuildContext context) {
     return SizedBox(
-      height:
-          MediaQuery.of(context).size.height * 0.8, // Adjust height as needed
+      height: MediaQuery.of(context).size.height * 0.8,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -82,8 +241,7 @@ class _MeassagesPageState extends State<MeassagesPage> {
 
     // Filter chats to exclude the account owner based on their ID
     final filteredChats = chatProvider.chats
-        .where((chat) =>
-            chat.id != widget.senderId.toString()) // Convert senderId to String
+        .where((chat) => chat.id != widget.senderId.toString())
         .toList();
 
     return ListView.builder(

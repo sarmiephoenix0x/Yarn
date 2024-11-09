@@ -190,7 +190,6 @@ class _CommentsPageState extends State<CommentsPage> {
                     ? Center(child: Text(errorMessage))
                     : commentsList.isEmpty
                         ? Center(
-                            // Display this if the comments list is empty
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -232,6 +231,7 @@ class _CommentsPageState extends State<CommentsPage> {
                                 comments['commentor'] ?? 'Unknown User',
                                 comments['text'],
                                 comments['dateCommented'],
+                                comments['commentorId'],
                               );
                             },
                           ),
@@ -282,22 +282,22 @@ class _CommentsPageState extends State<CommentsPage> {
   }
 
   Widget comment(
-      String img, String name, String description, String dateCommented) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UserProfile(
-              key: UniqueKey(),
-              userId: widget.userId,
-              senderId: widget.senderId,
+      String img, String name, String description, String dateCommented, int commentorId) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfile(
+                key: UniqueKey(),
+                userId: commentorId,
+                senderId: widget.senderId,
+              ),
             ),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          );
+        },
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,

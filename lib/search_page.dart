@@ -60,6 +60,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     try {
       final response = await http
           .get(Uri.parse('https://yarnapi-n2dw.onrender.com/api/locations'));
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -80,7 +81,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       }
     } catch (error) {
       setState(() {
-        errorMessage = 'An error occurred';
+        errorMessage = 'An error occurred. Please try again later.';
         isLoading = false;
       });
     }
@@ -169,18 +170,19 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   void _searchLocations(String query) {
     setState(() {
       if (query.isEmpty) {
-        filteredLocationsList = List<Map<String, dynamic>>.from(
-            locationsList); // Show all if query is empty
+        // Show all if the query is empty
+        filteredLocationsList = List<Map<String, dynamic>>.from(locationsList);
       } else {
         filteredLocationsList = locationsList
-            .where((location) =>
-                location['name']
-                    ?.toString()
-                    .toLowerCase()
-                    .contains(query.toLowerCase()) ??
-                false)
+            .where((location) {
+              final locationName = location['name']?.toString().toLowerCase();
+              final searchQuery = query.toLowerCase();
+              return locationName != null && locationName.contains(searchQuery);
+            })
             .toList()
-            .cast<Map<String, dynamic>>(); // Cast to List<Map<String, dynamic>>
+            .cast<
+                Map<String,
+                    dynamic>>(); // Ensure the result is cast to List<Map<String, dynamic>>
       }
     });
   }
@@ -267,12 +269,43 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     isLoading
                         ? const Center(
                             child: CircularProgressIndicator(
-                                color: Color(0xFF500450)))
+                                color: Color(0xFF500450)),
+                          )
                         : errorMessage.isNotEmpty
-                            ? Center(child: Text(errorMessage))
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.error,
+                                        size: 80, color: Colors.redAccent),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      errorMessage,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 18, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton(
+                                      onPressed: () => _fetchLocations(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF500450),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Retry',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
                             : filteredLocationsList.isEmpty
                                 ? Center(
-                                    // Display this if the timeline posts list is empty
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -290,7 +323,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                         ElevatedButton(
                                           onPressed: () => _fetchLocations(),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Color(0xFF500450),
+                                            backgroundColor:
+                                                const Color(0xFF500450),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(10),
@@ -308,7 +342,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                 : ListView.builder(
                                     itemCount: filteredLocationsList.length,
                                     itemBuilder: (context, index) {
-                                      final locationData = locationsList[index];
+                                      final locationData =
+                                          filteredLocationsList[index];
                                       return location(
                                         locationData['name'],
                                         isFollowingMap[locationData['id']

@@ -294,7 +294,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _fetchPosts({bool loadMore = false, int pageNum = 1}) async {
-    if (loadMore && isLoadingMore) return;
+    if (loadMore && (isLoadingMore || !hasMore)) return;
 
     if (mounted) {
       setState(() {
@@ -305,12 +305,9 @@ class _HomePageState extends State<HomePage>
       });
     }
 
-    _getLocation(context);
-
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       if (accessToken == null) {
-        print('No access token found');
         _showCustomSnackBar(
             context, 'Authentication failed. Please log in again.',
             isError: true);
@@ -323,40 +320,37 @@ class _HomePageState extends State<HomePage>
       final response = await http
           .get(url, headers: {'Authorization': 'Bearer $accessToken'});
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
 
         setState(() {
           if (loadMore) {
-            // Filter out duplicates based on a unique identifier, e.g., 'postId'
             final newPosts = fetchedPosts.where((post) {
               return !posts.any(
                   (existingPost) => existingPost['postId'] == post['postId']);
             }).toList();
 
             if (newPosts.isEmpty) {
-              // If no new posts are found, stop loading more and show a message
+              // If there are no new posts, we’ve reached the end.
               hasMore = false;
               _showCustomSnackBar(context, 'No more posts to load.',
                   isError: false);
             } else {
-              posts.addAll(newPosts); // Append only non-duplicates
+              posts.addAll(newPosts);
+              hasMore = true;
             }
           } else {
-            posts = fetchedPosts; // Set for initial load
+            posts = fetchedPosts;
+            hasMore = fetchedPosts.isNotEmpty;
           }
+
           currentPage = pageNum;
-          hasMore = fetchedPosts.isNotEmpty;
         });
       } else {
         _handleErrorResponse(response);
       }
     } catch (e) {
-      print('Exception: $e');
       if (mounted) {
         _showCustomSnackBar(context, 'Failed to load yarns.', isError: true);
       }
