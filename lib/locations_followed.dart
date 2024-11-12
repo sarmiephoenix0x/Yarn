@@ -82,7 +82,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Following'),
+        title: const Text('Locations Followed'),
       ),
       body: isLoading
           ? const Center(

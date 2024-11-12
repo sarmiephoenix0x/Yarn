@@ -141,7 +141,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       if (mounted) {
         setState(() {
           _errorMessage =
-              'An error occurred: $e'; // Include the exception in the error message for debugging
+              'An error occurred. Please try again later.';
           _isLoading = false; // Stop loading after error
         });
       }
@@ -379,8 +379,36 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           )
                         : _errorMessage.isNotEmpty
                             ? Center(
-                                child:
-                                    Text(_errorMessage), // Show error message
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.error,
+                                        size: 80, color: Colors.redAccent),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      errorMessage,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontSize: 18, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton(
+                                      onPressed: () => _fetchPages(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF500450),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Retry',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               )
                             : _pages.isEmpty
                                 ? Center(
