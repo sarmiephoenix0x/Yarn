@@ -545,126 +545,134 @@ class _HomePageState extends State<HomePage>
           fit: BoxFit.cover,
         ),
       ),
-      body: Column(
-        children: [
-          AppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Color(0xFF500450).withOpacity(0.8),
-            elevation: 2,
-            titleSpacing: 20,
-            title: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (isDarkMode)
+      body: SafeArea(
+        child: Column(
+          children: [
+            AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Color(0xFF500450).withOpacity(0.8),
+              elevation: 2,
+              titleSpacing: 20,
+              title: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     Image.asset(
                       'images/AppLogo.png',
-                      height: 45,
+                      height: 55,
                       color: Colors.white,
-                    )
-                  else
-                    Image.asset(
-                      'images/AppLogo.png',
-                      height: 45,
                     ),
-                  const Spacer(),
-                  _buildIconButton('images/NotificationIcon.png', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NotificationPage(
-                          key: UniqueKey(),
-                          selectedIndex: widget.selectedIndex,
+                    // if (isDarkMode)
+                    //   Image.asset(
+                    //     'images/AppLogo.png',
+                    //     height: 45,
+                    //     color: Colors.white,
+                    //   )
+                    // else
+                    //   Image.asset(
+                    //     'images/AppLogo.png',
+                    //     height: 45,
+                    //   ),
+                    const Spacer(),
+                    _buildIconButton('images/NotificationIcon.png', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NotificationPage(
+                            key: UniqueKey(),
+                            selectedIndex: widget.selectedIndex,
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                  _buildIconButton('images/ChatImg.png', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MeassagesPage(
-                          key: UniqueKey(),
-                          senderId: userId!,
+                      );
+                    }),
+                    _buildIconButton('images/ChatImg.png', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MeassagesPage(
+                            key: UniqueKey(),
+                            senderId: userId!,
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
-          ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _fetchPosts,
-              child: isLoading
-                  ? const Center(
-                      child:
-                          CircularProgressIndicator(color: Color(0xFF500450)),
-                    )
-                  : posts.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.article_outlined,
-                                  size: 100, color: Colors.grey.shade600),
-                              const SizedBox(height: 20),
-                              Text(
-                                'No yarns available at the moment.',
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.grey.shade600),
-                              ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: () => _fetchPosts(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF500450),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _fetchPosts,
+                child: isLoading
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: Color(0xFF500450)),
+                      )
+                    : posts.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.article_outlined,
+                                    size: 100, color: Colors.grey.shade600),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'No yarns available at the moment.',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () => _fetchPosts(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF500450),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Retry',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Retry',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _timelineScrollController,
-                          itemCount: posts.length + 1,
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            if (index == posts.length) {
-                              return hasMore
-                                  ? const Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 16),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                            color: Color(0xFF500450)),
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Padding(
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _timelineScrollController,
+                            itemCount: posts.length + 1,
+                            shrinkWrap: true,
+                            itemBuilder: (context, index) {
+                              if (index == posts.length) {
+                                return hasMore
+                                    ? const Padding(
                                         padding:
                                             EdgeInsets.symmetric(vertical: 16),
-                                        child: Text('No more yarns'),
-                                      ),
-                                    );
-                            }
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                              color: Color(0xFF500450)),
+                                        ),
+                                      )
+                                    : const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 16),
+                                          child: Text('No more yarns'),
+                                        ),
+                                      );
+                              }
 
-                            final post = posts[index];
-                            return _buildPostItem(post);
-                          },
-                        ),
+                              final post = posts[index];
+                              return _buildPostItem(post);
+                            },
+                          ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

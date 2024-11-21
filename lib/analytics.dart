@@ -9,7 +9,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Analytics extends StatefulWidget {
-  const Analytics({super.key});
+  final int senderId;
+  const Analytics({super.key, required this.senderId});
 
   @override
   AnalyticsState createState() => AnalyticsState();
@@ -126,8 +127,10 @@ class AnalyticsState extends State<Analytics>
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          CommunityPage(key: UniqueKey()),
+                                      builder: (context) => CommunityPage(
+                                        key: UniqueKey(),
+                                        senderId: widget.senderId,
+                                      ),
                                     ),
                                   );
                                 },
@@ -186,8 +189,10 @@ class AnalyticsState extends State<Analytics>
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                CommunityPage(key: UniqueKey()),
+                                            builder: (context) => CommunityPage(
+                                              key: UniqueKey(),
+                                              senderId: widget.senderId,
+                                            ),
                                           ),
                                         );
                                       },

@@ -917,6 +917,7 @@ class _AccountPageState extends State<AccountPage>
                                 MaterialPageRoute(
                                   builder: (context) => Analytics(
                                     key: UniqueKey(),
+                                    senderId: userId!,
                                   ),
                                 ),
                               );
