@@ -24,12 +24,14 @@ class HomePage extends StatefulWidget {
   final int selectedIndex;
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final HubConnection? hubConnection;
 
   const HomePage(
       {super.key,
       required this.selectedIndex,
       required this.onToggleDarkMode,
-      required this.isDarkMode});
+      required this.isDarkMode,
+      this.hubConnection});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -61,10 +63,11 @@ class _HomePageState extends State<HomePage>
   String? _detectedState;
   String? _detectedCity;
   Position? _position;
-  HubConnection? _hubConnection;
   bool _hasFetchedData = false;
   final ScrollController _timelineScrollController = ScrollController();
   bool isLoadingMore = false;
+  Map<int, ValueNotifier<bool>> _isLikedNotifiers = {};
+  Map<int, ValueNotifier<int>> likesNotifier = {};
 
   @override
   void initState() {
@@ -110,41 +113,60 @@ class _HomePageState extends State<HomePage>
   }
 
   void _startSignalRConnection() async {
-    _hubConnection = HubConnectionBuilder()
-        .withUrl("https://yarnapi-n2dw.onrender.com/postHub")
-        .build();
-
-    _hubConnection?.onclose((error) {
-      print("Connection closed: $error");
-    });
-
-    _hubConnection?.on("PostLiked", (message) {
+    widget.hubConnection?.on("PostLiked", (message) {
       print("Yarn Liked Signal");
       int postId = message![0];
+      int likeCounts = message[1]; // Assuming likeCounts is the second item
       setState(() {
+        // Update the local maps and notifiers
         _isLikedMap[postId] = true;
-        _likesMap[postId] = (_likesMap[postId] ?? 0) + 1;
+        _likesMap[postId] = likeCounts; // Update likes count directly
+
+        // Ensure likesNotifier is initialized for the postId
+        if (!likesNotifier.containsKey(postId)) {
+          likesNotifier[postId] = ValueNotifier<int>(likeCounts);
+        } else {
+          likesNotifier[postId]!.value =
+              likeCounts; // Update likes count in notifier
+        }
+
+        _isLikedNotifiers[postId]?.value = true; // Update liked state
       });
+      print(likeCounts);
     });
 
-    _hubConnection?.on("PostUnliked", (message) {
+    widget.hubConnection?.on("PostUnliked", (message) {
       print("Yarn UnLiked Signal");
       int postId = message![0];
+      int likeCounts = message[1]; // Assuming likeCounts is the second item
       setState(() {
+        // Update the local maps and notifiers
         _isLikedMap[postId] = false;
-        _likesMap[postId] = (_likesMap[postId] ?? 0) - 1;
+        _likesMap[postId] = likeCounts; // Update likes count directly
+
+        // Ensure likesNotifier is initialized for the postId
+        if (!likesNotifier.containsKey(postId)) {
+          likesNotifier[postId] = ValueNotifier<int>(likeCounts);
+        } else {
+          likesNotifier[postId]!.value =
+              likeCounts; // Update likes count in notifier
+        }
+
+        _isLikedNotifiers[postId]?.value = false; // Update liked state
       });
+      print(likeCounts);
     });
 
-    _hubConnection?.on("PostCommented", (message) {
+    widget.hubConnection?.on("PostCommented", (message) {
+      print("Yarn Commented Signal");
       int postId = message![0];
+      int commentCounts =
+          message[1]; // Assuming commentCounts is the second item
       setState(() {
-        _commentsMap[postId] = (_commentsMap[postId] ?? 0) + 1;
+        _commentsMap[postId] = commentCounts; // Update comments count directly
       });
+      print(commentCounts);
     });
-
-    await _hubConnection?.start();
-    print("SignalR connection started");
   }
 
   Future<void> _getLocation(BuildContext context) async {
@@ -319,7 +341,7 @@ class _HomePageState extends State<HomePage>
           'https://yarnapi-n2dw.onrender.com/api/posts/home/$_detectedCity/$pageNum');
       final response = await http
           .get(url, headers: {'Authorization': 'Bearer $accessToken'});
-
+      print(response.body);
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
@@ -722,10 +744,18 @@ class _HomePageState extends State<HomePage>
     }
 
     String time = post['datePosted'] ?? 'Unknown time';
-    bool isLiked = _isLikedMap[post['postId']] ?? false;
-    bool isFollowing = false; // Same assumption for following
-    int likes = post['likesCount'];
-    int comments = post['commentsCount'];
+    bool isLiked = post['isLiked'] ?? false;
+    if (!_isLikedNotifiers.containsKey(post['postId'])) {
+      _isLikedNotifiers[post['postId']] =
+          ValueNotifier<bool>(post['isLiked'] ?? false);
+    }
+    bool isFollowing = false;
+    if (!likesNotifier.containsKey(post['postId'])) {
+      likesNotifier[post['postId']] =
+          ValueNotifier<int>(post['likesCount'] ?? 0);
+    }
+    ValueNotifier<int> commentsNotifier = ValueNotifier<int>(
+        _commentsMap[post['postId']] ?? post['commentsCount'] ?? 0);
     int creatorUserId = post['creatorId'];
     ValueNotifier<int> _current = ValueNotifier<int>(0);
 
@@ -736,13 +766,20 @@ class _HomePageState extends State<HomePage>
       final uri = Uri.parse(
           'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
 
-      // Optimistically update the like status and likes count immediately
+      bool currentLikedState = _isLikedNotifiers[post['postId']]!.value;
+
       setState(() {
-        _isLikedMap[post['postId']] = !(_isLikedMap[post['postId']] ?? false);
+        _isLikedNotifiers[post['postId']]!.value = !currentLikedState;
 
-        likes = _isLikedMap[post['postId']] == true ? likes + 1 : likes - 1;
+        if (_isLikedNotifiers[post['postId']]!.value) {
+          likesNotifier[post['postId']]!.value++;
+        } else {
+          likesNotifier[post['postId']]!.value =
+              (likesNotifier[post['postId']]!.value > 0)
+                  ? likesNotifier[post['postId']]!.value - 1
+                  : 0;
+        }
       });
-
       final response = await http.patch(
         uri,
         headers: {
@@ -754,14 +791,19 @@ class _HomePageState extends State<HomePage>
       if (response.statusCode != 200) {
         final errorData = json.decode(response.body);
         setState(() {
-          // Revert optimistic update
-          _isLikedMap[post['postId']] = !(_isLikedMap[post['postId']] ?? false);
+          // Revert optimistic update if the API call fails
+          _isLikedNotifiers[post['postId']]!.value =
+              currentLikedState; // revert to old state
 
-          likes = _isLikedMap[post['postId']] == true ? likes + 1 : likes - 1;
+          // Update the likes count based on the reverted state
+          likesNotifier[post['postId']]!.value = currentLikedState
+              ? likesNotifier[post['postId']]!.value - 1
+              : likesNotifier[post['postId']]!.value + 1;
         });
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${errorData['message']}')));
       }
+      print("Test: ${likesNotifier[post['postId']]!.value}");
     }
 
     return Padding(
@@ -783,8 +825,8 @@ class _HomePageState extends State<HomePage>
                 anonymous: anonymous,
                 time: time,
                 isFollowing: isFollowing,
-                likes: likes.toString(),
-                comments: comments.toString(),
+                likes: likesNotifier[post['postId']]!.value.toString(),
+                comments: commentsNotifier.value.toString(),
                 isLiked: isLiked,
                 userId: creatorUserId,
                 senderId: userId!,
@@ -850,28 +892,34 @@ class _HomePageState extends State<HomePage>
                   child: Row(children: [
                     Row(
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            isLiked == true
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: isLiked == true ? Colors.red : Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              // Toggle the like status for this post
-                              _toggleLike();
-                            });
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _isLikedNotifiers[post['postId']]!,
+                          builder: (context, isLiked, child) {
+                            return IconButton(
+                              icon: Icon(
+                                isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: isLiked ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: _toggleLike,
+                            );
                           },
                         ),
-                        Text(
-                          likes.toString(),
-                          style: TextStyle(
-                            fontFamily: 'Inconsolata',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: likesNotifier[post['postId']]!,
+                          builder: (context, likes, child) {
+                            print("Likes updated: $likes");
+                            return Text(
+                              likes.toString(),
+                              style: TextStyle(
+                                fontFamily: 'Inconsolata',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -893,14 +941,19 @@ class _HomePageState extends State<HomePage>
                             );
                           },
                         ),
-                        Text(
-                          comments.toString(),
-                          style: TextStyle(
-                            fontFamily: 'Inconsolata',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: commentsNotifier,
+                          builder: (context, comments, child) {
+                            return Text(
+                              comments.toString(),
+                              style: TextStyle(
+                                fontFamily: 'Inconsolata',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -999,26 +1052,33 @@ class _HomePageState extends State<HomePage>
                   child: Row(children: [
                     Row(
                       children: [
-                        IconButton(
-                          icon: Icon(
-                              isLiked == true
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isLiked == true
-                                  ? Colors.red
-                                  : originalIconColor),
-                          onPressed: () {
-                            _toggleLike();
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _isLikedNotifiers[post['postId']]!,
+                          builder: (context, isLiked, child) {
+                            return IconButton(
+                              icon: Icon(
+                                isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: isLiked ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: _toggleLike,
+                            );
                           },
                         ),
-                        Text(
-                          likes.toString(),
-                          style: TextStyle(
-                            fontFamily: 'Inconsolata',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: likesNotifier[post['postId']]!,
+                          builder: (context, likes, child) {
+                            return Text(
+                              likes.toString(),
+                              style: TextStyle(
+                                fontFamily: 'Inconsolata',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -1040,14 +1100,19 @@ class _HomePageState extends State<HomePage>
                             );
                           },
                         ),
-                        Text(
-                          comments.toString(),
-                          style: TextStyle(
-                            fontFamily: 'Inconsolata',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: commentsNotifier,
+                          builder: (context, comments, child) {
+                            return Text(
+                              comments.toString(),
+                              style: TextStyle(
+                                fontFamily: 'Inconsolata',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

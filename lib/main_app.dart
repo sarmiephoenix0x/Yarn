@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yarn/search_page.dart';
-
 import 'account_page.dart';
 import 'explore_page.dart';
 import 'home_page.dart';
 import 'like_page.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:signalr_core/signalr_core.dart';
 
 class MainApp extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
 
-  const MainApp(
-      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
+  const MainApp({
+    super.key,
+    required this.onToggleDarkMode,
+    required this.isDarkMode,
+  });
 
   @override
   State<MainApp> createState() => _MainAppState();
@@ -21,15 +24,28 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  final List<bool> _hasNotification = [false, false, false, false, false];
   DateTime? currentBackPressTime;
+  HubConnection? _hubConnection;
 
   @override
   void initState() {
     super.initState();
+    _startSignalRConnection();
     _getLocationPermission();
   }
 
+  Future<void> _startSignalRConnection() async {
+    _hubConnection = HubConnectionBuilder()
+        .withUrl("https://yarnapi-n2dw.onrender.com/postHub")
+        .build();
+
+    _hubConnection?.onclose((error) {
+      print("Connection closed: $error");
+    });
+
+    await _hubConnection?.start();
+    print("SignalR connection started");
+  }
 
   Future<void> _getLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -99,7 +115,32 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
       },
       child: Scaffold(
         body: SafeArea(
-          child: _buildPageContent(_selectedIndex),
+          child: IndexedStack(
+            index: _selectedIndex, // Keep the state of the selected index
+            children: [
+              HomePage(
+                selectedIndex: _selectedIndex,
+                onToggleDarkMode: widget.onToggleDarkMode,
+                isDarkMode: widget.isDarkMode,
+                hubConnection: _hubConnection,
+              ),
+              SearchPage(
+                selectedIndex: _selectedIndex,
+              ),
+              LikePage(
+                selectedIndex: _selectedIndex,
+              ),
+              ExplorePage(
+                selectedIndex: _selectedIndex,
+              ),
+              AccountPage(
+                selectedIndex: _selectedIndex,
+                onToggleDarkMode: widget.onToggleDarkMode,
+                isDarkMode: widget.isDarkMode,
+                hubConnection: _hubConnection,
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
@@ -109,25 +150,6 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 color: Colors.grey,
               ),
               label: '',
-              // Add notification dot
-              activeIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const ImageIcon(AssetImage('images/Home-Active.png')),
-                  if (_hasNotification[0])
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.red,
-                        ),
-                        width: 8,
-                        height: 8,
-                      ),
-                    ),
-                ],
-              ),
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
@@ -135,24 +157,6 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 color: Colors.grey,
               ),
               label: '',
-              activeIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const ImageIcon(AssetImage('images/Search-Active.png')),
-                  if (_hasNotification[1])
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.red,
-                        ),
-                        width: 8,
-                        height: 8,
-                      ),
-                    ),
-                ],
-              ),
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
@@ -160,24 +164,6 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 color: Colors.grey,
               ),
               label: '',
-              activeIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const ImageIcon(AssetImage('images/Like.png')),
-                  if (_hasNotification[2])
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.red,
-                        ),
-                        width: 8,
-                        height: 8,
-                      ),
-                    ),
-                ],
-              ),
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
@@ -185,24 +171,6 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 color: Colors.grey,
               ),
               label: '',
-              activeIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const ImageIcon(AssetImage('images/Explore.png')),
-                  if (_hasNotification[3])
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.red,
-                        ),
-                        width: 8,
-                        height: 8,
-                      ),
-                    ),
-                ],
-              ),
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
@@ -210,68 +178,19 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 color: Colors.grey,
               ),
               label: '',
-              activeIcon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const ImageIcon(AssetImage('images/Account-active.png')),
-                  if (_hasNotification[4])
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.red,
-                        ),
-                        width: 8,
-                        height: 8,
-                      ),
-                    ),
-                ],
-              ),
             ),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: const Color(0xFF500450),
-          // Customize the selected item color
           onTap: (index) {
             if (index != _selectedIndex) {
               setState(() {
-                _selectedIndex = index;
+                _selectedIndex = index; // Update the selected index
               });
             }
           },
         ),
       ),
     );
-  }
-
-  Widget _buildPageContent(int index) {
-    switch (index) {
-      case 0:
-        return HomePage(
-            selectedIndex: _selectedIndex,
-            onToggleDarkMode: widget.onToggleDarkMode,
-            isDarkMode: widget.isDarkMode
-        );
-      case 1:
-        return SearchPage(
-          selectedIndex: _selectedIndex,
-        );
-      case 2:
-        return LikePage(
-          selectedIndex: _selectedIndex,
-        );
-      case 3:
-        return ExplorePage(
-          selectedIndex: _selectedIndex,
-        );
-      case 4:
-        return AccountPage(
-            selectedIndex: _selectedIndex,
-            onToggleDarkMode: widget.onToggleDarkMode,
-            isDarkMode: widget.isDarkMode);
-      default:
-        return const Center(child: Text("Error: Invalid page index"));
-    }
   }
 }
