@@ -239,6 +239,7 @@ class _AccountPageState extends State<AccountPage>
         'Authorization': 'Bearer $accessToken',
       });
 
+      print(response.body);
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         final List<dynamic> fetchedPosts = responseBody['data'] ?? [];
