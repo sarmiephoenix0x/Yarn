@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAsBdGOHdQFkR63TkbppwIuLggdz6VDmjE',
-    appId: '1:881824533107:web:17caf3ba7ce67e2668f806',
-    messagingSenderId: '881824533107',
-    projectId: 'yarn-ea60d',
-    authDomain: 'yarn-ea60d.firebaseapp.com',
-    storageBucket: 'yarn-ea60d.firebasestorage.app',
-    measurementId: 'G-11V67W3THK',
+    apiKey: 'AIzaSyDKvdeItMLSbO1N3adrP6tB9TdbmcOE7dU',
+    appId: '1:276804162614:web:c31f4a33f06a911e737497',
+    messagingSenderId: '276804162614',
+    projectId: 'yarn-e4ebb',
+    authDomain: 'yarn-e4ebb.firebaseapp.com',
+    storageBucket: 'yarn-e4ebb.firebasestorage.app',
+    measurementId: 'G-4ME6E1ZVL8',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA7cS8O41x2YRMxgiXvT6_AcG_YL0rNrmY',
-    appId: '1:881824533107:android:54c4dc7f161d0cf168f806',
-    messagingSenderId: '881824533107',
-    projectId: 'yarn-ea60d',
-    storageBucket: 'yarn-ea60d.firebasestorage.app',
+    apiKey: 'AIzaSyChLO9OuTtkcGMzyLkIwJ_Ps9dR4RK0eEE',
+    appId: '1:276804162614:android:92a04713e3055b73737497',
+    messagingSenderId: '276804162614',
+    projectId: 'yarn-e4ebb',
+    storageBucket: 'yarn-e4ebb.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCVhUsYDjNXNkEUo_nRjJqlHL-OTGvkrYE',
-    appId: '1:881824533107:ios:ca289f31953a37a468f806',
-    messagingSenderId: '881824533107',
-    projectId: 'yarn-ea60d',
-    storageBucket: 'yarn-ea60d.firebasestorage.app',
+    apiKey: 'AIzaSyCD1j-eY6IgVXGNyE9_MIOQIrakOBf02Z8',
+    appId: '1:276804162614:ios:020b8ab9026c9e9a737497',
+    messagingSenderId: '276804162614',
+    projectId: 'yarn-e4ebb',
+    storageBucket: 'yarn-e4ebb.firebasestorage.app',
     iosBundleId: 'com.yarn.yarn',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCVhUsYDjNXNkEUo_nRjJqlHL-OTGvkrYE',
-    appId: '1:881824533107:ios:ca289f31953a37a468f806',
-    messagingSenderId: '881824533107',
-    projectId: 'yarn-ea60d',
-    storageBucket: 'yarn-ea60d.firebasestorage.app',
+    apiKey: 'AIzaSyCD1j-eY6IgVXGNyE9_MIOQIrakOBf02Z8',
+    appId: '1:276804162614:ios:020b8ab9026c9e9a737497',
+    messagingSenderId: '276804162614',
+    projectId: 'yarn-e4ebb',
+    storageBucket: 'yarn-e4ebb.firebasestorage.app',
     iosBundleId: 'com.yarn.yarn',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAsBdGOHdQFkR63TkbppwIuLggdz6VDmjE',
-    appId: '1:881824533107:web:aae582352aaa046568f806',
-    messagingSenderId: '881824533107',
-    projectId: 'yarn-ea60d',
-    authDomain: 'yarn-ea60d.firebaseapp.com',
-    storageBucket: 'yarn-ea60d.firebasestorage.app',
-    measurementId: 'G-9N99BX3B39',
+    apiKey: 'AIzaSyDKvdeItMLSbO1N3adrP6tB9TdbmcOE7dU',
+    appId: '1:276804162614:web:483fc770fe876554737497',
+    messagingSenderId: '276804162614',
+    projectId: 'yarn-e4ebb',
+    authDomain: 'yarn-e4ebb.firebaseapp.com',
+    storageBucket: 'yarn-e4ebb.firebasestorage.app',
+    measurementId: 'G-1HPZV72KK2',
   );
+
 }

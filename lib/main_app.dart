@@ -147,41 +147,37 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
             BottomNavigationBarItem(
               icon: const ImageIcon(
                 AssetImage('images/Home.png'),
-                color: Colors.grey,
               ),
               label: '',
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
                 AssetImage('images/Search.png'),
-                color: Colors.grey,
               ),
               label: '',
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
                 AssetImage('images/Like.png'),
-                color: Colors.grey,
               ),
               label: '',
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
                 AssetImage('images/Explore.png'),
-                color: Colors.grey,
               ),
               label: '',
             ),
             BottomNavigationBarItem(
               icon: const ImageIcon(
                 AssetImage('images/Account.png'),
-                color: Colors.grey,
               ),
               label: '',
             ),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: const Color(0xFF500450),
+          unselectedItemColor: Colors.grey,
           onTap: (index) {
             if (index != _selectedIndex) {
               setState(() {

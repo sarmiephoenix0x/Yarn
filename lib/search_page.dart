@@ -140,8 +140,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage =
-              'An error occurred. Please try again later.';
+          _errorMessage = 'An error occurred. Please try again later.';
           _isLoading = false; // Stop loading after error
         });
       }
@@ -339,19 +338,22 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                       ],
                                     ),
                                   )
-                                : ListView.builder(
-                                    itemCount: filteredLocationsList.length,
-                                    itemBuilder: (context, index) {
-                                      final locationData =
-                                          filteredLocationsList[index];
-                                      return location(
-                                        locationData['name'],
-                                        isFollowingMap[locationData['id']
-                                                .toString()] ??
-                                            false,
-                                        locationData['id'],
-                                      );
-                                    },
+                                : RefreshIndicator(
+                                    onRefresh: _fetchLocations,
+                                    child: ListView.builder(
+                                      itemCount: filteredLocationsList.length,
+                                      itemBuilder: (context, index) {
+                                        final locationData =
+                                            filteredLocationsList[index];
+                                        return location(
+                                          locationData['name'],
+                                          isFollowingMap[locationData['id']
+                                                  .toString()] ??
+                                              false,
+                                          locationData['id'],
+                                        );
+                                      },
+                                    ),
                                   ),
                     const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -444,20 +446,24 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                       ],
                                     ),
                                   )
-                                : ListView.builder(
-                                    itemCount: _pages.length,
-                                    itemBuilder: (context, index) {
-                                      final page = _pages[index];
-                                      return author(
-                                          page['pageProfilePictureUrl'] != null
-                                              ? "${page['pageProfilePictureUrl']}/download?project=66e4476900275deffed4"
-                                              : '',
-                                          page['name'],
-                                          page['description'],
-                                          '${page['followers'].length} followers',
-                                          false,
-                                          page['pageId']);
-                                    },
+                                : RefreshIndicator(
+                                    onRefresh: _fetchPages,
+                                    child: ListView.builder(
+                                      itemCount: _pages.length,
+                                      itemBuilder: (context, index) {
+                                        final page = _pages[index];
+                                        return author(
+                                            page['pageProfilePictureUrl'] !=
+                                                    null
+                                                ? "${page['pageProfilePictureUrl']}/download?project=66e4476900275deffed4"
+                                                : '',
+                                            page['name'],
+                                            page['description'],
+                                            '${page['followers'].length} followers',
+                                            false,
+                                            page['pageId']);
+                                      },
+                                    ),
                                   ),
                   ],
                 ),
