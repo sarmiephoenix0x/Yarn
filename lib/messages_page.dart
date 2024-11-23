@@ -146,6 +146,13 @@ class _MeassagesPageState extends State<MeassagesPage> {
     });
   }
 
+  @override
+  void dispose() {
+    connectivitySubscription?.cancel(); // Cancel the connectivity subscription
+    chatsScrollController.dispose(); // Dispose of the scroll controller
+    super.dispose(); // Call the superclass dispose method
+  }
+
   void _showNoConnectionDialog() {
     showDialog(
       context: context,

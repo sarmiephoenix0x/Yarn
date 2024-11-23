@@ -558,6 +558,7 @@ class _HomePageState extends State<HomePage>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'home_fab',
         onPressed: () => _showCreateOptions(context),
         backgroundColor: const Color(0xFF500450),
         shape: const CircleBorder(),
@@ -575,8 +576,10 @@ class _HomePageState extends State<HomePage>
               backgroundColor: Color(0xFF500450).withOpacity(0.8),
               elevation: 2,
               titleSpacing: 20,
+              toolbarHeight: 70.0,
               title: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                padding: const EdgeInsets.only(
+                    top: 20.0, bottom: 20.0), // Adjust padding here
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -585,17 +588,6 @@ class _HomePageState extends State<HomePage>
                       height: 55,
                       color: Colors.white,
                     ),
-                    // if (isDarkMode)
-                    //   Image.asset(
-                    //     'images/AppLogo.png',
-                    //     height: 45,
-                    //     color: Colors.white,
-                    //   )
-                    // else
-                    //   Image.asset(
-                    //     'images/AppLogo.png',
-                    //     height: 45,
-                    //   ),
                     const Spacer(),
                     _buildIconButton('images/NotificationIcon.png', () {
                       Navigator.push(
@@ -623,7 +615,6 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _fetchPosts,

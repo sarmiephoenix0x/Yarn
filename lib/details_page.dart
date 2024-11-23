@@ -682,6 +682,7 @@ class DetailsPageState extends State<DetailsPage> {
                       Column(
                         children: [
                           FloatingActionButton(
+                            heroTag: 'like_fab',
                             onPressed: () {
                               if (!isLiked) {
                                 _toggleLike();
@@ -716,6 +717,7 @@ class DetailsPageState extends State<DetailsPage> {
                       Column(
                         children: [
                           FloatingActionButton(
+                            heroTag: 'comments_fab',
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -756,6 +758,7 @@ class DetailsPageState extends State<DetailsPage> {
 
                       // Bookmark button (no count needed)
                       FloatingActionButton(
+                        heroTag: 'bookmark_fab',
                         onPressed: () {
                           setState(() {
                             isBookmarked = !isBookmarked;

@@ -1228,6 +1228,7 @@ class _AccountPageState extends State<AccountPage>
               ),
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'profile_fab',
         onPressed: () {
           _showCreateOptions(context);
         },

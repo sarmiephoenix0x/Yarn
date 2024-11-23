@@ -247,6 +247,9 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       final bool shouldSendFCMToken =
           storedFCMToken == null || currentFCMToken != storedFCMToken;
 
+      print('Current FCM Token: $currentFCMToken');
+      print('Stored FCM Token: $storedFCMToken');
+
       final url =
           Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up');
       final request = http.MultipartRequest('POST', url)
@@ -274,8 +277,8 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
         request.fields['yearJoined'] = yearJoined;
       }
 
-      // Include FirebaseToken if needed
-      if (shouldSendFCMToken && currentFCMToken != null) {
+      // Include FirebaseToken if available
+      if (currentFCMToken != null) {
         request.fields['firebaseToken'] = currentFCMToken;
       }
 
