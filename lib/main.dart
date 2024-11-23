@@ -34,15 +34,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> _createNotificationChannel(
     String channelId, String channelName) async {
-  const AndroidNotificationChannel androidNotificationChannel =
+  AndroidNotificationChannel androidNotificationChannel =
       AndroidNotificationChannel(
-    'default_channel', // Default channel for creating fallback
-    'Default Channel', // Fallback name
-    description: 'This is the default notification channel',
+    channelId,
+    channelName,
+    description: 'Notifications for $channelName',
     importance: Importance.high,
   );
 
-  // Ensure the channel is created before showing notifications
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
@@ -51,19 +50,22 @@ Future<void> _createNotificationChannel(
 
 Future<void> _showNotification(
     RemoteMessage message, String channelId, String channelName) async {
-  const AndroidNotificationDetails androidNotificationDetails =
+  AndroidNotificationDetails androidNotificationDetails =
       AndroidNotificationDetails(
-    'default_channel', // Fallback channel
-    'Fallback Channel',
+    channelId,
+    channelName,
     importance: Importance.max,
+    priority: Priority.high,
   );
-  const NotificationDetails platformChannelSpecifics =
+
+  NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidNotificationDetails);
 
+  // Use the message title and body for the notification
   await flutterLocalNotificationsPlugin.show(
-    0,
-    message.notification?.title,
-    message.notification?.body,
+    message.hashCode, // Unique notification ID
+    message.notification?.title ?? 'No Title',
+    message.notification?.body ?? 'No Body',
     platformChannelSpecifics,
   );
 }
@@ -81,14 +83,17 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print('Received a foreground message: ${message.notification?.title}');
-    // Dynamically set the channel ID and name
     String channelId =
         "dynamic_channel_${DateTime.now().millisecondsSinceEpoch}";
-    String channelName = "Dynamic Notification Channel ${DateTime.now()}";
-    // Show notification for foreground message
-    _showNotification(message, channelId, channelName);
+    String channelName = "Dynamic Channel";
+
+    // Dynamically create the notification channel
+    await _createNotificationChannel(channelId, channelName);
+
+    // Show the notification
+    await _showNotification(message, channelId, channelName);
   });
 
   runApp(const MyApp());
@@ -105,6 +110,7 @@ class _MyAppState extends State<MyApp> {
   bool isLoggedIn = false;
   bool isLoading = true; // Loading state
   bool isDarkMode = false; // Dark mode state
+  String? fcmToken;
 
   @override
   void initState() {
@@ -113,18 +119,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeApp() async {
-    // Check network connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
-      // Handle no network case
       print('No network connection');
       setState(() {
-        isLoading = false; // Stop loading
+        isLoading = false;
       });
       return;
     }
 
-    // Proceed with fetching the token and checking login status
     await _requestPermission();
     await _getToken();
 
@@ -132,12 +135,14 @@ class _MyAppState extends State<MyApp> {
     final accessToken = await storage.read(key: 'yarnAccessToken');
     isLoggedIn = accessToken != null;
 
-    // Load dark mode preference
+    // Retrieve and store the FCM token
+    fcmToken = await getStoredFCMToken();
+
     final prefs = await SharedPreferences.getInstance();
     isDarkMode = prefs.getBool('isDarkMode') ?? false;
 
     setState(() {
-      isLoading = false; // Stop loading
+      isLoading = false;
     });
   }
 
@@ -165,31 +170,20 @@ class _MyAppState extends State<MyApp> {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
       String? token = await messaging.getToken();
       print("FCM Token: $token");
-      await sendTokenToServer(token);
+
+      if (token != null) {
+        // Save the token locally for later use
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('fcmToken', token);
+      }
     } catch (e) {
       print("Error fetching token: $e");
     }
   }
 
-  Future<void> sendTokenToServer(String? token) async {
-    if (token == null) return;
-
-    final response = await http.post(
-      Uri.parse(
-          'https://86t6buc6j0.execute-api.eu-north-1.amazonaws.com/test/'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'token': token,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      print('Token sent to server successfully');
-    } else {
-      print('Failed to send token to server: ${response.body}');
-    }
+  Future<String?> getStoredFCMToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('fcmToken');
   }
 
   void toggleDarkMode(bool isDark) async {
@@ -220,7 +214,10 @@ class _MyAppState extends State<MyApp> {
         home: isLoggedIn
             ? MainApp(onToggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode)
             : IntroPage(
-                onToggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode),
+                onToggleDarkMode: toggleDarkMode,
+                isDarkMode: isDarkMode,
+                fcmToken: fcmToken, // Pass the token here
+              ),
       ),
     );
   }

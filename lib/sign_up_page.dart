@@ -7,9 +7,13 @@ import 'package:yarn/sign_in_page.dart';
 class SignUpPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final String? fcmToken;
 
   const SignUpPage(
-      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      this.fcmToken});
 
   @override
   // ignore: library_private_types_in_public_api

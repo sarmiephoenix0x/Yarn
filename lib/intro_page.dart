@@ -6,9 +6,13 @@ import 'package:yarn/sign_in_page.dart';
 class IntroPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final String? fcmToken;
 
   const IntroPage(
-      {super.key, required this.onToggleDarkMode, required this.isDarkMode});
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      this.fcmToken});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -95,7 +99,8 @@ class _IntroPageState extends State<IntroPage> {
                                 child: Text(
                                   imageHeaders[_current],
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     fontFamily: 'Inconsolata',
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -115,7 +120,9 @@ class _IntroPageState extends State<IntroPage> {
                                   child: Text(
                                     imageSubheadings[_current],
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                       fontFamily: 'Inconsolata',
                                       fontSize: 16,
                                     ),
@@ -192,10 +199,11 @@ class _IntroPageState extends State<IntroPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        SignInPage(key: UniqueKey(),
-                                            onToggleDarkMode: widget.onToggleDarkMode,
-                                            isDarkMode: widget.isDarkMode),
+                                    builder: (context) => SignInPage(
+                                        key: UniqueKey(),
+                                        onToggleDarkMode:
+                                            widget.onToggleDarkMode,
+                                        isDarkMode: widget.isDarkMode),
                                   ),
                                 );
                               },

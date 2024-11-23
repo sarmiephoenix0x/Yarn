@@ -576,7 +576,7 @@ class _HomePageState extends State<HomePage>
               elevation: 2,
               titleSpacing: 20,
               title: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

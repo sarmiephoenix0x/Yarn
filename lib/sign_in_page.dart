@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -14,10 +15,13 @@ import 'package:yarn/main_app.dart';
 class SignInPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
   final bool isDarkMode;
+  final String? fcmToken;
 
-  const SignInPage({
-    super.key, required this.onToggleDarkMode, required this.isDarkMode
-  });
+  const SignInPage(
+      {super.key,
+      required this.onToggleDarkMode,
+      required this.isDarkMode,
+      this.fcmToken});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -77,88 +81,113 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
       isLoading = true;
     });
 
-    // Send the POST request
-    final response = await http.post(
-      Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-in'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+    try {
+      // Fetch the current FCM token
+      final FirebaseMessaging messaging = FirebaseMessaging.instance;
+      final String? currentFCMToken = await messaging.getToken();
+
+      // Fetch the stored FCM token
+      final String? storedFCMToken = prefs.getString('fcmToken');
+
+      // Determine if the token needs to be sent
+      final bool shouldSendFCMToken =
+          storedFCMToken == null || currentFCMToken != storedFCMToken;
+
+      // Prepare the request body
+      final Map<String, dynamic> requestBody = {
         'username': username,
         'password': password,
-      }),
-    );
+      };
 
-    final responseData = json.decode(response.body);
+      if (shouldSendFCMToken && currentFCMToken != null) {
+        requestBody['firebaseToken'] = currentFCMToken;
+      }
 
-    print('Response Data: $responseData');
-
-    if (response.statusCode == 200) {
-      // The response format: {status, data: {userId, token, username}}
-      final Map<String, dynamic> data = responseData['data'];
-      final String token = data['token'];
-      final int userId = data['userId'];
-      final String userName = data['username'];
-
-      // Store the token and user information
-      await storage.write(key: 'yarnAccessToken', value: token);
-      await prefs.setString('user', jsonEncode({
-        'userId': userId,
-        'username': userName,
-      }));
-
-      // Show success message
-      _showCustomSnackBar(
-        context,
-        'Sign In Successful!',
-        isError: false,
+      // Send the POST request
+      final response = await http.post(
+        Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-in'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
       );
+      print('Response Status: ${response.statusCode}');
+      print('Response Body Length: ${response.body.length}');
+      print('Response Body: "${response.body}"');
+      final responseData = json.decode(response.body);
 
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (context) =>
-      //         SelectCountry(key: UniqueKey(),
-      //             onToggleDarkMode: widget.onToggleDarkMode,
-      //             isDarkMode: widget.isDarkMode),
-      //   ),
-      // );
+      if (response.statusCode == 200) {
+        // The response format: {status, data: {userId, token, username}}
+        final Map<String, dynamic> data = responseData['data'];
+        final String token = data['token'];
+        final int userId = data['userId'];
+        final String userName = data['username'];
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              MainApp(
-                  key: UniqueKey(),
-                  onToggleDarkMode: widget
-                      .onToggleDarkMode,
-                  isDarkMode: widget.isDarkMode
-              ),
-        ),
-      );
-    } else if (response.statusCode == 400) {
+        // Store the token and user information
+        await storage.write(key: 'yarnAccessToken', value: token);
+        await prefs.setString(
+          'user',
+          jsonEncode({
+            'userId': userId,
+            'username': userName,
+          }),
+        );
+
+        // Update the stored FCM token if it was sent
+        if (shouldSendFCMToken && currentFCMToken != null) {
+          await prefs.setString('fcmToken', currentFCMToken);
+        }
+
+        // Show success message
+        _showCustomSnackBar(
+          context,
+          'Sign In Successful!',
+          isError: false,
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainApp(
+              key: UniqueKey(),
+              onToggleDarkMode: widget.onToggleDarkMode,
+              isDarkMode: widget.isDarkMode,
+            ),
+          ),
+        );
+      } else if (response.statusCode == 400) {
+        setState(() {
+          isLoading = false;
+        });
+        final String message = responseData['message'];
+
+        // Handle validation error
+        _showCustomSnackBar(
+          context,
+          'Error: $message',
+          isError: true,
+        );
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        // Handle other unexpected responses
+        _showCustomSnackBar(
+          context,
+          'An unexpected error occurred.',
+          isError: true,
+        );
+      }
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
-      final String message = responseData['message'];
-
-      // Handle validation error
+      print('Error: $e');
       _showCustomSnackBar(
         context,
-        'Error: $message',
-        isError: true,
-      );
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      // Handle other unexpected responses
-      _showCustomSnackBar(
-        context,
-        'An unexpected error occurred.',
+        'An error occurred. Please try again later.',
         isError: true,
       );
     }
   }
-
 
   void _showCustomSnackBar(BuildContext context, String message,
       {bool isError = false}) {
@@ -201,21 +230,13 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
               child: Center(
                 child: SizedBox(
                   height: orientation == Orientation.portrait
-                      ? MediaQuery
-                      .of(context)
-                      .size
-                      .height * 1.2
-                      : MediaQuery
-                      .of(context)
-                      .size
-                      .height * 1.9,
+                      ? MediaQuery.of(context).size.height * 1.2
+                      : MediaQuery.of(context).size.height * 1.9,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.1),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.1),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -224,14 +245,10 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w900,
                             fontSize: 50.0,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
-
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -244,10 +261,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -255,17 +270,12 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 17.0,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.05),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -274,10 +284,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -297,23 +304,15 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide(
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
-                          cursorColor: Theme
-                              .of(context)
-                              .colorScheme
-                              .onSurface,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
@@ -322,10 +321,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 16.0,
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -345,18 +341,16 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 fontSize: 12.0,
                                 decoration: TextDecoration.none,
                               ),
-                              floatingLabelBehavior: FloatingLabelBehavior
-                                  .never,
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
                                 borderSide: BorderSide(
-                                  color: Theme
-                                      .of(context)
-                                      .colorScheme
-                                      .onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               suffixIcon: IconButton(
@@ -369,18 +363,13 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   });
                                 },
                               )),
-                          cursorColor: Theme
-                              .of(context)
-                              .colorScheme
-                              .onSurface,
+                          cursorColor: Theme.of(context).colorScheme.onSurface,
                           obscureText: !_isPasswordVisible,
                           obscuringCharacter: "*",
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 20.0),
                         child: Row(
@@ -398,15 +387,16 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     });
                                   },
                                 ),
-                                Text("Remember me", style: TextStyle(
-                                  color: Theme
-                                      .of(context)
-                                      .colorScheme
-                                      .onSurface,
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12.0,
-                                  decoration: TextDecoration.none,
-                                ),),
+                                Text(
+                                  "Remember me",
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12.0,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
                               ],
                             ),
                             const Spacer(),
@@ -415,11 +405,11 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        ForgotPassword(key: UniqueKey(),
-                                            onToggleDarkMode: widget
-                                                .onToggleDarkMode,
-                                            isDarkMode: widget.isDarkMode),
+                                    builder: (context) => ForgotPassword(
+                                        key: UniqueKey(),
+                                        onToggleDarkMode:
+                                            widget.onToggleDarkMode,
+                                        isDarkMode: widget.isDarkMode),
                                   ),
                                 );
                               },
@@ -439,20 +429,12 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           ],
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Container(
                         width: double.infinity,
-                        height: (60 / MediaQuery
-                            .of(context)
-                            .size
-                            .height) *
-                            MediaQuery
-                                .of(context)
-                                .size
-                                .height,
+                        height: (60 / MediaQuery.of(context).size.height) *
+                            MediaQuery.of(context).size.height,
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: ElevatedButton(
                           onPressed: () {
@@ -460,8 +442,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           },
                           style: ButtonStyle(
                             backgroundColor:
-                            WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return Colors.white;
                                 }
@@ -469,8 +451,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                               },
                             ),
                             foregroundColor:
-                            WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                                WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.pressed)) {
                                   return const Color(0xFF500450);
                                 }
@@ -479,32 +461,30 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             ),
                             elevation: WidgetStateProperty.all<double>(4.0),
                             shape:
-                            WidgetStateProperty.all<RoundedRectangleBorder>(
+                                WidgetStateProperty.all<RoundedRectangleBorder>(
                               const RoundedRectangleBorder(
                                 borderRadius:
-                                BorderRadius.all(Radius.circular(15)),
+                                    BorderRadius.all(Radius.circular(15)),
                               ),
                             ),
                           ),
                           child: isLoading
                               ? const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          )
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                                  'Login',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       const Center(
                         child: Text(
                           'or continue with',
@@ -516,32 +496,22 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            height: (60 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
+                            height: (60 / MediaQuery.of(context).size.height) *
+                                MediaQuery.of(context).size.height,
                             padding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: ElevatedButton(
-                              onPressed: () {
-
-                              },
+                              onPressed: () {},
                               style: ButtonStyle(
                                 backgroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                                      (Set<WidgetState> states) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -549,8 +519,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 foregroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                                      (Set<WidgetState> states) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -562,7 +532,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
-                                    BorderRadius.all(Radius.circular(15)),
+                                        BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
                               ),
@@ -573,10 +543,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     height: 25,
                                   ),
                                   SizedBox(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.03),
                                   const Text(
                                     'Facebook',
@@ -590,22 +557,16 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             ),
                           ),
                           Container(
-                            height: (60 / MediaQuery
-                                .of(context)
-                                .size
-                                .height) *
-                                MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20.0),
+                            height: (60 / MediaQuery.of(context).size.height) *
+                                MediaQuery.of(context).size.height,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
                             child: ElevatedButton(
                               onPressed: () {},
                               style: ButtonStyle(
                                 backgroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                                      (Set<WidgetState> states) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -613,8 +574,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                   },
                                 ),
                                 foregroundColor:
-                                WidgetStateProperty.resolveWith<Color>(
-                                      (Set<WidgetState> states) {
+                                    WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                     if (states.contains(WidgetState.pressed)) {
                                       return Colors.white;
                                     }
@@ -626,7 +587,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     RoundedRectangleBorder>(
                                   const RoundedRectangleBorder(
                                     borderRadius:
-                                    BorderRadius.all(Radius.circular(15)),
+                                        BorderRadius.all(Radius.circular(15)),
                                   ),
                                 ),
                               ),
@@ -637,10 +598,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                     height: 25,
                                   ),
                                   SizedBox(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.03),
                                   const Text(
                                     'Google',
@@ -655,10 +613,8 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                      SizedBox(height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.02),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -672,20 +628,16 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                             ),
                           ),
                           SizedBox(
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.03),
+                              width: MediaQuery.of(context).size.width * 0.03),
                           InkWell(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      SignUpPage(key: UniqueKey(),
-                                          onToggleDarkMode: widget
-                                              .onToggleDarkMode,
-                                          isDarkMode: widget.isDarkMode),
+                                  builder: (context) => SignUpPage(
+                                      key: UniqueKey(),
+                                      onToggleDarkMode: widget.onToggleDarkMode,
+                                      isDarkMode: widget.isDarkMode),
                                 ),
                               );
                               // Navigator.push(

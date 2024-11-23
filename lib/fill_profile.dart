@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -234,85 +235,106 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       isLoading = true;
     });
 
-    // final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up');
-    final request = http.MultipartRequest('POST', url)
-      // ..headers['Authorization'] = 'Bearer $accessToken'
-      // ..fields['userId'] = userId
-      ..fields['username'] = widget.username
-      ..fields['password'] = widget.password
-      ..fields['firstName'] = firstName
-      ..fields['surname'] = surname
-      ..fields['email'] = email
-      ..fields['phone'] = phoneNumber
-      ..fields['gender'] = selectedGender
-      ..fields['dateOfBirth'] = dob
-      ..fields['state'] = widget.selectedState
-      ..fields['country'] = widget.countryIsoCode
-      ..fields['occupation'] = occupation
-      ..fields['city'] = widget.selectedCity;
-
-    // Adding optional fields if not empty
-    if (jobTitle != null && jobTitle.isNotEmpty) {
-      request.fields['jobTitle'] = jobTitle;
-    }
-    if (company != null && company.isNotEmpty) {
-      request.fields['company'] = company;
-    }
-    if (yearJoined != null && yearJoined.isNotEmpty) {
-      request.fields['yearJoined'] = yearJoined;
-    }
-
-    // Handling profile picture upload if it's a local file
-    if (_profileImage != null && !_profileImage.startsWith('http')) {
-      File imageFile = File(_profileImage);
-      if (await imageFile.exists()) {
-        var stream =
-            http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
-        var length = await imageFile.length();
-        request.files.add(http.MultipartFile(
-          'profile_photo',
-          stream,
-          length,
-          filename: path.basename(imageFile.path),
-        ));
-      } else {
-        print('Image file not found. Skipping image upload.');
-      }
-    } else {
-      print(
-          'Skipping image upload as the profile image is from an HTTP source.');
-    }
-
     try {
+      // Fetch the current FCM token
+      final FirebaseMessaging messaging = FirebaseMessaging.instance;
+      final String? currentFCMToken = await messaging.getToken();
+
+      // Fetch the stored FCM token
+      final String? storedFCMToken = prefs.getString('fcmToken');
+
+      // Determine if the token needs to be sent
+      final bool shouldSendFCMToken =
+          storedFCMToken == null || currentFCMToken != storedFCMToken;
+
+      final url =
+          Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up');
+      final request = http.MultipartRequest('POST', url)
+        ..fields['username'] = widget.username
+        ..fields['password'] = widget.password
+        ..fields['firstName'] = firstName
+        ..fields['surname'] = surname
+        ..fields['email'] = email
+        ..fields['phone'] = phoneNumber
+        ..fields['gender'] = selectedGender
+        ..fields['dateOfBirth'] = dob
+        ..fields['state'] = widget.selectedState
+        ..fields['country'] = widget.countryIsoCode
+        ..fields['occupation'] = occupation
+        ..fields['city'] = widget.selectedCity;
+
+      // Adding optional fields if not empty
+      if (jobTitle != null && jobTitle.isNotEmpty) {
+        request.fields['jobTitle'] = jobTitle;
+      }
+      if (company != null && company.isNotEmpty) {
+        request.fields['company'] = company;
+      }
+      if (yearJoined != null && yearJoined.isNotEmpty) {
+        request.fields['yearJoined'] = yearJoined;
+      }
+
+      // Include FirebaseToken if needed
+      if (shouldSendFCMToken && currentFCMToken != null) {
+        request.fields['firebaseToken'] = currentFCMToken;
+      }
+
+      // Handling profile picture upload if it's a local file
+      if (_profileImage != null && !_profileImage.startsWith('http')) {
+        File imageFile = File(_profileImage);
+        if (await imageFile.exists()) {
+          var stream =
+              http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+          var length = await imageFile.length();
+          request.files.add(http.MultipartFile(
+            'profile_photo',
+            stream,
+            length,
+            filename: path.basename(imageFile.path),
+          ));
+        } else {
+          print('Image file not found. Skipping image upload.');
+        }
+      } else {
+        print(
+            'Skipping image upload as the profile image is from an HTTP source.');
+      }
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       final responseData = json.decode(response.body);
-
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
       if (response.statusCode == 200) {
         // Success: Saving the user data
         final Map<String, dynamic> data = responseData['data'];
         await storage.write(key: 'yarnAccessToken', value: data['token']);
         await prefs.setString(
-            'user',
-            jsonEncode({
-              'userId': data['userId'],
-              'username': data['username'],
-              'firstName': firstName,
-              'surname': surname,
-              'email': email,
-              'phone': phoneNumber,
-              'gender': selectedGender,
-              'dateOfBirth': dob,
-              'state': widget.selectedState,
-              'country': widget.countryIsoCode,
-              'occupation': occupation,
-              'jobTitle': jobTitle,
-              'company': company,
-              'yearJoined': yearJoined,
-              'profilePicture': _profileImage,
-              'city': widget.selectedCity,
-            }));
+          'user',
+          jsonEncode({
+            'userId': data['userId'],
+            'username': data['username'],
+            'firstName': firstName,
+            'surname': surname,
+            'email': email,
+            'phone': phoneNumber,
+            'gender': selectedGender,
+            'dateOfBirth': dob,
+            'state': widget.selectedState,
+            'country': widget.countryIsoCode,
+            'occupation': occupation,
+            'jobTitle': jobTitle,
+            'company': company,
+            'yearJoined': yearJoined,
+            'profilePicture': _profileImage,
+            'city': widget.selectedCity,
+          }),
+        );
+
+        // Update stored FCM token
+        if (shouldSendFCMToken && currentFCMToken != null) {
+          await prefs.setString('fcmToken', currentFCMToken);
+        }
 
         _showCustomSnackBar(context, 'Account created!', isError: false);
         Navigator.pushReplacement(
