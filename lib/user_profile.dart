@@ -790,7 +790,9 @@ class _UserProfileState extends State<UserProfile>
                                   border: Border.all(
                                     color: isFollowing
                                         ? Colors.transparent
-                                        : const Color(0xFF500450)
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
                                             .withOpacity(0.2),
                                     width: 2,
                                   ),
@@ -815,7 +817,6 @@ class _UserProfileState extends State<UserProfile>
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontFamily: 'Poppins',
-                                          color: Color(0xFF500450),
                                         ),
                                       ),
                               ),

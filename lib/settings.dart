@@ -188,338 +188,346 @@ class SettingsState extends State<Settings>
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: true,
       child: Scaffold(
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  // Wrap SingleChildScrollView with Expanded
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0, vertical: 20),
-                        child: Row(
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Image.asset(
-                                'images/BackButton.png',
-                                height: 25,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.05),
-                            Expanded(
-                              flex: 10,
-                              child: Text(
-                                'Settings',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20.0,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    // Wrap SingleChildScrollView with Expanded
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 20),
+                          child: Row(
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Image.asset(
+                                  'images/BackButton.png',
+                                  height: 25,
                                   color:
                                       Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                            ),
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/Bell.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.05),
-                                    Text(
-                                      'Notifications',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          Privacy(key: UniqueKey()),
-                                    ),
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/Privacy.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.065),
-                                    Text(
-                                      'Privacy',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/AccountSettings.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.05),
-                                    Text(
-                                      'Account',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/Language.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.05),
-                                    Text(
-                                      'Language',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/Help.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.05),
-                                    Text(
-                                      'Help',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/About.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.05),
-                                    Text(
-                                      'About',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {},
-                                child: Row(
-                                  children: [
-                                    Image.asset(
-                                      'images/tabler_brightness-filled.png',
-                                      height: 35,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.065),
-                                    Text(
-                                      'Dark Mode',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 15.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Switch(
-                                      value: _darkModeMoved,
-                                      onChanged: _toggleDarkMode,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 20),
-                              child: InkWell(
-                                // Use InkWell for tap functionality
-                                onTap: () {
-                                  _showLogoutConfirmationDialog();
-                                },
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.05),
+                              Expanded(
+                                flex: 10,
                                 child: Text(
-                                  'Log out',
+                                  'Settings',
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
-                                    fontSize: 15.0,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.0,
                                     color:
                                         Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const Spacer(),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: ListView(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/Bell.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      Text(
+                                        'Notifications',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            Privacy(key: UniqueKey()),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/Privacy.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.065),
+                                      Text(
+                                        'Privacy',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/AccountSettings.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      Text(
+                                        'Account',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/Language.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      Text(
+                                        'Language',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/Help.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      Text(
+                                        'Help',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/About.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      Text(
+                                        'About',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  // Use InkWell for tap functionality
+                                  onTap: () {},
+                                  child: Row(
+                                    children: [
+                                      Image.asset(
+                                        'images/tabler_brightness-filled.png',
+                                        height: 35,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.065),
+                                      Text(
+                                        'Dark Mode',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 15.0,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Switch(
+                                        value: _darkModeMoved,
+                                        onChanged: _toggleDarkMode,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 20),
+                                child: InkWell(
+                                  onTap: () {
+                                    _showLogoutConfirmationDialog();
+                                  },
+                                  child: Text(
+                                    'Log out',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 15.0,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

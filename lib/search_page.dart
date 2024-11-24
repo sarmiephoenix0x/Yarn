@@ -258,7 +258,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                 ),
                 labelPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.label,
-                indicatorColor: const Color(0xFF500450),
+                indicatorColor: Theme.of(context).colorScheme.onSurface,
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height,
@@ -933,7 +933,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF500450).withOpacity(0.2),
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.2),
                       width: 2,
                     ),
                   ),
@@ -953,7 +956,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Color(0xFF500450),
                           ),
                         ),
                 ),
@@ -1107,7 +1109,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF500450).withOpacity(0.2),
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.2),
                       width: 2,
                     ),
                   ),
@@ -1127,7 +1132,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Color(0xFF500450),
                           ),
                         ),
                 ),

@@ -284,7 +284,10 @@ class _FollowingsPageState extends State<FollowingsPage> {
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF500450).withOpacity(0.2),
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.2),
                       width: 2,
                     ),
                   ),

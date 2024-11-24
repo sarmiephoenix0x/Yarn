@@ -289,7 +289,10 @@ class _FollowersPageState extends State<FollowersPage> {
                     border: Border.all(
                       color: isFollowing
                           ? Colors.transparent
-                          : const Color(0xFF500450).withOpacity(0.2),
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.2),
                       width: 2,
                     ),
                   ),
@@ -309,7 +312,6 @@ class _FollowersPageState extends State<FollowersPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Poppins',
-                            color: Color(0xFF500450),
                           ),
                         ),
                 ),

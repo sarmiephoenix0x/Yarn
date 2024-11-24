@@ -46,22 +46,23 @@ class ChatProvider with ChangeNotifier {
 
   // Method to add or update a chat based on username
   void addOrUpdateChat(Chat chat) {
-    // Check if a chat with the same username already exists
+    print("Adding or updating chat: ${chat.toJson()}");
     final existingChatIndex = _chats.indexWhere((c) => c.id == chat.id);
     if (existingChatIndex != -1) {
-      // Update the existing chat's preview text
+      print("Chat already exists. Updating chat with ID: ${chat.id}");
       _chats[existingChatIndex].chatPreviewText = chat.chatPreviewText;
       _chats[existingChatIndex].timeStamp = chat.timeStamp;
     } else {
-      // Add the new chat if it doesn't already exist
+      print("Adding new chat with ID: ${chat.id}");
       _chats.add(chat);
     }
     saveChatsLocally();
     notifyListeners();
-    print("Chat Updated");
+    print("Current chats: ${_chats.map((c) => c.toJson()).toList()}");
   }
 
   void setChats(List<Chat> chats) {
+    print("Setting chats: ${chats.map((c) => c.toJson()).toList()}");
     _chats = chats;
     notifyListeners();
   }
@@ -70,22 +71,29 @@ class ChatProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     List<String> chats =
         _chats.map((chat) => jsonEncode(chat.toJson())).toList();
-    prefs.setStringList('chats', chats);
+    await prefs.setStringList('chats', chats);
+    print("Chats saved locally: $chats");
   }
 
   Future<void> loadChatsLocally() async {
     final prefs = await SharedPreferences.getInstance();
     List<String>? chats = prefs.getStringList('chats');
     if (chats != null) {
+      print("Loading chats from local storage: $chats");
       _chats = chats.map((chat) => Chat.fromJson(jsonDecode(chat))).toList();
       notifyListeners();
+      print("Chats loaded: ${_chats.map((c) => c.toJson()).toList()}");
+    } else {
+      print("No chats found in local storage.");
     }
   }
 
   void clearChats() {
+    print("Clearing chats.");
     _chats.clear(); // Clear the chat list in memory
     saveChatsLocally(); // Save the cleared state to SharedPreferences
     notifyListeners(); // Notify any listeners about the update
+    print("Chats after clearing: $_chats");
   }
 
   String getChatPreviewText(String id) {
@@ -97,6 +105,8 @@ class ChatProvider with ChangeNotifier {
               imageUrl: '',
               timeStamp: '',
             ));
+    print(
+        "Getting chat preview text for ID: $id. Preview text: ${chat.chatPreviewText}");
     return chat.chatPreviewText;
   }
 }

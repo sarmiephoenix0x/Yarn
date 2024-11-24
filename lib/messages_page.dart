@@ -28,12 +28,13 @@ class _MeassagesPageState extends State<MeassagesPage> {
   ScrollController chatsScrollController = ScrollController();
   StreamSubscription<ConnectivityResult>? connectivitySubscription;
   bool isConnected = true;
+  bool isDialogOpen = false;
 
   @override
   void initState() {
     super.initState();
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    chatProvider.loadChatsLocally();
+    // final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    // chatProvider.loadChatsLocally();
     _setupConnectivityListener();
     _fetchChats();
   }
@@ -60,9 +61,26 @@ class _MeassagesPageState extends State<MeassagesPage> {
         if (responseData['status'] == 'Success') {
           final List<dynamic> chatsJson = responseData['data'];
 
+          // Check if chatsJson is empty
+          if (chatsJson.isEmpty) {
+            _showEmptyState(); // Show a message when there are no chats
+            return; // Early return to avoid further processing
+          }
+
           // Process the data into the expected Chat model
           final List<Chat> chats = chatsJson.map((chatJson) {
             final lastMessage = chatJson['lastMessage'];
+
+            // Check if lastMessage is null
+            if (lastMessage == null) {
+              return Chat(
+                id: 'unknown',
+                username: 'Unknown',
+                imageUrl: '',
+                timeStamp: '',
+                chatPreviewText: 'No message content',
+              );
+            }
 
             // Determine the chat preview text based on content availability
             final chatPreviewText = (lastMessage['audioUrl'] != null &&
@@ -101,11 +119,9 @@ class _MeassagesPageState extends State<MeassagesPage> {
           for (var chat in chats) {
             chatProvider.addOrUpdateChat(chat);
           }
-
-          if (chats.isEmpty) {
-            _showEmptyState(); // Show a message when there are no chats
+          if (mounted) {
+            setState(() => isLoading = false);
           }
-          setState(() => isLoading = false);
         } else {
           throw Exception('Failed to load chats: ${responseData['status']}');
         }
@@ -134,26 +150,28 @@ class _MeassagesPageState extends State<MeassagesPage> {
     connectivitySubscription = Connectivity()
         .onConnectivityChanged
         .listen((ConnectivityResult result) {
-      setState(() {
-        isConnected = result != ConnectivityResult.none;
-      });
+      print("Connectivity changed: $result");
+      if (mounted) {
+        setState(() {
+          isConnected = result != ConnectivityResult.none;
+        });
+      }
       if (!isConnected) {
+        print("No internet connection.");
         _showNoConnectionDialog();
       } else {
-        Navigator.pop(context); // Close the no-internet dialog when back online
+        print("Back online.");
+        if (isDialogOpen) {
+          Navigator.pop(context); // Close the no-internet dialog if it's open
+        }
+        print("Fetching chats due to connectivity change.");
         _fetchChats(); // Retry fetching chats when the connection is restored
       }
     });
   }
 
-  @override
-  void dispose() {
-    connectivitySubscription?.cancel(); // Cancel the connectivity subscription
-    chatsScrollController.dispose(); // Dispose of the scroll controller
-    super.dispose(); // Call the superclass dispose method
-  }
-
   void _showNoConnectionDialog() {
+    isDialogOpen = true; // Set the flag to true when the dialog is shown
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -164,19 +182,26 @@ class _MeassagesPageState extends State<MeassagesPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              isDialogOpen =
+                  false; // Reset the flag when the dialog is dismissed
             },
             child: Text("Close"),
           ),
         ],
       ),
-    );
+    ).then((_) {
+      isDialogOpen =
+          false; // Ensure the flag is reset when the dialog is closed
+    });
   }
 
   void _showEmptyState() {
-    setState(() {
-      isLoading =
-          false; // Set to false since there’s no loading required in empty state
-    });
+    if (mounted) {
+      setState(() {
+        isLoading =
+            false; // Set to false since there’s no loading required in empty state
+      });
+    }
   }
 
   void _showCustomSnackBar(BuildContext context, String message,
@@ -210,6 +235,13 @@ class _MeassagesPageState extends State<MeassagesPage> {
   }
 
   @override
+  void dispose() {
+    connectivitySubscription?.cancel(); // Cancel the connectivity subscription
+    chatsScrollController.dispose(); // Dispose of the scroll controller
+    super.dispose(); // Call the superclass dispose method
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -232,7 +264,17 @@ class _MeassagesPageState extends State<MeassagesPage> {
 
     // Show a loading spinner if data is still loading
     if (isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return Center(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF500450)),
+            ],
+          ),
+        ),
+      );
     }
 
     // Show error message if there's one and no chats are loaded

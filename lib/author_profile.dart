@@ -537,7 +537,10 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                           border: Border.all(
                             color: isFollowing
                                 ? Colors.transparent
-                                : const Color(0xFF500450).withOpacity(0.2),
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.2),
                             width: 2,
                           ),
                         ),
@@ -560,7 +563,6 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontFamily: 'Poppins',
-                                  color: Color(0xFF500450),
                                 ),
                               ),
                       ),
