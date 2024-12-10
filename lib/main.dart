@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -119,56 +121,87 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeApp() async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
+    // Check network connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
       print('No network connection');
       setState(() {
-        isLoading = false;
+        isLoading = false; // Stop loading
       });
       return;
     }
 
-    await _requestPermission();
-    await _getToken();
-
     const storage = FlutterSecureStorage();
     final accessToken = await storage.read(key: 'yarnAccessToken');
     isLoggedIn = accessToken != null;
+
+    try {
+      // Request permission and get token
+      await _requestPermission();
+      await _getToken();
+    } catch (e) {
+      print("Error during initialization: $e");
+      // Optionally show an error message
+      _showErrorMessage(
+          "An error occurred during initialization. Please try again.");
+    } finally {
+      // Ensure loading state is updated
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+    }
 
     // Retrieve and store the FCM token
     fcmToken = await getStoredFCMToken();
 
     final prefs = await SharedPreferences.getInstance();
     isDarkMode = prefs.getBool('isDarkMode') ?? false;
-
-    setState(() {
-      isLoading = false;
-    });
   }
 
   Future<void> _requestPermission() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      provisional: false,
-      sound: true,
-    );
+    try {
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      NotificationSettings settings = await messaging
+          .requestPermission(
+            alert: true,
+            badge: true,
+            provisional: false,
+            sound: true,
+          )
+          .timeout(const Duration(seconds: 10)); // Set timeout duration
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User  granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      print('User  granted provisional permission');
-    } else {
-      print('User  declined permission');
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('User granted permission');
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        print('User granted provisional permission');
+      } else {
+        print('User declined permission');
+        _showErrorMessage("Permission to receive notifications was denied.");
+      }
+    } catch (e) {
+      if (e is TimeoutException) {
+        print("Permission request timed out");
+        _showErrorMessage(
+            "Failed to request notification permissions. Please try again later.");
+      } else {
+        print("Error requesting permission: $e");
+        _showErrorMessage(
+            "An error occurred while requesting notification permissions.");
+      }
     }
   }
 
   Future<void> _getToken() async {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
-      String? token = await messaging.getToken();
+      String? token = await messaging
+          .getToken()
+          .timeout(const Duration(seconds: 10)); // Set timeout duration
       print("FCM Token: $token");
 
       if (token != null) {
@@ -177,8 +210,35 @@ class _MyAppState extends State<MyApp> {
         await prefs.setString('fcmToken', token);
       }
     } catch (e) {
-      print("Error fetching token: $e");
+      if (e is TimeoutException) {
+        print("Token fetch timed out");
+        _showErrorMessage("Failed to fetch FCM token. Please try again later.");
+      } else {
+        print("Error fetching token: $e");
+        _showErrorMessage("An error occurred while fetching the FCM token.");
+      }
     }
+  }
+
+  void _showErrorMessage(String message) {
+    // You can use a dialog or a snackbar to show the error message
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Error"),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<String?> getStoredFCMToken() async {

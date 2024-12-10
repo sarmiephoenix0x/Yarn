@@ -89,6 +89,9 @@ class ForgotPasswordState extends State<ForgotPassword>
     }
 
     if (response.statusCode == 200) {
+      setState(() {
+        isLoading = false;
+      });
       Navigator.push(
         context,
         MaterialPageRoute(
