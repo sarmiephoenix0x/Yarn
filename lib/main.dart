@@ -13,6 +13,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:yarn/intro_page.dart';
 import 'package:yarn/main_app.dart';
 import 'chat_provider.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -74,6 +75,7 @@ Future<void> _showNotification(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await checkBatteryOptimization();
   await Firebase.initializeApp();
 
   // Initialize local notifications plugin
@@ -101,6 +103,18 @@ void main() async {
   runApp(const MyApp());
 }
 
+Future<void> checkBatteryOptimization() async {
+  try {
+    final isIgnoring =
+        await FlutterForegroundTask.isIgnoringBatteryOptimizations;
+    if (!isIgnoring) {
+      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    }
+  } catch (e) {
+    print('Error checking/requesting battery optimizations: $e');
+  }
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -110,7 +124,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isLoggedIn = false;
-  bool isLoading = true; // Loading state
+  bool isLoading = false; // Loading state
   bool isDarkMode = false; // Dark mode state
   String? fcmToken;
 

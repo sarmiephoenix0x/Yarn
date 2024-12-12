@@ -30,8 +30,12 @@ class ChatSignalR {
             ))
         .build();
 
-    hubConnection.onclose((error) => print('Connection Closed: $error'));
-    await hubConnection.start(); // Ensure start is awaited
+    hubConnection.onclose((error) {
+      print('Connection Closed: $error');
+    });
+
+    await hubConnection.start();
+    print('SignalR connection established');
   }
 
   void onMessageReceived(Function(int messageId) onMessage) {
@@ -161,6 +165,10 @@ class ChatService {
       headers: {"Authorization": dio.options.headers["Authorization"]!},
     );
 
+    print("Fetching new message with ID: $messageId");
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -250,10 +258,16 @@ class _ChatPageState extends State<ChatPage> {
     try {
       await chatSignalR.initSignalR(); // Wait for SignalR initialization
       chatSignalR.onMessageReceived((messageId) async {
-        final newMessage = await chatService.fetchNewMessage(messageId);
-        setState(() {
-          messages.add(newMessage);
-        });
+        print('Message received with ID: $messageId');
+        try {
+          final newMessage = await chatService.fetchNewMessage(messageId);
+          print('New message fetched: $newMessage');
+          setState(() {
+            messages.add(newMessage);
+          });
+        } catch (e) {
+          print('Error fetching new message: $e');
+        }
       });
 
       // Load messages on init (for demo, fetch by a specific chatId, e.g., 1)
