@@ -413,136 +413,136 @@ class _SignUpPageState extends State<SignUpPage> with WidgetsBindingObserver {
                                 ),
                         ),
                       ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      const Center(
-                        child: Text(
-                          'or continue with',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return const Color(0xFFEEF1F4);
-                                  },
-                                ),
-                                foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return Colors.grey;
-                                  },
-                                ),
-                                elevation: WidgetStateProperty.all<double>(0),
-                                shape: WidgetStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Image.asset(
-                                    'images/FacebookIcon.png',
-                                    height: 25,
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.03),
-                                  const Text(
-                                    'Facebook',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return const Color(0xFFEEF1F4);
-                                  },
-                                ),
-                                foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return Colors.grey;
-                                  },
-                                ),
-                                elevation: WidgetStateProperty.all<double>(0),
-                                shape: WidgetStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Image.asset(
-                                    'images/GoogleIcon.png',
-                                    height: 25,
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.03),
-                                  const Text(
-                                    'Google',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      // SizedBox(
+                      //     height: MediaQuery.of(context).size.height * 0.02),
+                      // const Center(
+                      //   child: Text(
+                      //     'or continue with',
+                      //     style: TextStyle(
+                      //       fontFamily: 'Poppins',
+                      //       fontSize: 13.0,
+                      //       fontWeight: FontWeight.bold,
+                      //       color: Colors.grey,
+                      //     ),
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //     height: MediaQuery.of(context).size.height * 0.02),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.center,
+                      //   children: [
+                      //     Container(
+                      //       height: (60 / MediaQuery.of(context).size.height) *
+                      //           MediaQuery.of(context).size.height,
+                      //       padding:
+                      //           const EdgeInsets.symmetric(horizontal: 20.0),
+                      //       child: ElevatedButton(
+                      //         onPressed: () {},
+                      //         style: ButtonStyle(
+                      //           backgroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return const Color(0xFFEEF1F4);
+                      //             },
+                      //           ),
+                      //           foregroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return Colors.grey;
+                      //             },
+                      //           ),
+                      //           elevation: WidgetStateProperty.all<double>(0),
+                      //           shape: WidgetStateProperty.all<
+                      //               RoundedRectangleBorder>(
+                      //             const RoundedRectangleBorder(
+                      //               borderRadius:
+                      //                   BorderRadius.all(Radius.circular(15)),
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         child: Row(
+                      //           children: [
+                      //             Image.asset(
+                      //               'images/FacebookIcon.png',
+                      //               height: 25,
+                      //             ),
+                      //             SizedBox(
+                      //                 width: MediaQuery.of(context).size.width *
+                      //                     0.03),
+                      //             const Text(
+                      //               'Facebook',
+                      //               style: TextStyle(
+                      //                 fontFamily: 'Poppins',
+                      //                 fontWeight: FontWeight.bold,
+                      //               ),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     Container(
+                      //       height: (60 / MediaQuery.of(context).size.height) *
+                      //           MediaQuery.of(context).size.height,
+                      //       padding:
+                      //           const EdgeInsets.symmetric(horizontal: 20.0),
+                      //       child: ElevatedButton(
+                      //         onPressed: () {},
+                      //         style: ButtonStyle(
+                      //           backgroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return const Color(0xFFEEF1F4);
+                      //             },
+                      //           ),
+                      //           foregroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return Colors.grey;
+                      //             },
+                      //           ),
+                      //           elevation: WidgetStateProperty.all<double>(0),
+                      //           shape: WidgetStateProperty.all<
+                      //               RoundedRectangleBorder>(
+                      //             const RoundedRectangleBorder(
+                      //               borderRadius:
+                      //                   BorderRadius.all(Radius.circular(15)),
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         child: Row(
+                      //           children: [
+                      //             Image.asset(
+                      //               'images/GoogleIcon.png',
+                      //               height: 25,
+                      //             ),
+                      //             SizedBox(
+                      //                 width: MediaQuery.of(context).size.width *
+                      //                     0.03),
+                      //             const Text(
+                      //               'Google',
+                      //               style: TextStyle(
+                      //                 fontFamily: 'Poppins',
+                      //                 fontWeight: FontWeight.bold,
+                      //               ),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
                       Row(

@@ -139,6 +139,10 @@ class _MyAppState extends State<MyApp> {
       isLoading = true; // Start loading
     });
 
+    const storage = FlutterSecureStorage();
+    final accessToken = await storage.read(key: 'yarnAccessToken');
+    isLoggedIn = accessToken != null;
+
     // Check network connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
@@ -148,10 +152,6 @@ class _MyAppState extends State<MyApp> {
       });
       return;
     }
-
-    const storage = FlutterSecureStorage();
-    final accessToken = await storage.read(key: 'yarnAccessToken');
-    isLoggedIn = accessToken != null;
 
     try {
       // Request permission and get token

@@ -834,7 +834,7 @@ class _UserProfileState extends State<UserProfile>
                                             userName ?? 'Unknown User',
                                         profilePic: _profileImage,
                                         senderId: widget.senderId,
-                                      ), // Pass the receiverId
+                                      ),
                                     ),
                                   );
                                 }

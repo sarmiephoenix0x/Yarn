@@ -11,6 +11,9 @@ import 'package:yarn/sign_up_page.dart';
 
 import 'forgot_password_page.dart';
 import 'package:yarn/main_app.dart';
+import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignInPage extends StatefulWidget {
   final Function(bool) onToggleDarkMode;
@@ -39,6 +42,7 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
   bool isLoading = false;
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool isGoogleLoading = false;
 
   @override
   void initState() {
@@ -48,6 +52,116 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
 
   Future<void> _initializePrefs() async {
     prefs = await SharedPreferences.getInstance();
+  }
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+      'profile',
+      'https://www.googleapis.com/auth/user.gender.read',
+      'https://www.googleapis.com/auth/user.birthday.read',
+    ],
+  );
+
+  Future<void> _handleSignIn(BuildContext context) async {
+    try {
+      print('Attempting Google Sign-In...');
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        setState(() {
+          isGoogleLoading = true;
+        });
+        print('Google Sign-In successful. Retrieving authentication token...');
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        String authToken = googleAuth.idToken!;
+        print('Authentication Token: $authToken');
+
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+        final String? fullName = googleUser.displayName;
+        final String? email = googleUser.email;
+
+        final List<String>? nameParts = fullName?.split(' ');
+        final String? firstName = nameParts?.first;
+        final String surname = nameParts!.length > 1 ? nameParts.last : '';
+      } else {
+        setState(() {
+          isGoogleLoading = false;
+        });
+        print('Google Sign-In canceled.');
+      }
+    } on PlatformException catch (e) {
+      print('PlatformException: $e');
+      if (e.code == 'sign_in_required') {
+        _promptUserForPermission(e, context);
+      } else {
+        _showSignInErrorDialog(e, context);
+      }
+    } catch (error) {
+      setState(() {
+        isGoogleLoading = false;
+      });
+      print('Error during Google Sign-In: $error');
+      _showSignInErrorDialog(error, context);
+    }
+  }
+
+  void _promptUserForPermission(PlatformException e, BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Permission Required'),
+        content: Text('Please grant permission to continue: ${e.message}'),
+        actions: [
+          TextButton(
+            child: const Text('Grant Permission'),
+            onPressed: () {
+              Navigator.pop(context);
+              _handlePermissionGranted(context);
+            },
+          ),
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.pop(context);
+              _handlePermissionDenied(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handlePermissionGranted(BuildContext context) {
+    print('User granted permission.');
+  }
+
+  void _handlePermissionDenied(BuildContext context) {
+    print('User denied permission.');
+  }
+
+  void _showSignInErrorDialog(Object error, BuildContext context) {
+    setState(() {
+      isGoogleLoading = false;
+    });
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign-in Error'),
+        content: Text('Failed to sign in: $error'),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submitForm() async {
@@ -483,136 +597,138 @@ class _SignInPageState extends State<SignInPage> with WidgetsBindingObserver {
                                 ),
                         ),
                       ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      const Center(
-                        child: Text(
-                          'or continue with',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.02),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return const Color(0xFFEEF1F4);
-                                  },
-                                ),
-                                foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return Colors.grey;
-                                  },
-                                ),
-                                elevation: WidgetStateProperty.all<double>(0),
-                                shape: WidgetStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Image.asset(
-                                    'images/FacebookIcon.png',
-                                    height: 25,
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.03),
-                                  const Text(
-                                    'Facebook',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: (60 / MediaQuery.of(context).size.height) *
-                                MediaQuery.of(context).size.height,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return const Color(0xFFEEF1F4);
-                                  },
-                                ),
-                                foregroundColor:
-                                    WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return Colors.white;
-                                    }
-                                    return Colors.grey;
-                                  },
-                                ),
-                                elevation: WidgetStateProperty.all<double>(0),
-                                shape: WidgetStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Image.asset(
-                                    'images/GoogleIcon.png',
-                                    height: 25,
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.03),
-                                  const Text(
-                                    'Google',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      // SizedBox(
+                      //     height: MediaQuery.of(context).size.height * 0.02),
+                      // const Center(
+                      //   child: Text(
+                      //     'or continue with',
+                      //     style: TextStyle(
+                      //       fontFamily: 'Poppins',
+                      //       fontSize: 13.0,
+                      //       fontWeight: FontWeight.bold,
+                      //       color: Colors.grey,
+                      //     ),
+                      //   ),
+                      // ),
+                      // SizedBox(
+                      //     height: MediaQuery.of(context).size.height * 0.02),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.center,
+                      //   children: [
+                      //     Container(
+                      //       height: (60 / MediaQuery.of(context).size.height) *
+                      //           MediaQuery.of(context).size.height,
+                      //       padding:
+                      //           const EdgeInsets.symmetric(horizontal: 20.0),
+                      //       child: ElevatedButton(
+                      //         onPressed: () {},
+                      //         style: ButtonStyle(
+                      //           backgroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return const Color(0xFFEEF1F4);
+                      //             },
+                      //           ),
+                      //           foregroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return Colors.grey;
+                      //             },
+                      //           ),
+                      //           elevation: WidgetStateProperty.all<double>(0),
+                      //           shape: WidgetStateProperty.all<
+                      //               RoundedRectangleBorder>(
+                      //             const RoundedRectangleBorder(
+                      //               borderRadius:
+                      //                   BorderRadius.all(Radius.circular(15)),
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         child: Row(
+                      //           children: [
+                      //             Image.asset(
+                      //               'images/FacebookIcon.png',
+                      //               height: 25,
+                      //             ),
+                      //             SizedBox(
+                      //                 width: MediaQuery.of(context).size.width *
+                      //                     0.03),
+                      //             const Text(
+                      //               'Facebook',
+                      //               style: TextStyle(
+                      //                 fontFamily: 'Poppins',
+                      //                 fontWeight: FontWeight.bold,
+                      //               ),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     Container(
+                      //       height: (60 / MediaQuery.of(context).size.height) *
+                      //           MediaQuery.of(context).size.height,
+                      //       padding:
+                      //           const EdgeInsets.symmetric(horizontal: 20.0),
+                      //       child: ElevatedButton(
+                      //         onPressed: () {
+                      //           //_handleSignIn(context);
+                      //         },
+                      //         style: ButtonStyle(
+                      //           backgroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return const Color(0xFFEEF1F4);
+                      //             },
+                      //           ),
+                      //           foregroundColor:
+                      //               WidgetStateProperty.resolveWith<Color>(
+                      //             (Set<WidgetState> states) {
+                      //               if (states.contains(WidgetState.pressed)) {
+                      //                 return Colors.white;
+                      //               }
+                      //               return Colors.grey;
+                      //             },
+                      //           ),
+                      //           elevation: WidgetStateProperty.all<double>(0),
+                      //           shape: WidgetStateProperty.all<
+                      //               RoundedRectangleBorder>(
+                      //             const RoundedRectangleBorder(
+                      //               borderRadius:
+                      //                   BorderRadius.all(Radius.circular(15)),
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         child: Row(
+                      //           children: [
+                      //             Image.asset(
+                      //               'images/GoogleIcon.png',
+                      //               height: 25,
+                      //             ),
+                      //             SizedBox(
+                      //                 width: MediaQuery.of(context).size.width *
+                      //                     0.03),
+                      //             const Text(
+                      //               'Google',
+                      //               style: TextStyle(
+                      //                 fontFamily: 'Poppins',
+                      //                 fontWeight: FontWeight.bold,
+                      //               ),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02),
                       Row(
