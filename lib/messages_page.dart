@@ -44,7 +44,7 @@ class _MeassagesPageState extends State<MeassagesPage> {
     final accessToken = await storage.read(key: 'yarnAccessToken');
     final currentUserId =
         widget.senderId.toString(); // Get the current user's ID
-    final url = 'https://yarnapi-n2dw.onrender.com/api/chats';
+    final url = 'https://yarnapi-fuu0.onrender.com/api/chats';
 
     try {
       if (!isConnected) throw Exception("No internet connection");

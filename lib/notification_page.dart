@@ -31,7 +31,7 @@ class NotificationPageState extends State<NotificationPage> {
 
   Future<List<Map<String, dynamic>>> fetchNotifications() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    const url = 'https://yarnapi-n2dw.onrender.com/api/users/notifications';
+    const url = 'https://yarnapi-fuu0.onrender.com/api/users/notifications';
     final response = await http.get(Uri.parse(url), headers: {
       'Authorization': 'Bearer $accessToken',
     });

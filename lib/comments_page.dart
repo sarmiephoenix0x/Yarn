@@ -40,7 +40,7 @@ class _CommentsPageState extends State<CommentsPage> {
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-n2dw.onrender.com/api/posts/${widget.postId}/comments';
+        'https://yarnapi-fuu0.onrender.com/api/posts/${widget.postId}/comments';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -92,7 +92,7 @@ class _CommentsPageState extends State<CommentsPage> {
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final uri = Uri.parse(
-        'https://yarnapi-n2dw.onrender.com/api/posts/${widget.postId}/comments');
+        'https://yarnapi-fuu0.onrender.com/api/posts/${widget.postId}/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");

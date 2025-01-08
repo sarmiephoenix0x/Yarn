@@ -47,7 +47,7 @@ class CreateCommunityState extends State<CreateCommunity> {
 
     // Prepare the request
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final uri = Uri.parse('https://yarnapi-n2dw.onrender.com/api/communities/');
+    final uri = Uri.parse('https://yarnapi-fuu0.onrender.com/api/communities/');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $accessToken'
       ..fields['name'] = name

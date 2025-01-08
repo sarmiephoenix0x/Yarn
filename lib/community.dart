@@ -13,7 +13,7 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  final String baseUrl = 'https://yarnapi-n2dw.onrender.com/api/communities/';
+  final String baseUrl = 'https://yarnapi-fuu0.onrender.com/api/communities/';
   final storage = const FlutterSecureStorage();
   Map<int, bool> _isFollowingMap = {};
 

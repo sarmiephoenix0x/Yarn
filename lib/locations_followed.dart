@@ -35,7 +35,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-n2dw.onrender.com/api/locations/followed/${widget.senderId}';
+        'https://yarnapi-fuu0.onrender.com/api/locations/followed/${widget.senderId}';
 
     try {
       final response = await http.get(
@@ -169,7 +169,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
     Future<void> followLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/follow';
+          'https://yarnapi-fuu0.onrender.com/api/locations/$locationId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -203,7 +203,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
     Future<void> unfollowLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/unfollow';
+          'https://yarnapi-fuu0.onrender.com/api/locations/$locationId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),

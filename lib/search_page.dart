@@ -59,7 +59,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
     try {
       final response = await http
-          .get(Uri.parse('https://yarnapi-n2dw.onrender.com/api/locations'));
+          .get(Uri.parse('https://yarnapi-fuu0.onrender.com/api/locations'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -98,7 +98,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
 
-      final url = 'https://yarnapi-n2dw.onrender.com/api/pages';
+      final url = 'https://yarnapi-fuu0.onrender.com/api/pages';
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -783,7 +783,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     isFollowing = isFollowingMap[pageId.toString()] ?? false;
     Future<void> followUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi-n2dw.onrender.com/api/pages/$pageId/follow';
+      final url = 'https://yarnapi-fuu0.onrender.com/api/pages/$pageId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -817,7 +817,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     Future<void> unfollowUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/pages/$pageId/unfollow';
+          'https://yarnapi-fuu0.onrender.com/api/pages/$pageId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -981,7 +981,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     Future<void> followLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/follow';
+          'https://yarnapi-fuu0.onrender.com/api/locations/$locationId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -1015,7 +1015,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     Future<void> unfollowLocation() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/locations/$locationId/unfollow';
+          'https://yarnapi-fuu0.onrender.com/api/locations/$locationId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),

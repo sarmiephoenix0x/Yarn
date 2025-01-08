@@ -101,7 +101,7 @@ class _UserProfileState extends State<UserProfile>
 
   Future<void> fetchUserProfile() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/users/${widget.userId}';
+    final url = 'https://yarnapi-fuu0.onrender.com/api/users/${widget.userId}';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -164,7 +164,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/user-timeline/${widget.userId}/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -244,7 +244,7 @@ class _UserProfileState extends State<UserProfile>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/user-community/${widget.userId}/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -340,7 +340,7 @@ class _UserProfileState extends State<UserProfile>
   Future<void> followUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-n2dw.onrender.com/api/users/follow/${widget.userId}';
+        'https://yarnapi-fuu0.onrender.com/api/users/follow/${widget.userId}';
     try {
       final response = await http.patch(
         Uri.parse(url),
@@ -374,7 +374,7 @@ class _UserProfileState extends State<UserProfile>
   Future<void> unfollowUser() async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-n2dw.onrender.com/api/users/unfollow/${widget.userId}';
+        'https://yarnapi-fuu0.onrender.com/api/users/unfollow/${widget.userId}';
     try {
       final response = await http.patch(
         Uri.parse(url),
@@ -419,7 +419,7 @@ class _UserProfileState extends State<UserProfile>
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final uri = Uri.parse(
-        'https://yarnapi-n2dw.onrender.com/api/posts/$postId/comments');
+        'https://yarnapi-fuu0.onrender.com/api/posts/$postId/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -1140,7 +1140,7 @@ class _UserProfileState extends State<UserProfile>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
+          'https://yarnapi-fuu0.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       bool currentLikedState = _isLikedNotifiers[post['postId']]!.value;
 
@@ -1585,7 +1585,7 @@ class _UserProfileState extends State<UserProfile>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
+          'https://yarnapi-fuu0.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       bool currentLikedState = _isLikedNotifiers[post['postId']]!.value;
 

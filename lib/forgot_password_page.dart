@@ -71,7 +71,7 @@ class ForgotPasswordState extends State<ForgotPassword>
 
     // Send the POST request
     final response = await http.post(
-      Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/forgot-password'),
+      Uri.parse('https://yarnapi-fuu0.onrender.com/api/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': emailController.text.trim()}),
     );

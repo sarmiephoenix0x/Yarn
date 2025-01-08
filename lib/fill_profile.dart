@@ -251,7 +251,7 @@ class _FillProfileState extends State<FillProfile> with WidgetsBindingObserver {
       print('Stored FCM Token: $storedFCMToken');
 
       final url =
-          Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/sign-up');
+          Uri.parse('https://yarnapi-fuu0.onrender.com/api/auth/sign-up');
       final request = http.MultipartRequest('POST', url)
         ..fields['username'] = widget.username
         ..fields['password'] = widget.password

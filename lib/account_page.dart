@@ -226,7 +226,7 @@ class _AccountPageState extends State<AccountPage>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/my-timeline/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/my-timeline/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -309,7 +309,7 @@ class _AccountPageState extends State<AccountPage>
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/my-community/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/my-community/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         setState(() {
@@ -405,7 +405,7 @@ class _AccountPageState extends State<AccountPage>
   Future<void> fetchUserProfile() async {
     userId = await getUserIdFromPrefs();
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
-    final url = 'https://yarnapi-n2dw.onrender.com/api/users/$userId';
+    final url = 'https://yarnapi-fuu0.onrender.com/api/users/$userId';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -544,7 +544,7 @@ class _AccountPageState extends State<AccountPage>
 
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final uri = Uri.parse(
-        'https://yarnapi-n2dw.onrender.com/api/posts/$postId/comments');
+        'https://yarnapi-fuu0.onrender.com/api/posts/$postId/comments');
     // Log the comment and URL for debugging
     print("Submitting Comment:");
     print("Comment: $comment");
@@ -1609,7 +1609,7 @@ class _AccountPageState extends State<AccountPage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
+          'https://yarnapi-fuu0.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       bool currentLikedState = _isLikedNotifiers[post['postId']]!.value;
 
@@ -2072,7 +2072,7 @@ class _AccountPageState extends State<AccountPage>
     Future<void> _toggleLike() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final uri = Uri.parse(
-          'https://yarnapi-n2dw.onrender.com/api/posts/toggle-like/${post['postId']}');
+          'https://yarnapi-fuu0.onrender.com/api/posts/toggle-like/${post['postId']}');
 
       bool currentLikedState = _isLikedNotifiers[post['postId']]!.value;
 

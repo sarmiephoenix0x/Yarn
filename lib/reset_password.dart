@@ -50,7 +50,7 @@ class ResetPasswordState extends State<ResetPassword>
     try {
       // Send the POST request
       final response = await http.post(
-        Uri.parse('https://yarnapi-n2dw.onrender.com/auth/reset-password'),
+        Uri.parse('https://yarnapi-fuu0.onrender.com/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': widget.userId,

@@ -36,7 +36,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
 
   Future<void> _startSignalRConnection() async {
     _hubConnection = HubConnectionBuilder()
-        .withUrl("https://yarnapi-n2dw.onrender.com/postHub")
+        .withUrl("https://yarnapi-fuu0.onrender.com/postHub")
         .build();
 
     _hubConnection?.onclose((error) {

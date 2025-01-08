@@ -80,7 +80,7 @@ class SignUpOTPPageState extends State<SignUpOTPPage> {
     try {
       // Send the POST request
       final response = await http.post(
-        Uri.parse('https://yarnapi-n2dw.onrender.com/api/auth/otp-submit'),
+        Uri.parse('https://yarnapi-fuu0.onrender.com/api/auth/otp-submit'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': widget.email, 'otp': otpCode}),
       );

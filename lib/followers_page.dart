@@ -36,7 +36,7 @@ class _FollowersPageState extends State<FollowersPage> {
     });
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-n2dw.onrender.com/api/users/followers/${widget.senderId}';
+        'https://yarnapi-fuu0.onrender.com/api/users/followers/${widget.senderId}';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -141,7 +141,7 @@ class _FollowersPageState extends State<FollowersPage> {
     isFollowing = isFollowingMap[userId.toString()] ?? false;
     Future<void> followUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
-      final url = 'https://yarnapi-n2dw.onrender.com/api/pages/$userId/follow';
+      final url = 'https://yarnapi-fuu0.onrender.com/api/pages/$userId/follow';
       try {
         final response = await http.patch(
           Uri.parse(url),
@@ -175,7 +175,7 @@ class _FollowersPageState extends State<FollowersPage> {
     Future<void> unfollowUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url =
-          'https://yarnapi-n2dw.onrender.com/api/pages/$userId/unfollow';
+          'https://yarnapi-fuu0.onrender.com/api/pages/$userId/unfollow';
       try {
         final response = await http.patch(
           Uri.parse(url),

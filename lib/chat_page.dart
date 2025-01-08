@@ -16,7 +16,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 
 class ChatSignalR {
-  final String serverUrl = "https://yarnapi-n2dw.onrender.com/chatHub";
+  final String serverUrl = "https://yarnapi-fuu0.onrender.com/chatHub";
   late HubConnection hubConnection;
   final storage = const FlutterSecureStorage();
 
@@ -48,7 +48,7 @@ class ChatSignalR {
 // Main Chat Service class for sending/receiving messages and fetching data
 class ChatService {
   final String apiUrl =
-      "https://yarnapi-n2dw.onrender.com/api"; // Replace with your API URL
+      "https://yarnapi-fuu0.onrender.com/api"; // Replace with your API URL
   final Dio dio = Dio();
   final storage = const FlutterSecureStorage();
 
