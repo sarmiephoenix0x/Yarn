@@ -7,15 +7,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:yarn/intro_page.dart';
-import 'package:yarn/main_app.dart';
-import 'chat_provider.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+import 'presentation/controllers/analytics_controller.dart';
+import 'presentation/controllers/community_controller.dart';
+import 'presentation/controllers/create_community_controller.dart';
+import 'presentation/controllers/create_page_controller.dart';
+import 'presentation/controllers/main_app_controller.dart';
+import 'presentation/controllers/navigation_controller.dart';
+import 'presentation/controllers/notification_controller.dart';
+import 'presentation/controllers/notification_page_controller.dart';
+import 'presentation/controllers/privacy_controller.dart';
+import 'presentation/controllers/select_country_controller.dart';
+import 'presentation/controllers/successful_psw_reset_page_controller.dart';
+import 'presentation/controllers/theme_controller.dart';
+import 'presentation/screens/intro_page/intro_page.dart';
+import 'presentation/screens/main_app/main_app.dart';
+
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // Initialize the local notification plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -260,14 +271,6 @@ class _MyAppState extends State<MyApp> {
     return prefs.getString('fcmToken');
   }
 
-  void toggleDarkMode(bool isDark) async {
-    setState(() {
-      isDarkMode = isDark;
-    });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', isDark);
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -280,43 +283,40 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-    return ChangeNotifierProvider(
-      create: (context) => ChatProvider(),
-      child: MaterialApp(
-        navigatorObservers: [routeObserver],
-        theme: isDarkMode ? darkTheme : lightTheme,
-        home: isLoggedIn
-            ? MainApp(onToggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode)
-            : IntroPage(
-                onToggleDarkMode: toggleDarkMode,
-                isDarkMode: isDarkMode,
-                fcmToken: fcmToken, // Pass the token here
-              ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AnalyticsController()),
+        ChangeNotifierProvider(create: (_) => CommunityController()),
+        ChangeNotifierProvider(create: (_) => CreateCommunityController()),
+        ChangeNotifierProvider(create: (_) => CreatePageController()),
+        ChangeNotifierProvider(create: (_) => MainAppController()),
+        ChangeNotifierProvider(create: (_) => NotificationPageController()),
+        ChangeNotifierProvider(create: (_) => PrivacyController()),
+        ChangeNotifierProvider(create: (_) => SelectCountryController()),
+        ChangeNotifierProvider(
+            create: (_) => SuccessfulPswResetPageController()),
+        ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => NavigationController()),
+        ChangeNotifierProvider(create: (_) => NotificationController()),
+      ],
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, child) {
+          return MaterialApp(
+            navigatorObservers: [routeObserver],
+            themeMode:
+                themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: isLoggedIn
+                ? MainApp(
+                    onToggleDarkMode: themeController.toggleDarkMode,
+                    isDarkMode: themeController.isDarkMode)
+                : IntroPage(
+                    onToggleDarkMode: themeController.toggleDarkMode,
+                    isDarkMode: themeController.isDarkMode,
+                    fcmToken: fcmToken, // Pass the token here
+                  ),
+          );
+        },
       ),
     );
   }
 }
-
-ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light,
-  primaryColor: Colors.black,
-  iconTheme: const IconThemeData(color: Colors.black),
-  textTheme: TextTheme(
-    bodyLarge: const TextStyle(color: Colors.black),
-    bodyMedium: const TextStyle(color: Colors.black),
-    titleLarge: const TextStyle(color: Colors.black),
-    labelSmall: TextStyle(color: Colors.grey[700]),
-  ),
-);
-
-ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-  primaryColor: Colors.white,
-  iconTheme: const IconThemeData(color: Colors.white),
-  textTheme: TextTheme(
-    bodyLarge: const TextStyle(color: Colors.white),
-    bodyMedium: const TextStyle(color: Colors.white),
-    titleLarge: const TextStyle(color: Colors.white),
-    labelSmall: TextStyle(color: Colors.grey[400]),
-  ),
-);
