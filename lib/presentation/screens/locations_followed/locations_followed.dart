@@ -99,12 +99,12 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
                               final locationData = locationsFollowedController
                                   .locationsList[index];
                               return LocationWidget(
-                                img: locationData['profilepictureurl'] != null
-                                    ? locationData['profilepictureurl'] +
-                                        '/download?project=66e4476900275deffed4'
-                                    : '',
+                                // img: locationData['profilepictureurl'] != null
+                                //     ? locationData['profilepictureurl'] +
+                                //         '/download?project=66e4476900275deffed4'
+                                //     : '',
                                 name: locationData['name'],
-                                isFollowing: locationData['isFollowing'],
+                                isFollowing: false,
                                 locationId: locationData['id'],
                                 senderId: widget.senderId,
                                 isFollowingMap:

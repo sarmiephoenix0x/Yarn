@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../presentation/screens/user_profile/user_profile.dart';
 
 class LocationWidget extends StatelessWidget {
-  final String img;
+  // final String img;
   final String name;
   bool isFollowing;
   final int locationId;
@@ -18,7 +18,7 @@ class LocationWidget extends StatelessWidget {
 
   LocationWidget({
     super.key,
-    required this.img,
+    // required this.img,
     required this.name,
     required this.isFollowing,
     required this.locationId,

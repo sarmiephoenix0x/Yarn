@@ -91,6 +91,11 @@ class AccountPageController extends ChangeNotifier {
   ScrollController get timelineScrollController => _timelineScrollController;
   ScrollController get communityScrollController => _communityScrollController;
 
+  void resetHasFetchedData(bool value) {
+    _hasFetchedData = value;
+    notifyListeners();
+  }
+
   void initialize() {
     startSignalRConnection();
     _timelineScrollController.addListener(() {

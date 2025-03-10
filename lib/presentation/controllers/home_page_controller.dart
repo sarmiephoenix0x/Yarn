@@ -75,6 +75,11 @@ class HomePageController extends ChangeNotifier {
 
   FocusNode get searchFocusNode => _searchFocusNode;
 
+  void resetHasFetchedData(bool value) {
+    _hasFetchedData = value;
+    notifyListeners();
+  }
+
   void initialize() {
     _timelineScrollController.addListener(() {
       if (_timelineScrollController.position.pixels >=

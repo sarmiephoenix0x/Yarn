@@ -85,6 +85,11 @@ class UserProfileController extends ChangeNotifier {
   ScrollController get timelineScrollController => _timelineScrollController;
   ScrollController get communityScrollController => _communityScrollController;
 
+  void resetHasFetchedData(bool value) {
+    _hasFetchedData = value;
+    notifyListeners();
+  }
+
   void initialize() {
     _timelineScrollController.addListener(() {
       if (_timelineScrollController.position.pixels >=

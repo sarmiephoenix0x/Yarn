@@ -4,7 +4,8 @@ import '../../../presentation/screens/create_community/create_community.dart';
 import '../../../presentation/screens/create_page/create_page.dart';
 import '../../../presentation/screens/create_post/create_post.dart';
 
-void showCreateOptions(BuildContext context, bool hasFetchedData) {
+void showCreateOptions(
+    BuildContext context, void Function(bool) resetHasFetchedData) {
   showModalBottomSheet(
     context: context,
     builder: (BuildContext context) {
@@ -14,7 +15,7 @@ void showCreateOptions(BuildContext context, bool hasFetchedData) {
             leading: Icon(Icons.post_add),
             title: Text('Create Yarn'),
             onTap: () {
-              hasFetchedData = false;
+              resetHasFetchedData(false);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -28,7 +29,7 @@ void showCreateOptions(BuildContext context, bool hasFetchedData) {
             leading: Icon(Icons.pageview),
             title: Text('Create Page'),
             onTap: () {
-              hasFetchedData = false;
+              resetHasFetchedData(false);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -42,7 +43,7 @@ void showCreateOptions(BuildContext context, bool hasFetchedData) {
             leading: Icon(Icons.group_add),
             title: Text('Create Community'),
             onTap: () {
-              hasFetchedData = false;
+              resetHasFetchedData(false);
               Navigator.push(
                 context,
                 MaterialPageRoute(

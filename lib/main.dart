@@ -302,6 +302,7 @@ class _MyAppState extends State<MyApp> {
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             navigatorObservers: [routeObserver],
             themeMode:
                 themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,

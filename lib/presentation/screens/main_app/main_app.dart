@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/widgets/custom_back_handler.dart';
 import '../../../core/widgets/custom_bottom_nav.dart';
+import '../../controllers/home_page_controller.dart';
+import '../../controllers/account_page_controller.dart';
 import '../../controllers/main_app_controller.dart';
 import '../../controllers/navigation_controller.dart';
 import '../../controllers/notification_controller.dart';
@@ -39,11 +41,19 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
             index: navController
                 .selectedIndex, // Keep the state of the selected index
             children: [
-              HomePage(
-                selectedIndex: navController.selectedIndex,
-                onToggleDarkMode: widget.onToggleDarkMode,
-                isDarkMode: widget.isDarkMode,
-                hubConnection: mainAppController.hubConnection,
+              ChangeNotifierProvider(
+                create: (context) => AccountPageController(
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode,
+                  hubConnection: mainAppController.hubConnection,
+                  vsync: this, // Pass vsync correctly
+                ),
+                child: HomePage(
+                  selectedIndex: navController.selectedIndex,
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode,
+                  hubConnection: mainAppController.hubConnection,
+                ),
               ),
               SearchPage(
                 selectedIndex: navController.selectedIndex,
@@ -54,11 +64,19 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
               ExplorePage(
                 selectedIndex: navController.selectedIndex,
               ),
-              AccountPage(
-                selectedIndex: navController.selectedIndex,
-                onToggleDarkMode: widget.onToggleDarkMode,
-                isDarkMode: widget.isDarkMode,
-                hubConnection: mainAppController.hubConnection,
+              ChangeNotifierProvider(
+                create: (context) => AccountPageController(
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode,
+                  hubConnection: mainAppController.hubConnection,
+                  vsync: this, // Pass vsync correctly
+                ),
+                child: AccountPage(
+                  selectedIndex: navController.selectedIndex,
+                  onToggleDarkMode: widget.onToggleDarkMode,
+                  isDarkMode: widget.isDarkMode,
+                  hubConnection: mainAppController.hubConnection,
+                ),
               ),
             ],
           ),

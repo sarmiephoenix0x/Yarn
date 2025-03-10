@@ -1,11 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/widgets/location_widget.dart';
 import '../../../core/widgets/tab.dart';
@@ -108,7 +102,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     child: TabBarView(
                       controller: searchPageController.explorerTabController,
                       children: [
-                        searchPageController.isLoading2
+                        searchPageController.isLoading
                             ? const Center(
                                 child: CircularProgressIndicator(
                                     color: Color(0xFF500450)),
@@ -200,16 +194,15 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                                         .filteredLocationsList[
                                                     index];
                                             return LocationWidget(
-                                              img: locationData[
-                                                          'profilepictureurl'] !=
-                                                      null
-                                                  ? locationData[
-                                                          'profilepictureurl'] +
-                                                      '/download?project=66e4476900275deffed4'
-                                                  : '',
+                                              // img: locationData[
+                                              //             'profilepictureurl'] !=
+                                              //         null
+                                              //     ? locationData[
+                                              //             'profilepictureurl'] +
+                                              //         '/download?project=66e4476900275deffed4'
+                                              //     : '',
                                               name: locationData['name'],
-                                              isFollowing:
-                                                  locationData['isFollowing'],
+                                              isFollowing: false,
                                               locationId: locationData['id'],
                                               senderId:
                                                   searchPageController.userId!,
