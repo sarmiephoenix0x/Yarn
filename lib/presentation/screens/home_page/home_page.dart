@@ -30,16 +30,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, RouteAware {
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
 
-    final ModalRoute? modalRoute = ModalRoute.of(context);
-    if (modalRoute is PageRoute) {
-      Provider.of<HomePageController>(context).didChangeDependenciesCall();
-      routeObserver.subscribe(this, modalRoute);
-    }
-  }
+  //   final ModalRoute? modalRoute = ModalRoute.of(context);
+  //   if (modalRoute is PageRoute) {
+  //     Provider.of<HomePageController>(context).didChangeDependenciesCall();
+  //     routeObserver.subscribe(this, modalRoute);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

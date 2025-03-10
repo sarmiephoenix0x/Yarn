@@ -42,7 +42,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                 .selectedIndex, // Keep the state of the selected index
             children: [
               ChangeNotifierProvider(
-                create: (context) => AccountPageController(
+                create: (context) => HomePageController(
                   onToggleDarkMode: widget.onToggleDarkMode,
                   isDarkMode: widget.isDarkMode,
                   hubConnection: mainAppController.hubConnection,

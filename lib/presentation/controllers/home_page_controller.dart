@@ -77,7 +77,6 @@ class HomePageController extends ChangeNotifier {
 
   void resetHasFetchedData(bool value) {
     _hasFetchedData = value;
-    notifyListeners();
   }
 
   void initialize() {

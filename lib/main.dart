@@ -22,8 +22,10 @@ import 'presentation/controllers/privacy_controller.dart';
 import 'presentation/controllers/select_country_controller.dart';
 import 'presentation/controllers/successful_psw_reset_page_controller.dart';
 import 'presentation/controllers/theme_controller.dart';
+import 'presentation/controllers/chat_provider_controller.dart';
 import 'presentation/screens/intro_page/intro_page.dart';
 import 'presentation/screens/main_app/main_app.dart';
+import 'core/themes/app_theme.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -285,6 +287,7 @@ class _MyAppState extends State<MyApp> {
 
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => AnalyticsController()),
         ChangeNotifierProvider(create: (_) => CommunityController()),
         ChangeNotifierProvider(create: (_) => CreateCommunityController()),
@@ -304,6 +307,8 @@ class _MyAppState extends State<MyApp> {
           return MaterialApp(
             navigatorKey: navigatorKey,
             navigatorObservers: [routeObserver],
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
             themeMode:
                 themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: isLoggedIn

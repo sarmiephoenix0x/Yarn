@@ -35,15 +35,15 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage>
     with TickerProviderStateMixin, RouteAware {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
 
-    final ModalRoute? modalRoute = ModalRoute.of(context);
-    if (modalRoute is PageRoute) {
-      Provider.of<AccountPageController>(context).didChangeDependenciesCall();
-      routeObserver.subscribe(this, modalRoute);
-    }
-  }
+  //   final ModalRoute? modalRoute = ModalRoute.of(context);
+  //   if (modalRoute is PageRoute) {
+  //     Provider.of<AccountPageController>(context).didChangeDependenciesCall();
+  //     routeObserver.subscribe(this, modalRoute);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
