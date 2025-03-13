@@ -97,7 +97,7 @@ class PostsWidget extends StatelessWidget {
     ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
-
+    print("UserID:$userId CreatorID:$creatorUserId");
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 30.0),
       child: InkWell(
@@ -121,7 +121,7 @@ class PostsWidget extends StatelessWidget {
                 comments: commentsNotifier.value.toString(),
                 isLiked: isLiked,
                 userId: creatorUserId,
-                senderId: userId!,
+                viewerUserId: userId!,
                 labels: labels,
               ),
             ),
@@ -141,7 +141,7 @@ class PostsWidget extends StatelessWidget {
                         builder: (context) => UserProfile(
                           key: UniqueKey(),
                           userId: creatorUserId,
-                          senderId: userId!,
+                          viewerUserId: userId!,
                         ),
                       ),
                     );
@@ -233,7 +233,7 @@ class PostsWidget extends StatelessWidget {
                                         key: UniqueKey(),
                                         postId: post['postId'],
                                         userId: creatorUserId,
-                                        senderId: userId!,
+                                        viewerUserId: userId!,
                                       )),
                             );
                           },
@@ -395,7 +395,7 @@ class PostsWidget extends StatelessWidget {
                                         key: UniqueKey(),
                                         postId: post['postId'],
                                         userId: creatorUserId,
-                                        senderId: userId!,
+                                        viewerUserId: userId!,
                                       )),
                             );
                           },

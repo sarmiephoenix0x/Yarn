@@ -5,11 +5,11 @@ import '../../../core/widgets/followers_widgets/user.dart';
 import '../../controllers/followers_page_controller.dart';
 
 class FollowersPage extends StatefulWidget {
-  final int senderId;
+  final int viewerUserId;
 
   const FollowersPage({
     super.key,
-    required this.senderId,
+    required this.viewerUserId,
   });
 
   @override
@@ -20,7 +20,8 @@ class _FollowersPageState extends State<FollowersPage> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => FollowersPageController(senderId: widget.senderId),
+      create: (context) =>
+          FollowersPageController(viewerUserId: widget.viewerUserId),
       child: Consumer<FollowersPageController>(
           builder: (context, followersPageController, child) {
         return Scaffold(
@@ -79,7 +80,7 @@ class _FollowersPageState extends State<FollowersPage> {
                               name: follower['username'],
                               isFollowing: follower['isFollowing'],
                               userId: follower['userId'],
-                              senderId: widget.senderId,
+                              viewerUserId: widget.viewerUserId,
                               isFollowingMap:
                                   followersPageController.isFollowingMap,
                               storage: followersPageController.storage,

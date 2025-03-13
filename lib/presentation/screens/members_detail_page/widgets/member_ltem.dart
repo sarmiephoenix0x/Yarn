@@ -18,7 +18,7 @@ class MemberItem extends StatelessWidget {
             builder: (context) => UserProfile(
               key: UniqueKey(),
               userId: member.id,
-              senderId: member.senderId,
+              viewerUserId: member.viewerUserId,
             ),
           ),
         );

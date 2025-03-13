@@ -136,7 +136,7 @@ class _ChatPageState extends State<ChatPage> {
 
               ChatTextField(
                 isRecording: chatPageController.isRecording,
-                selectedAudioFile: chatPageController.selectedAudioFile!,
+                selectedAudioFile: chatPageController.selectedAudioFile,
                 isPlaying: chatPageController.isPlaying,
                 currentPlayingFilePath:
                     chatPageController.currentPlayingFilePath,

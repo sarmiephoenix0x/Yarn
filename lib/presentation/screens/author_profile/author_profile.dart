@@ -6,7 +6,7 @@ import '../../controllers/author_profile_controller.dart';
 
 class AuthorProfilePage extends StatefulWidget {
   final int pageId;
-  final int senderId;
+  final int viewerUserId;
   final String profileImage;
   final String pageName;
   final String pageDescription;
@@ -14,7 +14,7 @@ class AuthorProfilePage extends StatefulWidget {
   const AuthorProfilePage({
     super.key,
     required this.pageId,
-    required this.senderId,
+    required this.viewerUserId,
     required this.profileImage,
     required this.pageName,
     required this.pageDescription,
@@ -31,7 +31,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
     return ChangeNotifierProvider(
       create: (context) => AuthorProfileController(
           pageId: widget.pageId,
-          senderId: widget.senderId,
+          viewerUserId: widget.viewerUserId,
           profileImage: widget.profileImage,
           pageName: widget.pageName,
           pageDescription: widget.pageDescription,
@@ -406,8 +406,8 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                                 .submitComment,
                                         toggleLike:
                                             authorProfileController.toggleLike,
-                                        userId:
-                                            authorProfileController.senderId,
+                                        userId: authorProfileController
+                                            .viewerUserId,
                                       );
                                     },
                                   ),

@@ -4,7 +4,7 @@ import 'animated_button.dart';
 
 class ChatTextField extends StatelessWidget {
   final bool isRecording;
-  final String selectedAudioFile;
+  final String? selectedAudioFile;
   final bool isPlaying;
   final String currentPlayingFilePath;
   final TextEditingController messageController;

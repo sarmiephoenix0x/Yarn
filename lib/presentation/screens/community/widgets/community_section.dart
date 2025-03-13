@@ -9,7 +9,7 @@ class CommunitySection extends StatelessWidget {
   final Map<int, bool> isFollowingMap;
   final Future<List<dynamic>> Function(String) refreshCommunitiesMethod;
   final void Function() refreshState;
-  final int senderId;
+  final int viewerUserId;
   final Future<void> Function(int) leaveCommunityMethod;
   final Future<void> Function(int) joinCommunityMethod;
 
@@ -20,7 +20,7 @@ class CommunitySection extends StatelessWidget {
     required this.isFollowingMap,
     required this.refreshCommunitiesMethod,
     required this.refreshState,
-    required this.senderId,
+    required this.viewerUserId,
     required this.leaveCommunityMethod,
     required this.joinCommunityMethod,
   });
@@ -64,7 +64,7 @@ class CommunitySection extends StatelessWidget {
                     return CommunityItem(
                       community: communities[index],
                       isFollowingMap: isFollowingMap,
-                      senderId: senderId,
+                      viewerUserId: viewerUserId,
                       leaveCommunityMethod: leaveCommunityMethod,
                       joinCommunityMethod: joinCommunityMethod,
                     );

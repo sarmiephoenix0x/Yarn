@@ -11,7 +11,7 @@ class LocationWidget extends StatelessWidget {
   final String name;
   bool isFollowing;
   final int locationId;
-  final int senderId;
+  final int viewerUserId;
   final Map<String, bool> isFollowingMap;
   final FlutterSecureStorage storage;
   final void Function(String, bool) setIsFollowingMap;
@@ -22,7 +22,7 @@ class LocationWidget extends StatelessWidget {
     required this.name,
     required this.isFollowing,
     required this.locationId,
-    required this.senderId,
+    required this.viewerUserId,
     required this.isFollowingMap,
     required this.storage,
     required this.setIsFollowingMap,

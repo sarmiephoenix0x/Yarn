@@ -1,8 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import '../../controllers/comments_page_controller.dart';
@@ -11,13 +7,13 @@ import 'widgets/comment.dart';
 class CommentsPage extends StatefulWidget {
   final int postId;
   final int userId;
-  final int senderId;
+  final int viewerUserId;
 
   const CommentsPage(
       {super.key,
       required this.postId,
       required this.userId,
-      required this.senderId});
+      required this.viewerUserId});
 
   @override
   _CommentsPageState createState() => _CommentsPageState();
@@ -96,7 +92,7 @@ class _CommentsPageState extends State<CommentsPage> {
                                       description: comments['text'],
                                       dateCommented: comments['dateCommented'],
                                       commentorId: comments['commentorId'],
-                                      senderId: widget.senderId);
+                                      viewerUserId: widget.viewerUserId);
                                 },
                               ),
               ),

@@ -5,8 +5,8 @@ import '../../controllers/community_controller.dart';
 import 'widgets/community_section.dart';
 
 class CommunityPage extends StatefulWidget {
-  final int senderId;
-  const CommunityPage({super.key, required this.senderId});
+  final int viewerUserId;
+  const CommunityPage({super.key, required this.viewerUserId});
 
   @override
   _CommunityPageState createState() => _CommunityPageState();
@@ -35,7 +35,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       refreshCommunitiesMethod:
                           communityController.refreshCommunities,
                       refreshState: communityController.refreshState,
-                      senderId: widget.senderId,
+                      viewerUserId: widget.viewerUserId,
                       leaveCommunityMethod: communityController.leaveCommunity,
                       joinCommunityMethod: communityController.joinCommunity,
                     ),
@@ -46,7 +46,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       refreshCommunitiesMethod:
                           communityController.refreshCommunities,
                       refreshState: communityController.refreshState,
-                      senderId: widget.senderId,
+                      viewerUserId: widget.viewerUserId,
                       leaveCommunityMethod: communityController.leaveCommunity,
                       joinCommunityMethod: communityController.joinCommunity,
                     ),
@@ -57,7 +57,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       refreshCommunitiesMethod:
                           communityController.refreshCommunities,
                       refreshState: communityController.refreshState,
-                      senderId: widget.senderId,
+                      viewerUserId: widget.viewerUserId,
                       leaveCommunityMethod: communityController.leaveCommunity,
                       joinCommunityMethod: communityController.joinCommunity,
                     ),

@@ -5,10 +5,10 @@ import 'widgets/member_ltem.dart';
 
 class MembersListPage extends StatelessWidget {
   final List<Member> members;
-  final int senderId;
+  final int viewerUserId;
 
   const MembersListPage(
-      {super.key, required this.members, required this.senderId});
+      {super.key, required this.members, required this.viewerUserId});
 
   @override
   Widget build(BuildContext context) {

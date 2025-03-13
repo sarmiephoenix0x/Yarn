@@ -204,7 +204,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                                               name: locationData['name'],
                                               isFollowing: false,
                                               locationId: locationData['id'],
-                                              senderId:
+                                              viewerUserId:
                                                   searchPageController.userId!,
                                               isFollowingMap:
                                                   searchPageController

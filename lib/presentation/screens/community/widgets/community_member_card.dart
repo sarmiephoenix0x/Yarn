@@ -12,7 +12,7 @@ class CommunityMemberCard extends StatelessWidget {
   final int pageId;
   final List<dynamic> members;
   final BuildContext context;
-  final int senderId;
+  final int viewerUserId;
   final Future<void> Function(int) leaveCommunityMethod;
   final Future<void> Function(int) joinCommunityMethod;
 
@@ -26,7 +26,7 @@ class CommunityMemberCard extends StatelessWidget {
     required this.pageId,
     required this.members,
     required this.context,
-    required this.senderId,
+    required this.viewerUserId,
     required this.leaveCommunityMethod,
     required this.joinCommunityMethod,
   });
@@ -96,7 +96,8 @@ class CommunityMemberCard extends StatelessWidget {
                                       : '',
                                   description:
                                       'Member description here', // Placeholder
-                                  senderId: senderId, // Pass the senderId here
+                                  viewerUserId:
+                                      viewerUserId, // Pass the senderId here
                                 );
                               }).toList();
 
@@ -105,7 +106,7 @@ class CommunityMemberCard extends StatelessWidget {
                                 MaterialPageRoute(
                                   builder: (context) => MembersListPage(
                                     members: membersList,
-                                    senderId: senderId,
+                                    viewerUserId: viewerUserId,
                                   ),
                                 ),
                               );

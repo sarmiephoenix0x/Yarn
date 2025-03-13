@@ -109,7 +109,7 @@ class PageWidget extends StatelessWidget {
               profileImage: img,
               pageName: name,
               pageDescription: description,
-              senderId: userId!,
+              viewerUserId: userId!,
             ),
           ),
         );

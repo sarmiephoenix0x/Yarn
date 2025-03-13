@@ -5,7 +5,6 @@ import 'package:flutter/material.dart' hide CarouselController;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:signalr_core/signalr_core.dart';
 
 import '../../core/widgets/custom_snackbar.dart';
 
@@ -54,8 +53,10 @@ class UserProfileController extends ChangeNotifier {
 
   TickerProvider vsync;
   final int userId;
+  final int viewerUserId;
 
-  UserProfileController({required this.vsync, required this.userId}) {
+  UserProfileController(
+      {required this.vsync, required this.userId, required this.viewerUserId}) {
     initialize();
   }
 
@@ -146,7 +147,7 @@ class UserProfileController extends ChangeNotifier {
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-fuu0.onrender.com/api/posts/my-timeline/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/user-timeline/$userId/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         timelinePosts.clear();
@@ -216,7 +217,7 @@ class UserProfileController extends ChangeNotifier {
     try {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = Uri.parse(
-          'https://yarnapi-fuu0.onrender.com/api/posts/my-community/$pageNum');
+          'https://yarnapi-fuu0.onrender.com/api/posts/user-community/$userId/$pageNum');
 
       if (pageNum == 1 && !loadMore) {
         communityPosts.clear();

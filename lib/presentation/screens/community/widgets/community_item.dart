@@ -5,7 +5,7 @@ import 'community_member_card.dart';
 class CommunityItem extends StatelessWidget {
   final dynamic community;
   final Map<int, bool> isFollowingMap;
-  final int senderId;
+  final int viewerUserId;
   final Future<void> Function(int) leaveCommunityMethod;
   final Future<void> Function(int) joinCommunityMethod;
 
@@ -13,7 +13,7 @@ class CommunityItem extends StatelessWidget {
     super.key,
     this.community,
     required this.isFollowingMap,
-    required this.senderId,
+    required this.viewerUserId,
     required this.leaveCommunityMethod,
     required this.joinCommunityMethod,
   });
@@ -34,7 +34,7 @@ class CommunityItem extends StatelessWidget {
       pageId:
           community['communityId'], // Assuming the community ID is available
       members: community['members'], // Pass members data
-      context: context, senderId: senderId,
+      context: context, viewerUserId: viewerUserId,
       leaveCommunityMethod: leaveCommunityMethod,
       joinCommunityMethod: joinCommunityMethod, // Pass the BuildContext
     );

@@ -11,9 +11,9 @@ class FollowersPageController extends ChangeNotifier {
   Map<String, bool> _isFollowingMap = {};
   String _errorMessage = '';
 
-  final int senderId;
+  final int viewerUserId;
 
-  FollowersPageController({required this.senderId}) {
+  FollowersPageController({required this.viewerUserId}) {
     initialize();
   }
 
@@ -37,7 +37,7 @@ class FollowersPageController extends ChangeNotifier {
     notifyListeners();
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     final url =
-        'https://yarnapi-fuu0.onrender.com/api/users/followers/$senderId';
+        'https://yarnapi-fuu0.onrender.com/api/users/followers/$viewerUserId';
     try {
       final response = await http.get(
         Uri.parse(url),

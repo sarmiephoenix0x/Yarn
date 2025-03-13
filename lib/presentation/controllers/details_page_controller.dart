@@ -41,7 +41,7 @@ class DetailsPageController extends ChangeNotifier {
   final String likesWidget;
   final String comments;
   final bool isLikedWidget;
-  final int senderId;
+  final int viewerUserId;
   final List<String> labels;
 
   DetailsPageController(
@@ -58,7 +58,7 @@ class DetailsPageController extends ChangeNotifier {
       required this.likesWidget,
       required this.comments,
       required this.isLikedWidget,
-      required this.senderId,
+      required this.viewerUserId,
       required this.labels,
       required this.userId}) {
     initialize();

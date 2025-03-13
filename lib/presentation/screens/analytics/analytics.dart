@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yarn/presentation/controllers/analytics_controller.dart';
 
 import '../community/community.dart';
@@ -9,8 +7,8 @@ import '../create_post/create_post.dart';
 import 'widgets/analytics.dart';
 
 class Analytics extends StatefulWidget {
-  final int senderId;
-  const Analytics({super.key, required this.senderId});
+  final int viewerUserId;
+  const Analytics({super.key, required this.viewerUserId});
 
   @override
   AnalyticsState createState() => AnalyticsState();
@@ -85,7 +83,7 @@ class AnalyticsState extends State<Analytics>
                                     MaterialPageRoute(
                                       builder: (context) => CommunityPage(
                                         key: UniqueKey(),
-                                        senderId: widget.senderId,
+                                        viewerUserId: widget.viewerUserId,
                                       ),
                                     ),
                                   );
@@ -147,7 +145,7 @@ class AnalyticsState extends State<Analytics>
                                           MaterialPageRoute(
                                             builder: (context) => CommunityPage(
                                               key: UniqueKey(),
-                                              senderId: widget.senderId,
+                                              viewerUserId: widget.viewerUserId,
                                             ),
                                           ),
                                         );

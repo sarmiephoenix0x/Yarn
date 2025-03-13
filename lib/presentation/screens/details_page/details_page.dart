@@ -21,7 +21,7 @@ class DetailsPage extends StatefulWidget {
   final String likes;
   final String comments;
   final bool isLiked;
-  final int senderId;
+  final int viewerUserId;
   final List<String> labels;
 
   const DetailsPage(
@@ -40,7 +40,7 @@ class DetailsPage extends StatefulWidget {
       required this.comments,
       required this.isLiked,
       required this.userId,
-      required this.senderId,
+      required this.viewerUserId,
       required this.labels});
 
   @override
@@ -66,7 +66,7 @@ class DetailsPageState extends State<DetailsPage> {
           likesWidget: widget.likes,
           comments: widget.comments,
           isLikedWidget: widget.isLiked,
-          senderId: widget.senderId,
+          viewerUserId: widget.viewerUserId,
           labels: widget.labels,
           userId: widget.userId),
       child: Consumer<DetailsPageController>(
@@ -89,8 +89,7 @@ class DetailsPageState extends State<DetailsPage> {
                             height: MediaQuery.of(context).size.height * 0.1,
                           ),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: const EdgeInsets.only(left: 20.0),
                             child: Row(
                               children: [
                                 InkWell(
@@ -100,6 +99,8 @@ class DetailsPageState extends State<DetailsPage> {
                                   child: Image.asset(
                                     'images/BackButton.png',
                                     height: 25,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const Spacer(),
@@ -134,7 +135,7 @@ class DetailsPageState extends State<DetailsPage> {
                                       builder: (context) => UserProfile(
                                         key: UniqueKey(),
                                         userId: widget.userId,
-                                        senderId: widget.senderId,
+                                        viewerUserId: widget.viewerUserId,
                                       ),
                                     ),
                                   );
@@ -442,7 +443,7 @@ class DetailsPageState extends State<DetailsPage> {
                                         key: UniqueKey(),
                                         postId: widget.postId,
                                         userId: widget.userId,
-                                        senderId: widget.senderId,
+                                        viewerUserId: widget.viewerUserId,
                                       ),
                                     ),
                                   );

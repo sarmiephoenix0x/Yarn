@@ -11,7 +11,7 @@ class UserWidget extends StatelessWidget {
   final String name;
   bool isFollowing;
   final int userId;
-  final int senderId;
+  final int viewerUserId;
   final Map<String, bool> isFollowingMap;
   final FlutterSecureStorage storage;
   final void Function(String, bool) setIsFollowingMap;
@@ -22,7 +22,7 @@ class UserWidget extends StatelessWidget {
     required this.name,
     required this.isFollowing,
     required this.userId,
-    required this.senderId,
+    required this.viewerUserId,
     required this.isFollowingMap,
     required this.storage,
     required this.setIsFollowingMap,
@@ -102,7 +102,7 @@ class UserWidget extends StatelessWidget {
             builder: (context) => UserProfile(
               key: UniqueKey(),
               userId: userId,
-              senderId: senderId,
+              viewerUserId: viewerUserId,
             ),
           ),
         );

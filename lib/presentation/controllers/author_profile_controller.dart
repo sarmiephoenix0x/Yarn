@@ -29,14 +29,14 @@ class AuthorProfileController extends ChangeNotifier {
 
   TickerProvider vsync;
   final int pageId;
-  final int senderId;
+  final int viewerUserId;
   final String profileImage;
   final String pageName;
   final String pageDescription;
 
   AuthorProfileController(
       {required this.pageId,
-      required this.senderId,
+      required this.viewerUserId,
       required this.pageName,
       required this.profileImage,
       required this.pageDescription,
@@ -318,6 +318,6 @@ class AuthorProfileController extends ChangeNotifier {
       );
     }
     print("Test: ${likesNotifier[post['postId']]!.value}");
-    print("IDs: $senderId $creatorUserId");
+    print("IDs: $viewerUserId $creatorUserId");
   }
 }

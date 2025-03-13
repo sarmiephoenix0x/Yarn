@@ -8,7 +8,7 @@ class CommentWidget extends StatelessWidget {
   final String description;
   final String dateCommented;
   final int commentorId;
-  final int senderId;
+  final int viewerUserId;
 
   const CommentWidget({
     super.key,
@@ -17,7 +17,7 @@ class CommentWidget extends StatelessWidget {
     required this.description,
     required this.dateCommented,
     required this.commentorId,
-    required this.senderId,
+    required this.viewerUserId,
   });
 
   @override
@@ -32,7 +32,7 @@ class CommentWidget extends StatelessWidget {
               builder: (context) => UserProfile(
                 key: UniqueKey(),
                 userId: commentorId,
-                senderId: senderId,
+                viewerUserId: viewerUserId,
               ),
             ),
           );

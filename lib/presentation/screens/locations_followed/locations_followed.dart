@@ -4,9 +4,9 @@ import '../../../core/widgets/location_widget.dart';
 import '../../controllers/locations_followed_controller.dart';
 
 class LocationsFollowedPage extends StatefulWidget {
-  final int senderId;
+  final int viewerUserId;
 
-  const LocationsFollowedPage({super.key, required this.senderId});
+  const LocationsFollowedPage({super.key, required this.viewerUserId});
 
   @override
   _LocationsFollowedPageState createState() => _LocationsFollowedPageState();
@@ -17,7 +17,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) =>
-          LocationsFollowedController(senderId: widget.senderId),
+          LocationsFollowedController(viewerUserId: widget.viewerUserId),
       child: Consumer<LocationsFollowedController>(
         builder: (context, locationsFollowedController, child) {
           return Scaffold(
@@ -106,7 +106,7 @@ class _LocationsFollowedPageState extends State<LocationsFollowedPage> {
                                 name: locationData['name'],
                                 isFollowing: false,
                                 locationId: locationData['id'],
-                                senderId: widget.senderId,
+                                viewerUserId: widget.viewerUserId,
                                 isFollowingMap:
                                     locationsFollowedController.isFollowingMap,
                                 storage: locationsFollowedController.storage,

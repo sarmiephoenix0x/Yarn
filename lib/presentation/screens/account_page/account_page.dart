@@ -160,7 +160,8 @@ class _AccountPageState extends State<AccountPage>
                                     MaterialPageRoute(
                                       builder: (context) => FollowersPage(
                                         key: UniqueKey(),
-                                        senderId: accountPageController.userId!,
+                                        viewerUserId:
+                                            accountPageController.userId!,
                                       ),
                                     ),
                                   );
@@ -208,7 +209,8 @@ class _AccountPageState extends State<AccountPage>
                                     MaterialPageRoute(
                                       builder: (context) => FollowingsPage(
                                         key: UniqueKey(),
-                                        senderId: accountPageController.userId!,
+                                        viewerUserId:
+                                            accountPageController.userId!,
                                       ),
                                     ),
                                   );
@@ -291,7 +293,8 @@ class _AccountPageState extends State<AccountPage>
                                       builder: (context) =>
                                           LocationsFollowedPage(
                                         key: UniqueKey(),
-                                        senderId: accountPageController.userId!,
+                                        viewerUserId:
+                                            accountPageController.userId!,
                                       ),
                                     ),
                                   );
@@ -450,7 +453,8 @@ class _AccountPageState extends State<AccountPage>
                                   MaterialPageRoute(
                                     builder: (context) => Analytics(
                                       key: UniqueKey(),
-                                      senderId: accountPageController.userId!,
+                                      viewerUserId:
+                                          accountPageController.userId!,
                                     ),
                                   ),
                                 );

@@ -11,9 +11,10 @@ import '../locations_followed/locations_followed.dart';
 
 class UserProfile extends StatefulWidget {
   final int userId;
-  final int senderId;
+  final int viewerUserId;
 
-  const UserProfile({super.key, required this.userId, required this.senderId});
+  const UserProfile(
+      {super.key, required this.userId, required this.viewerUserId});
 
   @override
   State<UserProfile> createState() => _UserProfileState();
@@ -24,8 +25,10 @@ class _UserProfileState extends State<UserProfile>
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) =>
-          UserProfileController(vsync: this, userId: widget.userId),
+      create: (context) => UserProfileController(
+          vsync: this,
+          userId: widget.userId,
+          viewerUserId: widget.viewerUserId),
       child: Consumer<UserProfileController>(
           builder: (context, userProfileController, child) {
         return Scaffold(
@@ -134,7 +137,7 @@ class _UserProfileState extends State<UserProfile>
                                         MaterialPageRoute(
                                             builder: (context) => FollowersPage(
                                                   key: UniqueKey(),
-                                                  senderId: widget.userId,
+                                                  viewerUserId: widget.userId,
                                                 )),
                                       );
                                     },
@@ -184,7 +187,7 @@ class _UserProfileState extends State<UserProfile>
                                         MaterialPageRoute(
                                           builder: (context) => FollowingsPage(
                                             key: UniqueKey(),
-                                            senderId: widget.userId,
+                                            viewerUserId: widget.userId,
                                           ),
                                         ),
                                       );
@@ -273,7 +276,7 @@ class _UserProfileState extends State<UserProfile>
                                           builder: (context) =>
                                               LocationsFollowedPage(
                                             key: UniqueKey(),
-                                            senderId: widget.userId,
+                                            viewerUserId: widget.userId,
                                           ),
                                         ),
                                       );
@@ -359,7 +362,7 @@ class _UserProfileState extends State<UserProfile>
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    if (widget.userId != widget.senderId) {
+                                    if (widget.userId != widget.viewerUserId) {
                                       if (userProfileController.isFollowing) {
                                         userProfileController.unfollowUser();
                                       } else {
@@ -413,7 +416,7 @@ class _UserProfileState extends State<UserProfile>
                                 const Spacer(),
                                 InkWell(
                                   onTap: () {
-                                    if (widget.userId != widget.senderId) {
+                                    if (widget.userId != widget.viewerUserId) {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -424,7 +427,7 @@ class _UserProfileState extends State<UserProfile>
                                                 'Unknown User',
                                             profilePic: userProfileController
                                                 .profileImage,
-                                            senderId: widget.senderId,
+                                            senderId: widget.viewerUserId,
                                           ),
                                         ),
                                       );
