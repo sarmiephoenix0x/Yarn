@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage>
                                 submitCommentMethod:
                                     homePageController.submitComment,
                                 toggleLike: homePageController.toggleLike,
-                                userId: homePageController.userId,
+                                viewerUserId: homePageController.userId,
                               );
                             },
                           ),

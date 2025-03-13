@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void showLogoutDialog(
-    BuildContext context, Future<void> Function(BuildContext) onLogout) {
+    BuildContext context, void Function(BuildContext) onLogout) {
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -46,7 +46,7 @@ void showLogoutDialog(
                             setState(() => isLoading = true);
 
                             try {
-                              await onLogout(context);
+                              onLogout(context);
                             } catch (e) {
                               print("Logout failed: $e");
                               setState(() => isLoading = false);

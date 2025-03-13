@@ -617,7 +617,7 @@ class _AccountPageState extends State<AccountPage>
                                                       .submitComment,
                                               toggleLike: accountPageController
                                                   .toggleLike,
-                                              userId:
+                                              viewerUserId:
                                                   accountPageController.userId,
                                             );
                                           },
@@ -727,7 +727,7 @@ class _AccountPageState extends State<AccountPage>
                                                       .submitComment,
                                               toggleLike: accountPageController
                                                   .toggleLike,
-                                              userId:
+                                              viewerUserId:
                                                   accountPageController.userId,
                                             );
                                           },

@@ -57,7 +57,7 @@ class SettingsController extends ChangeNotifier {
     onToggleDarkMode(value);
   }
 
-  Future<void> logout(BuildContext context) async {
+  void logout(BuildContext context) async {
     final String? accessToken = await storage.read(key: 'yarnAccessToken');
     if (accessToken == null) {
       CustomSnackbar.show(

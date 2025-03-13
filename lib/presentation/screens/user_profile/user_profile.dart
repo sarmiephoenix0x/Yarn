@@ -610,8 +610,8 @@ class _UserProfileState extends State<UserProfile>
                                                   toggleLike:
                                                       userProfileController
                                                           .toggleLike,
-                                                  userId: userProfileController
-                                                      .userId,
+                                                  viewerUserId:
+                                                      widget.viewerUserId,
                                                 );
                                               },
                                             ),
@@ -730,8 +730,8 @@ class _UserProfileState extends State<UserProfile>
                                                   toggleLike:
                                                       userProfileController
                                                           .toggleLike,
-                                                  userId: userProfileController
-                                                      .userId,
+                                                  viewerUserId:
+                                                      widget.viewerUserId,
                                                 );
                                               },
                                             ),

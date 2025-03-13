@@ -18,7 +18,7 @@ class PostsWidget extends StatelessWidget {
   final Map<int, ValueNotifier<bool>> isLikedNotifiers;
   final Map<int, ValueNotifier<int>> likesNotifier;
   final Map<int, int> commentsMap;
-  final int? userId;
+  final int? viewerUserId;
   final String profileImage;
   final Future<void> Function(int, TextEditingController) submitCommentMethod;
   final Future<void> Function(
@@ -30,7 +30,7 @@ class PostsWidget extends StatelessWidget {
     required this.isLikedNotifiers,
     required this.likesNotifier,
     required this.commentsMap,
-    required this.userId,
+    required this.viewerUserId,
     required this.profileImage,
     required this.submitCommentMethod,
     required this.toggleLike,
@@ -97,7 +97,8 @@ class PostsWidget extends StatelessWidget {
     ValueNotifier<int> _current = ValueNotifier<int>(0);
 
     Color originalIconColor = IconTheme.of(context).color ?? Colors.black;
-    print("UserID:$userId CreatorID:$creatorUserId");
+    print(
+        "ViewerUserID:$viewerUserId CreatorID:$creatorUserId Liked?:$isLiked");
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 30.0),
       child: InkWell(
@@ -121,7 +122,7 @@ class PostsWidget extends StatelessWidget {
                 comments: commentsNotifier.value.toString(),
                 isLiked: isLiked,
                 userId: creatorUserId,
-                viewerUserId: userId!,
+                viewerUserId: viewerUserId!,
                 labels: labels,
               ),
             ),
@@ -141,7 +142,7 @@ class PostsWidget extends StatelessWidget {
                         builder: (context) => UserProfile(
                           key: UniqueKey(),
                           userId: creatorUserId,
-                          viewerUserId: userId!,
+                          viewerUserId: viewerUserId!,
                         ),
                       ),
                     );
@@ -233,7 +234,7 @@ class PostsWidget extends StatelessWidget {
                                         key: UniqueKey(),
                                         postId: post['postId'],
                                         userId: creatorUserId,
-                                        viewerUserId: userId!,
+                                        viewerUserId: viewerUserId!,
                                       )),
                             );
                           },
@@ -395,7 +396,7 @@ class PostsWidget extends StatelessWidget {
                                         key: UniqueKey(),
                                         postId: post['postId'],
                                         userId: creatorUserId,
-                                        viewerUserId: userId!,
+                                        viewerUserId: viewerUserId!,
                                       )),
                             );
                           },

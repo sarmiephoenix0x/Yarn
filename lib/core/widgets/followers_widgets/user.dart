@@ -30,7 +30,7 @@ class UserWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    isFollowing = isFollowingMap[userId.toString()] ?? false;
+    //isFollowing = isFollowingMap[userId.toString()] ?? false;
     Future<void> followUser() async {
       final String? accessToken = await storage.read(key: 'yarnAccessToken');
       final url = 'https://yarnapi-fuu0.onrender.com/api/pages/$userId/follow';

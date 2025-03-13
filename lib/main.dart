@@ -155,6 +155,7 @@ class _MyAppState extends State<MyApp> {
     const storage = FlutterSecureStorage();
     final accessToken = await storage.read(key: 'yarnAccessToken');
     isLoggedIn = accessToken != null;
+    print("Logged In? : ${isLoggedIn = accessToken != null}");
 
     // Check network connectivity
     var connectivityResult = await (Connectivity().checkConnectivity());

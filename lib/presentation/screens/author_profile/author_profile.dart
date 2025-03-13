@@ -406,7 +406,7 @@ class _AuthorProfilePageState extends State<AuthorProfilePage>
                                                 .submitComment,
                                         toggleLike:
                                             authorProfileController.toggleLike,
-                                        userId: authorProfileController
+                                        viewerUserId: authorProfileController
                                             .viewerUserId,
                                       );
                                     },
